@@ -1,0 +1,44 @@
+{
+    "server": {
+        "address": "127.0.0.1",
+        "port": 12345
+    },
+    "audio": {
+        "sample_rate": 44100,
+        "buffer_size": 256
+    }, 
+    "oscillator": {
+        "wavetable_size": 1024,
+        "expected_voices": 12,
+        "SINE":{
+            "auto_gain": 1.0
+        },
+        "SQUARE":{
+            "auto_gain": 0.6
+        },
+        "TRIANGLE":{
+            "auto_gain": 1.0
+        },
+        "SAW":{
+            "auto_gain": 0.7
+        },
+        "NOISE":{
+            "auto_gain": 0.8
+        }
+    },
+    "modulation": {
+        "ADSREnvelope": {
+            "attack": 0.1,
+            "decay": 0.1,
+            "sustain": 0.8,
+            "release": 0.1
+        },
+        "LinearFader": {
+            "attack": 0.1,
+            "release": 0.1
+        }
+        
+    }
+        
+}
+

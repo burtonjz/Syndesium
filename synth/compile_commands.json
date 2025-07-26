@@ -1,0 +1,74 @@
+[
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/home/burtonjz/audio-app-playground/shared/config/Config.cpp.o -c /home/burtonjz/audio-app-playground/shared/config/Config.cpp",
+  "file": "/home/burtonjz/audio-app-playground/shared/config/Config.cpp",
+  "output": "CMakeFiles/apollo.dir/home/burtonjz/audio-app-playground/shared/config/Config.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/ApolloEngine.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/ApolloEngine.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/ApolloEngine.cpp",
+  "output": "CMakeFiles/apollo.dir/src/ApolloEngine.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/dsp/Wavetable.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/dsp/Wavetable.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/dsp/Wavetable.cpp",
+  "output": "CMakeFiles/apollo.dir/src/dsp/Wavetable.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/main.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/main.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/main.cpp",
+  "output": "CMakeFiles/apollo.dir/src/main.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/midi/MidiController.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/midi/MidiController.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/midi/MidiController.cpp",
+  "output": "CMakeFiles/apollo.dir/src/midi/MidiController.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/midi/MidiEventListener.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/midi/MidiEventListener.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/midi/MidiEventListener.cpp",
+  "output": "CMakeFiles/apollo.dir/src/midi/MidiEventListener.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/midi/MidiNote.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/midi/MidiNote.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/midi/MidiNote.cpp",
+  "output": "CMakeFiles/apollo.dir/src/midi/MidiNote.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/modulation/ADSREnvelope.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/modulation/ADSREnvelope.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/modulation/ADSREnvelope.cpp",
+  "output": "CMakeFiles/apollo.dir/src/modulation/ADSREnvelope.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/modulation/LinearFader.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/modulation/LinearFader.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/modulation/LinearFader.cpp",
+  "output": "CMakeFiles/apollo.dir/src/modulation/LinearFader.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/modulation/Modulator.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/modulation/Modulator.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/modulation/Modulator.cpp",
+  "output": "CMakeFiles/apollo.dir/src/modulation/Modulator.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/modules/Oscillator.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/modules/Oscillator.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/modules/Oscillator.cpp",
+  "output": "CMakeFiles/apollo.dir/src/modules/Oscillator.cpp.o"
+},
+{
+  "directory": "/home/burtonjz/audio-app-playground/synth/build",
+  "command": "/usr/bin/g++ -I/home/burtonjz/audio-app-playground/synth/src -I/home/burtonjz/audio-app-playground/synth/../shared -I/usr/include/rtaudio -I/usr/include/rtmidi  -fsanitize=address -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math -g -std=gnu++20 -o CMakeFiles/apollo.dir/src/modules/PolyOscillator.cpp.o -c /home/burtonjz/audio-app-playground/synth/src/modules/PolyOscillator.cpp",
+  "file": "/home/burtonjz/audio-app-playground/synth/src/modules/PolyOscillator.cpp",
+  "output": "CMakeFiles/apollo.dir/src/modules/PolyOscillator.cpp.o"
+}
+]
