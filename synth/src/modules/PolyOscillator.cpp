@@ -13,24 +13,19 @@
 #include <iostream>
 
 
-Module::PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size, Waveform waveform):
-    BaseModule(ModuleType::PolyOscillator, buf_size),
+Module::PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size, PolyOscillatorConfig cfg):
+    BaseModule(ModuleType::PolyOscillator, sample_rate, buf_size),
     MidiEventListener(),
-    sampleRate_(sample_rate),
     children_(),
     modulators_(),
     modulationData_()
 {
-    parameters_.add<ParameterType::WAVEFORM>(waveform,false);
+    parameters_.add<ParameterType::WAVEFORM>(cfg.waveform,false);
     parameters_.add<ParameterType::GAIN>(1.0 , true);
     updateGain();
 
-    childPool_.initializeAll(sampleRate_, parameters_, 0.0, size_);
+    childPool_.initializeAll(sampleRate_, size_, parameters_, 0.0);
 }
-
-Module::PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size):
-    PolyOscillator(sample_rate, buf_size, Waveform::SINE)
-{}
 
 ParameterMap* Module::PolyOscillator::getParameters(){
     return &parameters_ ;

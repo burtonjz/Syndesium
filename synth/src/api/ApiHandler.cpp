@@ -171,6 +171,19 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         }
 
         // MODULES
+        if ( action == "add_module"){
+            ModuleType type = static_cast<ModuleType>(jRequest["type"]) ;
+            ModuleID id = engine->moduleController.dispatchFromJson(
+                type,
+                jRequest["name"], 
+                Module::getDefaultConfig(type));
+            jResponse["module_id"] = id ;
+            jResponse["type"] = jRequest["type"];
+            jResponse["status"] = "success";
+            sendApiResponse(clientSock, jResponse);
+            return ;
+        }
+
         if ( action == "get_waveforms" ){
             jResponse["data"] = Waveform::getWaveforms() ;
             sendApiResponse(clientSock, jResponse);

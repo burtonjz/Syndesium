@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
-project(apollo)
+project(synth)
 
 # set variables
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
@@ -22,15 +22,15 @@ pkg_check_modules(RTMIDI REQUIRED rtmidi)
 
 file(GLOB SRC "${SRC_DIR}/*.cpp" "${SRC_DIR}/*/*.cpp")
 
-add_executable(apollo ${SRC})
+add_executable(synth ${SRC})
 
-target_include_directories(apollo PRIVATE
+target_include_directories(synth PRIVATE
     ${SRC_DIR}
     ${RTAUDIO_INCLUDE_DIRS}
     ${RTMIDI_INCLUDE_DIRS}
 )
 
-target_link_libraries(apollo PRIVATE 
+target_link_libraries(synth PRIVATE 
     shared
     ${RTAUDIO_LIBRARIES}
     ${RTMIDI_LIBRARIES}
@@ -38,7 +38,7 @@ target_link_libraries(apollo PRIVATE
 )
 
 # Linker Flags
-target_link_options(apollo PRIVATE
+target_link_options(synth PRIVATE
     -Wl,-Bstatic
     -Wl,-Bdynamic
     -Wl,--as-needed

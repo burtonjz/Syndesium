@@ -3,17 +3,28 @@
 
 #include "modules/SignalChain.hpp"
 #include "modules/BaseModule.hpp"
+#include "modules/Oscillator.hpp"
+#include "modules/PolyOscillator.hpp"
+
 #include "params/Parameter.hpp"
 #include "types/ModuleType.hpp"
+#include "types/Waveform.hpp"
+
+#include "config/Config.hpp"
 
 #include <cstddef>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 #include <type_traits>
 #include <unordered_map>
 
 using ModuleID = std::size_t ;
 using ModuleKey = std::pair<ModuleType, int>;
+
+#define HANDLE_CREATE_MODULE(Type) \
+    case ModuleType::Type: \
+        return create<ModuleType::Type>(name,  j.get<Type##Config>());
 
 struct ModuleKeyHash {
     std::size_t operator()(const ModuleKey& key) const {
@@ -31,21 +42,34 @@ private:
     SignalChain signalChain_ ;
 
 public:
-    template <ModuleType T, typename... Args>
-    ModuleID create(std::string name, Args&&... args){
+    template <ModuleType T>
+    ModuleID create(std::string name, ModuleConfig<T>::cfg cfg){
         using ModType = typename ModuleTypeTraits<T>::ModType ;
         static_assert(std::is_base_of<Module::BaseModule, ModType>::value, "Must be derived from Module");
+
+        Config::load();
+        double sampleRate = Config::get<double>("audio.sample_rate").value();
+        size_t bufferSize = Config::get<size_t>("audio.buffer_size").value();
 
         int idx = ++typeInstanceCount_[T] ;
         ModuleID id = nextID_++ ;
         
-        auto m = std::make_unique<ModType>(std::forward<Args>(args)...);
+        auto m = std::make_unique<ModType>(sampleRate, bufferSize, cfg);
         Modules_[id] = std::move(m);
 
         typeLookup_[{T,idx}] = id ;
         nameLookup_[name] = id ;
         
         return id ;
+    }
+
+    ModuleID dispatchFromJson(ModuleType type, const std::string& name, const json& j){
+        switch (type){
+            HANDLE_CREATE_MODULE(Oscillator)
+            HANDLE_CREATE_MODULE(PolyOscillator)
+            default:
+                throw std::invalid_argument("Unsupported ModuleType");
+        }
     }
 
     Module::BaseModule* getRaw(ModuleID id){

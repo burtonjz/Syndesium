@@ -32,6 +32,7 @@ void GraphPanel::addModule(int id, ModuleType typ){
 void GraphPanel::onModuleAdded(ModuleType typ){
     QJsonObject obj ;
     obj["action"] = "add_module" ;
+    obj["name"] = "placeholder" ;
     obj["type"] = static_cast<int>(typ);
     apiClient_->sendMessage(obj);
 }

@@ -8,8 +8,6 @@ namespace Module {
 
     class Oscillator : public Module::BaseModule {
     private:
-        double sampleRate_ ;
-
         double phase_ ;
         double increment_ ;
         
@@ -18,13 +16,13 @@ namespace Module {
          * @brief Construct a new Oscillator module
          * 
          */
-        Oscillator(double sample_rate, Waveform waveform, double frequency, std::size_t buf_size);
+        Oscillator(double sample_rate, std::size_t buf_size, OscillatorConfig cfg);
 
         /**
          * @brief Construct a child oscillator module
          * 
         */
-        Oscillator(double sample_rate, ParameterMap& map, double frequency, std::size_t buf_size);
+        Oscillator(double sample_rate, std::size_t buf_size, ParameterMap& map, double frequency);
 
         // overrides
         bool isGenerative() const override ;
@@ -41,6 +39,9 @@ namespace Module {
     };
 }
 
-template <> struct ModuleTypeTraits<ModuleType::Oscillator>{using ModType = Module::Oscillator;};
+template <> struct ModuleTypeTraits<ModuleType::Oscillator>{ using ModType = Module::Oscillator;};
+
+
+
 
 #endif // __MODULE_OSCILLATOR_HPP_

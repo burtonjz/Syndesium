@@ -7,17 +7,15 @@
 #include "containers/RTMap.hpp"
 #include "containers/FixedPool.hpp"
 #include "modules/Oscillator.hpp"
+#include "types/ModuleType.hpp"
 #include "types/ParameterType.hpp"
 
 #include <cstdint>
-#include <vector>
 
 namespace Module {
 
     class PolyOscillator : public Module::BaseModule, public MidiEventListener {
     private:
-        double sampleRate_ ;
-
         RTMap<uint8_t, Oscillator*, 128> children_ ;
         FixedPool<Oscillator, 128> childPool_ ;
 
@@ -27,8 +25,7 @@ namespace Module {
         
     public:
         // Constructors
-        PolyOscillator(double sample_rate, std::size_t buf_size, Waveform waveform);
-        PolyOscillator(double sample_rate, std::size_t buf_size);
+        PolyOscillator(double sample_rate, std::size_t buf_size, PolyOscillatorConfig cfg);
 
         // getters/setters
         ParameterMap* getParameters();
@@ -51,6 +48,6 @@ namespace Module {
     
 }
 
-template <> struct ModuleTypeTraits<ModuleType::PolyOscillator>{using ModType = Module::PolyOscillator;};
+template <> struct ModuleTypeTraits<ModuleType::PolyOscillator>{ using ModType = Module::PolyOscillator;};
 
 #endif // __MODULE_POLYOSCILLATOR_HPP_

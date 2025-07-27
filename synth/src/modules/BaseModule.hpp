@@ -16,6 +16,7 @@ namespace Module {
 class BaseModule {
 protected:
     ModuleType  type_ ;
+    double  sampleRate_ ;
     std::size_t size_ ;
     std::vector<BaseModule*> inputs_ ;
     std::unique_ptr<double[]> buffer_ ;
@@ -24,8 +25,9 @@ protected:
     
 
 public:
-    BaseModule(ModuleType typ, std::size_t size):
+    BaseModule(ModuleType typ, double sampleRate, std::size_t size):
         type_(typ),
+        sampleRate_(sampleRate),
         size_(size), 
         buffer_(new double[size] ()),
         bufferIndex_(0),

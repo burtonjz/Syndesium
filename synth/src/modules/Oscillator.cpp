@@ -6,22 +6,20 @@
 #include <cmath>
 #include <cstdint>
 
-Module::Oscillator::Oscillator(double sample_rate, Waveform waveform, double frequency, std::size_t buf_size):
-    BaseModule(ModuleType::Oscillator, buf_size),
-    sampleRate_(sample_rate),
+Module::Oscillator::Oscillator(double sample_rate, std::size_t buf_size, OscillatorConfig cfg):
+    BaseModule(ModuleType::Oscillator, sample_rate, buf_size),
     phase_(0),
     increment_(0)
 {
     Wavetable::generate();
 
-    parameters_.add<ParameterType::WAVEFORM>(waveform,false);
+    parameters_.add<ParameterType::WAVEFORM>(cfg.waveform,false);
     parameters_.add<ParameterType::AMPLITUDE>(1.0,true);
-    parameters_.add<ParameterType::FREQUENCY>(frequency, true, 0.0, sample_rate / 2.0); // limit to nyquist frequency
+    parameters_.add<ParameterType::FREQUENCY>(cfg.frequency, true, 0.0, sample_rate / 2.0); // limit to nyquist frequency
 }
 
-Module::Oscillator::Oscillator(double sample_rate, ParameterMap& parent, double frequency, std::size_t buf_size):
-    BaseModule(ModuleType::Oscillator, buf_size),
-    sampleRate_(sample_rate),
+Module::Oscillator::Oscillator(double sample_rate, std::size_t buf_size, ParameterMap& parent, double frequency):
+    BaseModule(ModuleType::Oscillator, sample_rate, buf_size),
     phase_(0),
     increment_(0)
 {
