@@ -6,7 +6,7 @@ ModuleWidget::ModuleWidget(int id, ModuleType typ, QGraphicsItem* parent):
     moduleId_(id),
     type_(typ),
     width_(100),
-    height_(150)
+    height_(75)
 {
     setFlag(ItemIsMovable);
     setFlag(ItemIsSelectable);

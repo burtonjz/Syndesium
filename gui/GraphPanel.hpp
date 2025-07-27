@@ -18,13 +18,13 @@ private:
 
 public:
     explicit GraphPanel(ApiClient* client, QWidget* parent = nullptr);
-    void addModule(int id, ModuleType typ);
+    void addModule(int id, ModuleType type);
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
 
 public  slots:
-    void onModuleAdded(ModuleType typ);
+    void onModuleAdded(ModuleType type);
 
 };
 

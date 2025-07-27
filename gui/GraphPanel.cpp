@@ -23,18 +23,18 @@ GraphPanel::GraphPanel(ApiClient* client, QWidget* parent):
     connect(apiClient_, &ApiClient::dataReceived, this, &GraphPanel::onApiDataReceived);
 }
 
-void GraphPanel::addModule(int id, ModuleType typ){
-    auto* module = new ModuleWidget(id, typ);
+void GraphPanel::addModule(int id, ModuleType type){
+    auto* module = new ModuleWidget(id, type);
     scene_->addItem(module);
     module->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
 }
 
-void GraphPanel::onModuleAdded(ModuleType typ){
+void GraphPanel::onModuleAdded(ModuleType type){
     QJsonObject obj ;
     obj["action"] = "add_module" ;
     obj["name"] = "placeholder" ;
-    obj["type"] = static_cast<int>(typ);
-    apiClient_->sendMessage(obj);
+    obj["type"] = static_cast<int>(type);
+    apiClient_->sendMessage(obj); 
 }
 
 void GraphPanel::onApiDataReceived(const QJsonObject& json){
@@ -47,5 +47,6 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
         }
         ModuleType type = static_cast<ModuleType>(json["type"].toInt());
         int id = json["module_id"].toInt();
+        addModule(id,type);
     }
 }
