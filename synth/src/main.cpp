@@ -1,9 +1,9 @@
-#include "ApolloEngine.hpp"
+#include "Engine.hpp"
 #include "config/Config.hpp"
 
 // Program Entry Point
 int main() {
     Config::load();
-    ApolloEngine engine ;
+    Engine engine ;
     engine.initialize();
 }

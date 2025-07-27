@@ -1,4 +1,4 @@
-#include "ApolloEngine.hpp"
+#include "Engine.hpp"
 #include "config/Config.hpp"
 #include "api/ApiHandler.hpp"
 #include "midi/MidiEventHandler.hpp"
@@ -23,14 +23,14 @@
 
 
 // static members and functions
-std::atomic<bool> ApolloEngine::stop_flag{false};
+std::atomic<bool> Engine::stop_flag{false};
 
-void ApolloEngine::signalHandler(int signum){
+void Engine::signalHandler(int signum){
     std::cout << "Caught signal " << signum << ", stopping threads...\n" ;
     stop_flag = true ;
 }
 
-void ApolloEngine::startAudio(ApolloEngine* engine){
+void Engine::startAudio(Engine* engine){
     unsigned int buffer = Config::get<unsigned int>("audio.buffer_size").value() ;
     unsigned int sampleRate = Config::get<unsigned int>("audio.sample_rate").value() ;
 
@@ -86,16 +86,16 @@ void ApolloEngine::startAudio(ApolloEngine* engine){
     }
 }
 
-void ApolloEngine::stopAudio(){
+void Engine::stopAudio(){
     if ( dac_.isStreamRunning() ) dac_.stopStream();
     if ( dac_.isStreamOpen() ) dac_.closeStream();
 }
 
-int ApolloEngine::audioCallback(
+int Engine::audioCallback(
     void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, 
     RtAudioStreamStatus status, void *userData 
 ){
-    ApolloEngine* engine = static_cast<ApolloEngine*>(userData);
+    Engine* engine = static_cast<Engine*>(userData);
     double* buffer = static_cast<double*>(outputBuffer) ;
     
     engine->moduleController.clearBuffer();
@@ -111,12 +111,12 @@ int ApolloEngine::audioCallback(
     return 0 ;
 }
 
-void ApolloEngine::audioCleanup(RtAudio* dac, RtAudioErrorType error){
+void Engine::audioCleanup(RtAudio* dac, RtAudioErrorType error){
     if (error) std::cout << '\n' << dac->getErrorText() << '\n' << std::endl ;
     if (dac->isStreamOpen()) dac->closeStream() ;
 }
 
-void ApolloEngine::startMidi(ApolloEngine* engine){
+void Engine::startMidi(Engine* engine){
     RtMidiIn* midiIn = engine->getMidiIn() ;
     MidiController* midiController = engine->getMidiController() ;
     int deviceId = engine->getMidiDeviceId() ;
@@ -131,12 +131,12 @@ void ApolloEngine::startMidi(ApolloEngine* engine){
     }
 }
 
-void ApolloEngine::stopMidi(){
+void Engine::stopMidi(){
     if ( midiIn_.isPortOpen() ) midiIn_.closePort() ;
 }
 
 // Constructors
-ApolloEngine::ApolloEngine():
+Engine::Engine():
     dac_(),
     availableAudioDevices_(),
     selectedAudioOutput_(0), // invalid device ID
@@ -148,11 +148,11 @@ ApolloEngine::ApolloEngine():
     moduleController(),
     modulationController()
 {
-    signal(SIGINT, ApolloEngine::signalHandler);
+    signal(SIGINT, Engine::signalHandler);
 }
 
 // state functions
-void ApolloEngine::initialize(){
+void Engine::initialize(){
     Config::load() ;
 
     // get midi list
@@ -177,67 +177,67 @@ void ApolloEngine::initialize(){
     
 }
 
-void ApolloEngine::run(){
+void Engine::run(){
     setup() ;    
 
     // start up the midi and audio threads
-    std::thread t1(std::bind(ApolloEngine::startMidi, this));
-    std::thread t2(std::bind(ApolloEngine::startAudio, this));
+    std::thread t1(std::bind(Engine::startMidi, this));
+    std::thread t2(std::bind(Engine::startAudio, this));
 
     // wait for threads to finish
     t1.detach() ;
     t2.detach() ;
 }
 
-void ApolloEngine::stop(){
+void Engine::stop(){
     stopAudio();
     stopMidi();
     destroy();
 }
 
-RtAudio* ApolloEngine::getDac(){
+RtAudio* Engine::getDac(){
     return &dac_ ;
 }
 
-RtMidiIn* ApolloEngine::getMidiIn(){
+RtMidiIn* Engine::getMidiIn(){
     return &midiIn_ ;
 }
 
-MidiController* ApolloEngine::getMidiController(){
+MidiController* Engine::getMidiController(){
     return &midiController_ ;
 }
 
-double ApolloEngine::getDeltaTime() const {
+double Engine::getDeltaTime() const {
     return dt_ ;
 }
-int ApolloEngine::getAudioDeviceId() const {
+int Engine::getAudioDeviceId() const {
     return selectedAudioOutput_ ;
 }
 
-void ApolloEngine::setAudioDeviceId(int deviceId){
+void Engine::setAudioDeviceId(int deviceId){
     std::cout << "audio output device set to id " << deviceId << "." << std::endl ;
     selectedAudioOutput_ = deviceId ;
 }
 
-int ApolloEngine::getMidiDeviceId() const {
+int Engine::getMidiDeviceId() const {
     return selectedMidiPort_ ;
 }
 
-void ApolloEngine::setMidiDeviceId(int deviceId){
+void Engine::setMidiDeviceId(int deviceId){
     std::cout << "midi device set to id " << deviceId << "." << std::endl ;
     selectedMidiPort_ = deviceId ;
 }
 
-const std::map<int,std::string> ApolloEngine::getAvailableMidiDevices() const {
+const std::map<int,std::string> Engine::getAvailableMidiDevices() const {
     return availableMidiPorts_ ;
 }
 
-const std::map<int, std::string> ApolloEngine::getAvailableAudioDevices() const {
+const std::map<int, std::string> Engine::getAvailableAudioDevices() const {
     return availableAudioDevices_ ;
 }
 
 // Set up Modules
-void ApolloEngine::setup(){
+void Engine::setup(){
     unsigned int buffer = Config::get<unsigned int>("audio.buffer_size").value() ;
     unsigned int sampleRate = Config::get<unsigned int>("audio.sample_rate").value() ;
     dt_ = 1.0 / sampleRate ;
@@ -272,7 +272,7 @@ void ApolloEngine::setup(){
 
 }
 
-void ApolloEngine::destroy(){
+void Engine::destroy(){
     modulationController.reset();
     moduleController.reset();
     midiState_.reset();

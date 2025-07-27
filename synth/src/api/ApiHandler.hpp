@@ -6,15 +6,15 @@
 using json = nlohmann::json ;
 
 // forward declarations
-class ApolloEngine ;
+class Engine ;
 
 class ApiHandler {
 public:
     ApiHandler() = delete ;
 
-    static void start(ApolloEngine* engine);
-    static void onClientConnection(ApolloEngine* engine, int clientSock);
-    static void handleClientMessage(ApolloEngine* engine, int clientSock, std::string jsonStr);
+    static void start(Engine* engine);
+    static void onClientConnection(Engine* engine, int clientSock);
+    static void handleClientMessage(Engine* engine, int clientSock, std::string jsonStr);
     static void sendApiResponse(int clientSock, json response);
 };
 

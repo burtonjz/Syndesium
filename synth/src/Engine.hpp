@@ -1,5 +1,5 @@
-#ifndef __APOLLO_ENGINE_HPP_
-#define __APOLLO_ENGINE_HPP_
+#ifndef __ENGINE_HPP_
+#define __ENGINE_HPP_
 
 #include <atomic>
 
@@ -10,15 +10,15 @@
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiState.hpp"
-
+#include "types/Waveform.hpp"
 #include "modules/ModuleController.hpp"
 #include "modulation/ModulationController.hpp"
 
 #include <nlohmann/json.hpp> 
 
-using json = nlohmann::json;
+using json = nlohmann::json ;
 
-class ApolloEngine {
+class Engine {
 private:
     // audio
     RtAudio dac_ ;
@@ -45,18 +45,18 @@ public:
     ModulationController modulationController ;
 
     // static thread functions
-    static void startAudio(ApolloEngine* engine);
+    static void startAudio(Engine* engine);
     void stopAudio();
 
     static int audioCallback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
                               double streamTime, RtAudioStreamStatus status, void *userData );
     static void audioCleanup(RtAudio* dac, RtAudioErrorType error);
 
-    static void startMidi(ApolloEngine* engine);
+    static void startMidi(Engine* engine);
     void stopMidi();
 
     // Constructor
-    ApolloEngine();
+    Engine();
 
     // Engine Block Functions
     void initialize() ;
@@ -92,4 +92,4 @@ public:
 
 };
 
-#endif // __APOLLO_ENGINE_HPP_
+#endif // __ENGINE_HPP_

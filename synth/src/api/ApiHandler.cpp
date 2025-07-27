@@ -1,5 +1,5 @@
 #include "api/ApiHandler.hpp"
-#include "ApolloEngine.hpp"
+#include "Engine.hpp"
 #include "config/Config.hpp"
 
 #include <iostream>
@@ -8,7 +8,7 @@
 #include <fcntl.h>
 #include <thread>
 
-void ApiHandler::start(ApolloEngine* engine){
+void ApiHandler::start(Engine* engine){
     int serverPort = Config::get<int>("server.port").value() ;
 
     // Create socket
@@ -46,7 +46,7 @@ void ApiHandler::start(ApolloEngine* engine){
     std::cout << "Server listening on port " << serverPort << "..." << std::endl;
 
     // Accept incoming client connections in a loop
-    while (!ApolloEngine::stop_flag) {
+    while (!Engine::stop_flag) {
         int clientSock = accept(serverSock, nullptr, nullptr);
         if (clientSock >= 0) {
             // set client socket to non-blocking
@@ -74,11 +74,11 @@ void ApiHandler::start(ApolloEngine* engine){
     close(serverSock);
 }
 
-void ApiHandler::onClientConnection(ApolloEngine* engine, int clientSock){
+void ApiHandler::onClientConnection(Engine* engine, int clientSock){
     char buffer[1024] = {0};
     std::string partialData ;
 
-    while (!ApolloEngine::stop_flag){
+    while (!Engine::stop_flag){
         ssize_t bytesReceived = recv(clientSock, buffer, sizeof(buffer) - 1, 0) ;
         if (bytesReceived > 0 ){
             buffer[bytesReceived] = '\0' ; // null-terminate the buffer so it can be read into a string
@@ -116,7 +116,7 @@ void ApiHandler::sendApiResponse(int clientSock, json response){
     send(clientSock, r.c_str(), r.size(), 0);
 }
 
-void ApiHandler::handleClientMessage(ApolloEngine* engine, int clientSock, std::string jsonStr){
+void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string jsonStr){
     json jResponse ;
     json jRequest ;
     try {
