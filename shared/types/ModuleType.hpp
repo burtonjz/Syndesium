@@ -1,7 +1,6 @@
 #ifndef __MODULE_TYPE_HPP_
 #define __MODULE_TYPE_HPP_
 
-#include  <optional>
 #include "types/Waveform.hpp"
 #include <nlohmann/json.hpp>
 
