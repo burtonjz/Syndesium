@@ -1,7 +1,7 @@
 #ifndef OSCILLATOR_HPP
 #define OSCILLATOR_HPP
 
-#include "ApiClient.hpp"
+#include "core/ApiClient.hpp"
 #include <QWidget>
 #include <QComboBox>
 

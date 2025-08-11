@@ -1,10 +1,9 @@
-#include "ApiClient.hpp"
-#include "StateManager.hpp"
-#include "ModuleContext.hpp"
+#include "core/ApiClient.hpp"
+#include "core/StateManager.hpp"
+#include "core/ModuleContext.hpp"
 
-#include "Synth.hpp"
-#include "Oscillator.hpp"
-
+#include "core/Synth.hpp"
+#include "modules/Oscillator.hpp"
 
 #include <QApplication>
 #include <qobject.h>

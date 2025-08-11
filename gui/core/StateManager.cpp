@@ -1,4 +1,4 @@
-#include "StateManager.hpp"
+#include "core/StateManager.hpp"
 
 StateManager::StateManager(QObject *parent)
     : QObject{parent} {

@@ -1,5 +1,5 @@
-#include "Setup.hpp"
-#include "ApiClient.hpp"
+#include "core/Setup.hpp"
+#include "core/ApiClient.hpp"
 #include "ui_Setup.h"
 
 #include <QJsonArray>

@@ -3,7 +3,7 @@
 
 #include <QWidget>
 #include <QComboBox>
-#include "ModuleContext.hpp"
+#include "core/ModuleContext.hpp"
 
 
 QT_BEGIN_NAMESPACE

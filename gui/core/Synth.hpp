@@ -9,9 +9,9 @@
 #include <QPushButton>
 #include <qtmetamacros.h>
 
-#include "ModuleContext.hpp"
-#include "GraphPanel.hpp"
-#include "Setup.hpp"
+#include "core/ModuleContext.hpp"
+#include "core/GraphPanel.hpp"
+#include "core/Setup.hpp"
 
 #include "types/ModuleType.hpp"
 

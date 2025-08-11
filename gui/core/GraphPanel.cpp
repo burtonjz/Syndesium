@@ -1,5 +1,5 @@
-#include "GraphPanel.hpp"
-#include "ApiClient.hpp"
+#include "core/GraphPanel.hpp"
+#include "core/ApiClient.hpp"
 #include "modules/ModuleWidget.hpp"
 #include "types/ModuleType.hpp"
 

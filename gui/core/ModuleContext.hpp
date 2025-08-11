@@ -1,8 +1,8 @@
 #ifndef __MODULE_CONTEXT_HPP_
 #define __MODULE_CONTEXT_HPP_
 
-#include "ApiClient.hpp"
-#include "StateManager.hpp"
+#include "core/ApiClient.hpp"
+#include "core/StateManager.hpp"
 
 struct ModuleContext {
     ApiClient* apiClient ;

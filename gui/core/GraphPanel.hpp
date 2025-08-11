@@ -6,7 +6,7 @@
 #include <qjsonobject.h>
 #include <qtmetamacros.h>
 
-#include "ApiClient.hpp"
+#include "core/ApiClient.hpp"
 #include "types/ModuleType.hpp"
 
 class GraphPanel : public QGraphicsView {

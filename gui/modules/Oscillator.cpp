@@ -1,4 +1,4 @@
-#include "Oscillator.hpp"
+#include "modules/Oscillator.hpp"
 #include "ui_Oscillator.h"
 #include <QJsonObject>
 #include <QJsonValue>

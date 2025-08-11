@@ -1,8 +1,9 @@
-#include "Synth.hpp"
-#include "GraphPanel.hpp"
-#include "ui_Synth.h"
-#include "ApiClient.hpp"
+#include "core/Synth.hpp"
+#include "core/GraphPanel.hpp"
+#include "core/ApiClient.hpp"
 #include "meta/ModuleRegistry.hpp"
+
+#include "ui_Synth.h"
 
 #include <QJsonArray>
 #include <QJsonObject>
