@@ -1,0 +1,115 @@
+#include "patch/SocketWidget.hpp"
+#include "modules/ModuleWidget.hpp"
+
+#include <QGraphicsSceneMouseEvent>
+
+SocketWidget::SocketWidget(SocketType type, QString name, ModuleWidget* parent):
+    QGraphicsObject(parent),
+    sockType_(type),
+    name_(name),
+    parentModule_(parent)
+{
+    setAcceptHoverEvents(true);
+    setFlag(QGraphicsItem::ItemIsSelectable, false);
+    setZValue(10); // ensures sockets are on top
+}
+
+QRectF SocketWidget::boundingRect() const {
+    return QRectF(-SOCKET_RADIUS, -SOCKET_RADIUS, SOCKET_RADIUS * 2, SOCKET_RADIUS * 2);
+}
+
+void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
+    Q_UNUSED(option)
+    Q_UNUSED(widget)
+
+    painter->setRenderHint(QPainter::Antialiasing);
+    
+    // Draw circle
+    QColor socketColor = getSocketColor();
+    if ( isHovered_ ){
+        socketColor = socketColor.lighter(150);
+    }
+
+    painter->setBrush(socketColor);
+    painter->setPen(QPen(Qt::black, 2));
+    painter->drawEllipse(boundingRect());
+
+    // Draw an indicator for input vs output
+    if (isOutput()){
+        painter->setBrush(Qt::white);
+    } else {
+        painter->setBrush(Qt::black);
+    }
+    painter->drawEllipse(-2,-2,4,4);
+
+}
+
+QColor SocketWidget::getSocketColor() const {
+    switch(sockType_){
+        case SocketType::ModulationInput:
+        case SocketType::ModulationOutput:
+            return QColor(255, 100, 100); // red
+        case SocketType::SignalInput:
+        case SocketType::SignalOutput:
+            return QColor(100,255,100); // green
+        case SocketType::MidiInput:
+        case SocketType::MidiOutput:
+            return QColor(100,100,255); // blue
+    }
+    return Qt::gray ; // shouldn't happen
+}
+
+bool SocketWidget::isOutput() const {
+    return sockType_ == SocketType::ModulationOutput || 
+           sockType_ == SocketType::SignalOutput ||
+           sockType_ == SocketType::MidiOutput
+    ;
+}
+
+bool SocketWidget::isInput() const {
+    return !isOutput() ;
+}
+
+QPointF SocketWidget::getConnectionPoint() const {
+    return mapToScene(0,0);
+}
+void SocketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
+    if ( event->button() == Qt::LeftButton ){
+        isDragging_ = true ;
+        emit connectionStarted(this);
+        event->accept();
+    }
+    QGraphicsObject::mousePressEvent(event);
+}
+
+void SocketWidget::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
+    if (isDragging_) {
+        emit connectionDragging(this, event->scenePos());
+        event->accept();
+    }
+    QGraphicsObject::mouseMoveEvent(event);
+}
+
+void SocketWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
+{
+    if (event->button() == Qt::LeftButton && isDragging_) {
+        isDragging_ = false;
+        emit connectionEnded(this, event->scenePos());
+        event->accept();
+    }
+    QGraphicsObject::mouseReleaseEvent(event);
+}
+
+void SocketWidget::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
+{
+    isHovered_ = true;
+    update();
+    QGraphicsObject::hoverEnterEvent(event);
+}
+
+void SocketWidget::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
+{
+    isHovered_ = false;
+    update();
+    QGraphicsObject::hoverLeaveEvent(event);
+}

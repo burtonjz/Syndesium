@@ -76,6 +76,25 @@ constexpr std::array<float, N_PARAMETER_TYPES> parameterDefaults({
     0.5f                               // Q_FACTOR
 });
 
+constexpr std::array<std::string, N_PARAMETER_TYPES> parameterStrings({
+    "status",
+    "waveform",
+    "frequency",
+    "amplitude",
+    "gain",
+    "phase",
+    "pan",
+    "detune",
+    "attack",
+    "decay",
+    "sustain",
+    "release",
+    "filter type",
+    "cutoff",
+    "q factor"
+});
+const std::string& parameter2String(ParameterType p);
+
 /**
  * @brief define value variable type for each ParameterType
 */
