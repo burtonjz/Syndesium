@@ -1,4 +1,4 @@
-- Implement colored sockets on ModuleWidget (midi, audio, modulation) based on ModuleRegistry info
+✓ Implement colored sockets on ModuleWidget (midi, audio, modulation) based on ModuleRegistry info
 - Implement ConnectionCable to draw connections from different sources
 - Create input/output widgets for midi and audio from/to hardware sources
 - Create control parameter UI forms and controls for each ModuleType
