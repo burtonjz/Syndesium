@@ -31,7 +31,6 @@ public:
 
 protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget *widget ) override ;
-    void mousePressEvent(QGraphicsSceneMouseEvent* event) override ;
 
 private:
     QPainterPath createBezierPath(const QPointF& start, const QPointF& end);

@@ -107,13 +107,8 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
 }
 
 void GraphPanel::mousePressEvent(QMouseEvent* event){
-    switch (event->button()){
-        case Qt::RightButton:
-            // TODO: add some context or info menu or something maybe
-            event->accept();
-            break ;
-        default:
-            break ;
+    if ( event->button() == Qt::RightButton ){
+        // TODO: maybe if we right click a module we can do some stuff...
     }
 
     QGraphicsView::mousePressEvent(event); // pass event through

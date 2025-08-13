@@ -25,6 +25,8 @@ public:
 
     bool hasConnection(SocketWidget* socket) const ;
     void removeConnection(SocketWidget* socket);
+    void removeConnection(ConnectionCable* cable);
+
     void removeAllConnections(ModuleWidget* module);
 
     const QList<ConnectionCable*>& getConnections() const { return connections_ ; }

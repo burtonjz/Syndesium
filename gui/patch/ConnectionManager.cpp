@@ -1,5 +1,6 @@
 #include "patch/ConnectionManager.hpp"
 #include "modules/ModuleWidget.hpp"
+#include "patch/ConnectionCable.hpp"
 
 #include <QGraphicsItem>
 #include <QDebug>
@@ -122,6 +123,15 @@ void ConnectionManager::removeConnection(SocketWidget* socket){
             ++it;
         }
     }
+}
+
+void ConnectionManager::removeConnection(ConnectionCable* cable){
+    if ( !cable ) return ;
+    if ( cable->scene() ){
+        cable->scene()->removeItem(cable);
+    }
+    connections_.removeAll(cable);
+    delete cable ;
 }
 
 void ConnectionManager::removeAllConnections(ModuleWidget* module){

@@ -142,17 +142,3 @@ void ConnectionCable::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
     // Draw the main cable
     QGraphicsPathItem::paint(painter, option, widget);
 }
-
-void ConnectionCable::mousePressEvent(QGraphicsSceneMouseEvent *event)
-{
-    if (event->button() == Qt::RightButton) {
-        // Right-click to delete connection
-        if (scene()) {
-            scene()->removeItem(this);
-            delete this ;
-        }
-        event->accept();
-        return;
-    }
-    QGraphicsPathItem::mousePressEvent(event);
-}
