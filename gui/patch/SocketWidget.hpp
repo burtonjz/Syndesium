@@ -43,6 +43,7 @@ public:
     // Getters
     SocketType getType() const { return sockType_ ; } 
     ModuleWidget* getParent() const { return parentModule_ ; }
+    const QString& getName() const { return name_ ; }
     bool isOutput() const ;
     bool isInput() const ;
     QPointF getConnectionPoint() const ;

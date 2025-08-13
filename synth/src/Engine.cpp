@@ -105,7 +105,6 @@ int Engine::audioCallback(
         sample = engine->moduleController.processFrame();
         engine->modulationController.tick(engine->getDeltaTime());
         buffer[i] = dsp::fastAtan(sample) ;
-        std::cout << buffer[i] << "\n" ;
     }
     
     return 0 ;
@@ -244,29 +243,6 @@ void Engine::setup(){
 
     midiState_.reset();
     midiController_.initialize() ;
-
-    // TEMPORARY MANUAL SIGNAL CHAIN CREATION
-    // make the polyphonic oscillator
-    // std::cout << "creating polyphonic oscillator..." << std::endl ;
-    // auto m = moduleController.create<ModuleType::PolyOscillator>("Oscillator1", sampleRate, buffer, {});
-    // auto osc = moduleController.get<ModuleType::PolyOscillator>(m);
-    // std::cout <<  "oscillator created with address " << osc << std::endl ;
-
-    // moduleController.registerSink(moduleController.getRaw(m));
-    
-    // // create a fader
-    // auto f = modulationController.create<ModulatorType::LinearFader>("fader1", &midiState_);
-    // auto fader = modulationController.get<LinearFader>(f);
-    
-    // // register the oscillator to the fader
-    // auto h = static_cast<MidiEventHandler*>(fader);
-    // midiState_.addHandler(h);
-    // h->addListener(osc);
-    // ModulationData d ;
-    // d[ModulationParameter::MIDI_NOTE];
-    // d[ModulationParameter::INITIAL_VALUE];
-    // d[ModulationParameter::LAST_VALUE];
-    // osc->setModulation(ParameterType::AMPLITUDE, fader, d);
 
     moduleController.setup();
 

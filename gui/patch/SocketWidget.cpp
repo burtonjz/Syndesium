@@ -9,8 +9,9 @@ SocketWidget::SocketWidget(SocketType type, QString name, ModuleWidget* parent):
     name_(name),
     parentModule_(parent)
 {
-    setAcceptHoverEvents(true);
     setFlag(QGraphicsItem::ItemIsSelectable, false);
+    setAcceptHoverEvents(true);
+    setAcceptedMouseButtons(Qt::LeftButton);
     setZValue(10); // ensures sockets are on top
 }
 
@@ -76,9 +77,12 @@ QPointF SocketWidget::getConnectionPoint() const {
 void SocketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
     if ( event->button() == Qt::LeftButton ){
         isDragging_ = true ;
+        grabMouse() ;
         emit connectionStarted(this);
         event->accept();
+        return ;
     }
+
     QGraphicsObject::mousePressEvent(event);
 }
 
@@ -86,7 +90,9 @@ void SocketWidget::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
     if (isDragging_) {
         emit connectionDragging(this, event->scenePos());
         event->accept();
+        return ;
     }
+
     QGraphicsObject::mouseMoveEvent(event);
 }
 
@@ -94,9 +100,12 @@ void SocketWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
     if (event->button() == Qt::LeftButton && isDragging_) {
         isDragging_ = false;
+        ungrabMouse() ; 
         emit connectionEnded(this, event->scenePos());
         event->accept();
+        return ;
     }
+
     QGraphicsObject::mouseReleaseEvent(event);
 }
 

@@ -9,19 +9,26 @@ ModuleWidget::ModuleWidget(int id, ModuleType type, QGraphicsItem* parent):
     moduleId_(id),
     descriptor_(ModuleRegistry::getModuleDescriptor(type))
 {
+    // configure widget
     setFlag(QGraphicsItem::ItemIsMovable, true);
     setFlag(QGraphicsItem::ItemIsSelectable, true);
     setFlag(QGraphicsItem::ItemSendsGeometryChanges, true);
+    setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton);
+    setAcceptHoverEvents(true);
 
     titleText_ = new QGraphicsTextItem(QString::fromStdString(descriptor_.name), this);
-    titleText_->setPos(5,5);
+    titleText_->setDefaultTextColor(MODULE_TEXT_COLOR);
+    titleText_->setPos(MODULE_TEXT_PADDING,MODULE_TEXT_PADDING);
+    titleText_->setTextWidth(MODULE_WIDTH - MODULE_TEXT_PADDING * 2);
 
     createSockets();
     layoutSockets();
 }
 
 QRectF ModuleWidget::boundingRect() const {
-    return QRectF(0, 0, MODULE_WIDTH, MODULE_HEIGHT);
+    qreal delta = HIGHLIGHT_BUFFER + HIGHLIGHT_WIDTH ;
+    return QRectF(0, 0, MODULE_WIDTH, MODULE_HEIGHT)
+        .adjusted(-delta, -delta, delta, delta);
 }
 
 void ModuleWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
@@ -29,16 +36,19 @@ void ModuleWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
     Q_UNUSED(widget)
 
     // draw background
-    QRectF rect = boundingRect();
+    QRectF baseRect(0, 0,MODULE_WIDTH, MODULE_HEIGHT);
     painter->setBrush(MODULE_BACKGROUND_COLOR);
-    painter->setPen(QPen(Qt::white,2));
-    painter->drawRoundedRect(rect, 5, 5);
+    painter->setPen(QPen(Qt::white,MODULE_BORDER_WIDTH));
+    painter->drawRoundedRect(baseRect, MODULE_ROUNDED_RADIUS, MODULE_ROUNDED_RADIUS);
 
     // when selected, draw an indicator around the object
     if (isSelected()){
-        painter->setPen(QPen(Qt::yellow, 3, Qt::DashLine));
+        painter->setPen(QPen(Qt::yellow, HIGHLIGHT_WIDTH, Qt::DashLine));
         painter->setBrush(Qt::NoBrush);
-        painter->drawRoundedRect(rect.adjusted(-2,-2,2,2),5,5);
+        painter->drawRoundedRect(
+            baseRect.adjusted(-HIGHLIGHT_BUFFER,-HIGHLIGHT_BUFFER,HIGHLIGHT_BUFFER,HIGHLIGHT_BUFFER),
+            MODULE_ROUNDED_RADIUS,MODULE_ROUNDED_RADIUS
+        );
     }
 }
 
@@ -142,4 +152,11 @@ void ModuleWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
         isDragging_ = false;
     }
     QGraphicsObject::mouseReleaseEvent(event);
+}
+
+QVariant ModuleWidget::itemChange(GraphicsItemChange change, const QVariant& value ){
+    if ( change == ItemPositionChange || change == ItemPositionHasChanged ){
+        emit modulePositionChanged() ;
+    }
+    return QGraphicsObject::itemChange(change, value);
 }

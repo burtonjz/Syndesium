@@ -3,11 +3,13 @@
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
-#include <qjsonobject.h>
-#include <qtmetamacros.h>
 
 #include "core/ApiClient.hpp"
+#include "patch/SocketWidget.hpp"
 #include "types/ModuleType.hpp"
+#include "patch/ConnectionManager.hpp"
+
+class ModuleWidget ; // forward declaration
 
 class GraphPanel : public QGraphicsView {
     Q_OBJECT
@@ -15,16 +17,42 @@ class GraphPanel : public QGraphicsView {
 private:
     QGraphicsScene* scene_ ;
     ApiClient* apiClient_ ;
+    ConnectionManager* connectionManager_ ;
+
+    QList<ModuleWidget*> modules_ ;
 
 public:
     explicit GraphPanel(ApiClient* client, QWidget* parent = nullptr);
+    ~GraphPanel();
+
     void addModule(int id, ModuleType type);
+    void deleteSelectedModules();
+
+protected:
+    void keyPressEvent(QKeyEvent* event) override ;
+    void mousePressEvent(QMouseEvent* event) override ;
+    void wheelEvent(QWheelEvent* event) override ;
+
+private:
+    void setupScene() ;
+    void connectModuleSignals(ModuleWidget* module);
+    void drawBackground(QPainter* painter, const QRectF& rect) override ;
+    
+    static constexpr qreal GRID_SIZE = 20.0 ;
+    static constexpr qreal WHEEL_SCALE_FACTOR = 1.15 ;
+    static constexpr QColor GRAPH_GRID_COLOR = QColor(50,50,50);
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
+    void onModuleDoubleClicked(ModuleWidget* module);
+    void onConnectionStarted(SocketWidget* socket);
+    void onConnectionDragging(SocketWidget* socket, QPointF scenePos);
+    void onConnectionEnded(SocketWidget* socket, QPointF scenePos);
 
 public  slots:
     void onModuleAdded(ModuleType type);
+
+
 
 };
 
