@@ -1,13 +1,12 @@
-#include "modules/ModuleWidget.hpp"
+#include "widgets/SocketContainerWidget.hpp"
 #include "meta/ModuleRegistry.hpp"
 #include "patch/SocketWidget.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 
-ModuleWidget::ModuleWidget(int id, ModuleType type, QGraphicsItem* parent): 
+SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent): 
     QGraphicsObject(parent),
-    moduleId_(id),
-    descriptor_(ModuleRegistry::getModuleDescriptor(type))
+    name_(name)
 {
     // configure widget
     setFlag(QGraphicsItem::ItemIsMovable, true);
@@ -16,22 +15,19 @@ ModuleWidget::ModuleWidget(int id, ModuleType type, QGraphicsItem* parent):
     setAcceptedMouseButtons(Qt::LeftButton | Qt::RightButton);
     setAcceptHoverEvents(true);
 
-    titleText_ = new QGraphicsTextItem(QString::fromStdString(descriptor_.name), this);
+    titleText_ = new QGraphicsTextItem(name_, this);
     titleText_->setDefaultTextColor(MODULE_TEXT_COLOR);
     titleText_->setPos(MODULE_TEXT_PADDING,MODULE_TEXT_PADDING);
     titleText_->setTextWidth(MODULE_WIDTH - MODULE_TEXT_PADDING * 2);
-
-    createSockets();
-    layoutSockets();
 }
 
-QRectF ModuleWidget::boundingRect() const {
+QRectF SocketContainerWidget::boundingRect() const {
     qreal delta = HIGHLIGHT_BUFFER + HIGHLIGHT_WIDTH ;
     return QRectF(0, 0, MODULE_WIDTH, MODULE_HEIGHT)
         .adjusted(-delta, -delta, delta, delta);
 }
 
-void ModuleWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
+void SocketContainerWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
     Q_UNUSED(option)
     Q_UNUSED(widget)
 
@@ -52,34 +48,25 @@ void ModuleWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
     }
 }
 
-void ModuleWidget::createSockets(){
-    for ( const ParameterType& p : descriptor_.modulatableParameters){
-        SocketWidget* socket = new SocketWidget(SocketType::ModulationInput, QString::fromStdString(parameter2String(p)), this);
+void SocketContainerWidget::createSockets(std::initializer_list<SocketSpec> specs ){
+    for ( const auto& s : specs ){
+        SocketWidget* socket = new SocketWidget(s, this);
         sockets_.append(socket);
     }
 
-    for (int i = 0; i < descriptor_.numAudioInputs; ++i){
-        SocketWidget* socket = new SocketWidget(SocketType::SignalInput, QString("In %1").arg(i+1), this);
-        sockets_.append(socket);
-    }
-
-    for (int i = 0; i < descriptor_.numMidiInputs; ++i){
-        SocketWidget* socket = new SocketWidget(SocketType::MidiInput, QString("MIDI IN %1").arg(i+1), this);
-        sockets_.append(socket);
-    }
-
-    for (int i = 0; i < descriptor_.numAudioOutputs; ++i){
-        SocketWidget* socket = new SocketWidget(SocketType::SignalOutput, QString("Out %1").arg(i+1), this);
-        sockets_.append(socket);
-    }
-
-    for (int i = 0; i < descriptor_.numMidiOutputs; ++i){
-        SocketWidget* socket = new SocketWidget(SocketType::MidiOutput, QString("In %1").arg(i+1), this);
-        sockets_.append(socket);
-    }
+    layoutSockets();
 }
 
-void ModuleWidget::layoutSockets(){
+void SocketContainerWidget::createSockets(std::vector<SocketSpec> specs){
+    for ( const auto& s : specs ){
+        SocketWidget* socket = new SocketWidget(s, this);
+        sockets_.append(socket);
+    }
+
+    layoutSockets();
+}
+
+void SocketContainerWidget::layoutSockets(){
     QList<SocketWidget*> leftSockets ; // audio / midi inputs
     QList<SocketWidget*> rightSockets ; // audio / midi outputs
     QList<SocketWidget*> bottomSockets ; // modulatable inputs
@@ -127,12 +114,12 @@ void ModuleWidget::layoutSockets(){
     }
 }
 
-void ModuleWidget::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event){
-    emit moduleDoubleClicked(this);
+void SocketContainerWidget::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event){
+    emit doubleClicked(this);
     event->accept();
 }
 
-void ModuleWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
+void SocketContainerWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
     if (event->button() == Qt::LeftButton) {
         isDragging_ = true;
         dragStartPos_ = event->pos();
@@ -140,23 +127,23 @@ void ModuleWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
     QGraphicsObject::mousePressEvent(event);
 }
 
-void ModuleWidget::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
+void SocketContainerWidget::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
     if (isDragging_) {
         // Handle dragging the module
         QGraphicsObject::mouseMoveEvent(event);
     }
 }
 
-void ModuleWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
+void SocketContainerWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
     if (event->button() == Qt::LeftButton) {
         isDragging_ = false;
     }
     QGraphicsObject::mouseReleaseEvent(event);
 }
 
-QVariant ModuleWidget::itemChange(GraphicsItemChange change, const QVariant& value ){
+QVariant SocketContainerWidget::itemChange(GraphicsItemChange change, const QVariant& value ){
     if ( change == ItemPositionChange || change == ItemPositionHasChanged ){
-        emit modulePositionChanged() ;
+        emit positionChanged() ;
     }
     return QGraphicsObject::itemChange(change, value);
 }

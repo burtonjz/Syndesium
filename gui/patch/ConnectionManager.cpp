@@ -1,5 +1,5 @@
 #include "patch/ConnectionManager.hpp"
-#include "modules/ModuleWidget.hpp"
+#include "widgets/SocketContainerWidget.hpp"
 #include "patch/ConnectionCable.hpp"
 
 #include <QGraphicsItem>
@@ -40,15 +40,15 @@ void ConnectionManager::finishConnection(const QPointF& scenePos){
         connections_.append(dragConnection_);
 
         // connect to position changes
-        ModuleWidget* fromModule = dragFromSocket_->getParent();
-        ModuleWidget* toModule = toSocket->getParent();
+        SocketContainerWidget* fromModule = dragFromSocket_->getParent();
+        SocketContainerWidget* toModule = toSocket->getParent();
 
         // Note: other logic prohibits self connections, and we won't get 
         // this far if these are null pointers, so let's not worry about safeguards
-        connect(fromModule, &ModuleWidget::modulePositionChanged, 
-            this, &ConnectionManager::onModulePositionChanged);
-        connect(toModule, &ModuleWidget::modulePositionChanged, 
-            this, &ConnectionManager::onModulePositionChanged);
+        connect(fromModule, &SocketContainerWidget::positionChanged, 
+            this, &ConnectionManager::onWidgetPositionChanged);
+        connect(toModule, &SocketContainerWidget::positionChanged, 
+            this, &ConnectionManager::onWidgetPositionChanged);
 
         qDebug() << "Connection created:" << dragFromSocket_->getName() 
                  << "to" << toSocket->getName() ;
@@ -105,13 +105,13 @@ void ConnectionManager::removeConnection(SocketWidget* socket){
         if (cable->getFromSocket() == socket || cable->getToSocket() == socket) {
             QString fromText = cable->getFromSocket()
                 ? QString("%1%2")
-                    .arg(QString::fromStdString(cable->getFromSocket()->getParent()->getModuleDescriptor().name))
+                    .arg(cable->getFromSocket()->getParent()->getName())
                     .arg(cable->getFromSocket()->getName())
                 : "null" ;
 
             QString toText = cable->getToSocket()
                 ? QString("%1%2")
-                    .arg(QString::fromStdString(cable->getToSocket()->getParent()->getModuleDescriptor().name))
+                    .arg(cable->getToSocket()->getParent()->getName())
                     .arg(cable->getToSocket()->getName())
                 : "null" ;
             qDebug() << "removing cable connection:" << fromText << "->" << toText ;
@@ -134,18 +134,18 @@ void ConnectionManager::removeConnection(ConnectionCable* cable){
     delete cable ;
 }
 
-void ConnectionManager::removeAllConnections(ModuleWidget* module){
+void ConnectionManager::removeAllConnections(SocketContainerWidget* module){
     for (SocketWidget* socket : module->getSockets()) {
         removeConnection(socket);
     }
 }
 
-void ConnectionManager::onModulePositionChanged(){
-    ModuleWidget* module = dynamic_cast<ModuleWidget*>(sender());
-    if (!module) return ;
+void ConnectionManager::onWidgetPositionChanged(){
+    SocketContainerWidget* widget = dynamic_cast<SocketContainerWidget*>(sender());
+    if (!widget) return ;
     
     for (ConnectionCable* connection: connections_ ){
-        if (connection->involvesModule(module)){
+        if (connection->involvesWidget(widget)){
             connection->updatePath();
         }
     }

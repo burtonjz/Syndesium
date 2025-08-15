@@ -25,7 +25,7 @@ public:
     bool isComplete() const { return fromSocket_ && toSocket_ ; }
     bool isCompatible(SocketWidget* socket) const ;
 
-    bool involvesModule(ModuleWidget* module) const ;
+    bool involvesWidget(SocketContainerWidget* widget) const ;
 
     void updatePath();
 

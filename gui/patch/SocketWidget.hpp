@@ -1,15 +1,12 @@
 #ifndef __GUI_SOCKET_WIDGET_HPP_
 #define __GUI_SOCKET_WIDGET_HPP_
 
-
 #include <QGraphicsObject>
 #include <QWidget>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 
-
-
-class ModuleWidget ; // forward declaration
+class SocketContainerWidget ; // forward declaration
 
 enum class SocketType {
     ModulationInput,
@@ -20,13 +17,17 @@ enum class SocketType {
     MidiOutput
 };
 
+struct SocketSpec {
+    SocketType type ;
+    QString name ;
+};
+
 class SocketWidget : public QGraphicsObject {
     Q_OBJECT
 
 private:
-    SocketType sockType_ ;
-    QString name_ ;
-    ModuleWidget* parentModule_ ;
+    SocketSpec spec_ ;
+    SocketContainerWidget* parent_ ;
     bool isHovered_ = false ;
     bool isDragging_ = false ;
     QColor getSocketColor() const ;
@@ -34,16 +35,16 @@ private:
     static constexpr qreal SOCKET_RADIUS = 6.0 ;
 
 public:
-    SocketWidget(SocketType type, QString name, ModuleWidget* parent = nullptr);
+    SocketWidget(SocketSpec spec, SocketContainerWidget* parent = nullptr);
 
     // QGraphicsItem interface
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override ;
 
     // Getters
-    SocketType getType() const { return sockType_ ; } 
-    ModuleWidget* getParent() const { return parentModule_ ; }
-    const QString& getName() const { return name_ ; }
+    SocketType getType() const { return spec_.type ; } 
+    SocketContainerWidget* getParent() const { return parent_ ; }
+    const QString& getName() const { return spec_.name ; }
     bool isOutput() const ;
     bool isInput() const ;
     QPointF getConnectionPoint() const ;

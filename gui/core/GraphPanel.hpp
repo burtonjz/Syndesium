@@ -35,7 +35,7 @@ protected:
 
 private:
     void setupScene() ;
-    void connectModuleSignals(ModuleWidget* module);
+    void connectWidgetSignals(SocketContainerWidget* widget);
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
     
     static constexpr qreal GRID_SIZE = 20.0 ;
@@ -44,7 +44,7 @@ private:
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
-    void onModuleDoubleClicked(ModuleWidget* module);
+    void onWidgetDoubleClicked(SocketContainerWidget* widget);
     void onConnectionStarted(SocketWidget* socket);
     void onConnectionDragging(SocketWidget* socket, QPointF scenePos);
     void onConnectionEnded(SocketWidget* socket, QPointF scenePos);

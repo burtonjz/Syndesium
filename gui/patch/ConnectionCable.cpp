@@ -11,7 +11,7 @@ ConnectionCable::ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocke
     fromSocket_(fromSocket), 
     toSocket_(toSocket)
 {
-    setZValue(5); // Below sockets but above modules
+    setZValue(5); // Below sockets but above container widget
     setPen(QPen(getCableColor(), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     updatePath();
 }
@@ -37,7 +37,7 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
     // Can't connect socket to itself
     if (fromSocket_ == socket) return false ;
     
-    // Can't connect sockets from the same module
+    // Can't connect sockets from the same container widget
     if (fromSocket_->getParent() == socket->getParent()) return false ;
     
     // Must be compatible types
@@ -62,9 +62,9 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
     }
 }
 
-bool ConnectionCable::involvesModule(ModuleWidget* module) const {
-    return ( fromSocket_ && fromSocket_->getParent() == module ) ||
-           ( toSocket_   &&   toSocket_->getParent() == module ) ;
+bool ConnectionCable::involvesWidget(SocketContainerWidget* widget) const {
+    return ( fromSocket_ && fromSocket_->getParent() == widget ) ||
+           ( toSocket_   &&   toSocket_->getParent() == widget ) ;
 }
 
 void ConnectionCable::updatePath(){

@@ -1,28 +1,27 @@
-#ifndef __UI_MODULE_WIDGET_HPP_
-#define __UI_MODULE_WIDGET_HPP_
+#ifndef __UI_SOCKET_CONTAINER_WIDGET_HPP_
+#define __UI_SOCKET_CONTAINER_WIDGET_HPP_
 
 #include <QGraphicsObject>
 #include <QPainter>
 #include <QString>
 #include <QStyleOptionGraphicsItem>
-#include <qnamespace.h>
+#include <initializer_list>
+#include <vector>
 
-
-#include "meta/ModuleDescriptor.hpp"
 #include "patch/SocketWidget.hpp"
 
-class ModuleWidget :  public QGraphicsObject {
+class SocketContainerWidget :  public QGraphicsObject {
     Q_OBJECT
 
 private:
-    int moduleId_ ;
-    ModuleDescriptor descriptor_ ;
-    QList<SocketWidget*> sockets_ ; 
-
-    QGraphicsTextItem* titleText_ ;
     bool isDragging_ = false ;
     QPointF dragStartPos_ ;
+    QString name_ ;
 
+protected:
+    QList<SocketWidget*> sockets_ ; 
+    QGraphicsTextItem* titleText_ ;
+    
     static constexpr qreal MODULE_WIDTH = 120.0 ;
     static constexpr qreal MODULE_HEIGHT = 80.0 ;
     static constexpr qreal MODULE_ROUNDED_RADIUS = 5.0 ;
@@ -35,33 +34,34 @@ private:
     static constexpr QColor MODULE_BACKGROUND_COLOR = QColor(60,60,60);
     
     static constexpr qreal SOCKET_SPACING = 15.0 ;
-    
-    
 
 public:
-    explicit ModuleWidget(int id, ModuleType type, QGraphicsItem* parent = nullptr);
+    explicit SocketContainerWidget(QString name, QGraphicsItem* parent = nullptr);
 
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr ) override ;
 
-    const ModuleDescriptor& getModuleDescriptor() const { return descriptor_ ; }
     const QList<SocketWidget*>& getSockets() const { return sockets_ ; }
+    const QString& getName() const { return name_ ; }
+    
 
 protected:
+    // Graphics overrides
     void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override ;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override ;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override ;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override ;
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes
 
-signals:
-    void moduleDoubleClicked(ModuleWidget* module);
-    void modulePositionChanged();
-
-private:
-    void createSockets();
+    void createSockets(std::initializer_list<SocketSpec> specs );
+    void createSockets(const std::vector<SocketSpec> specs );
     void layoutSockets();
+
+signals:
+    void doubleClicked(SocketContainerWidget* module);
+    void positionChanged();
+
 
 };
 
-#endif // __UI_MODULE_WIDGET_HPP_
+#endif // __UI_SOCKET_CONTAINER_WIDGET_HPP_

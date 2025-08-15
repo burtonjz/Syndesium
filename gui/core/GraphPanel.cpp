@@ -1,6 +1,7 @@
 #include "core/GraphPanel.hpp"
 #include "core/ApiClient.hpp"
-#include "modules/ModuleWidget.hpp"
+#include "widgets/SocketContainerWidget.hpp"
+#include "widgets/ModuleWidget.hpp"
 #include "types/ModuleType.hpp"
 
 #include <QWheelEvent>
@@ -64,13 +65,13 @@ void GraphPanel::addModule(int id, ModuleType type){
     scene_->addItem(module);
     module->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
 
-    connectModuleSignals(module);
-    qDebug() << "Created module:" << module->getModuleDescriptor().name << "at position:" << module->pos() ;
+    connectWidgetSignals(module);
+    qDebug() << "Created module:" << module->getName() << "at position:" << module->pos() ;
 }
 
-void GraphPanel::connectModuleSignals(ModuleWidget* module){
-    connect(module, &ModuleWidget::moduleDoubleClicked, this, &GraphPanel::onModuleDoubleClicked);
-    for (SocketWidget* socket : module->getSockets() ){
+void GraphPanel::connectWidgetSignals(SocketContainerWidget* widget){
+    connect(widget, &SocketContainerWidget::doubleClicked, this, &GraphPanel::onWidgetDoubleClicked);
+    for (SocketWidget* socket : widget->getSockets() ){
         connect(socket, &SocketWidget::connectionStarted, this, &GraphPanel::onConnectionStarted);
         connect(socket, &SocketWidget::connectionDragging, this, &GraphPanel::onConnectionDragging);
         connect(socket, &SocketWidget::connectionEnded, this, &GraphPanel::onConnectionEnded);
@@ -165,13 +166,13 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
     }
 }
 
-void GraphPanel::onModuleDoubleClicked(ModuleWidget* module){
+void GraphPanel::onWidgetDoubleClicked(SocketContainerWidget* widget){
     // TODO -- use this to launch module specific control UIs
-    qDebug() << "Module double-clicked:" << module->getModuleDescriptor().name ;
+    qDebug() << "Module double-clicked:" << widget->getName() ;
 }
 
 void GraphPanel::onConnectionStarted(SocketWidget* socket){
-    qDebug() << "Connection started from:" << socket->getParent()->getModuleDescriptor().name << "-" << socket->getName() ;
+    qDebug() << "Connection started from:" << socket->getParent()->getName() << "-" << socket->getName() ;
     connectionManager_->startConnection(socket);
 }
 

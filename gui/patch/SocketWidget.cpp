@@ -1,13 +1,12 @@
 #include "patch/SocketWidget.hpp"
-#include "modules/ModuleWidget.hpp"
+#include "widgets/SocketContainerWidget.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 
-SocketWidget::SocketWidget(SocketType type, QString name, ModuleWidget* parent):
+SocketWidget::SocketWidget(SocketSpec spec, SocketContainerWidget* parent):
     QGraphicsObject(parent),
-    sockType_(type),
-    name_(name),
-    parentModule_(parent)
+    spec_(spec),
+    parent_(parent)
 {
     setFlag(QGraphicsItem::ItemIsSelectable, false);
     setAcceptHoverEvents(true);
@@ -46,7 +45,7 @@ void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 }
 
 QColor SocketWidget::getSocketColor() const {
-    switch(sockType_){
+    switch(spec_.type){
         case SocketType::ModulationInput:
         case SocketType::ModulationOutput:
             return QColor(255, 100, 100); // red
@@ -61,9 +60,9 @@ QColor SocketWidget::getSocketColor() const {
 }
 
 bool SocketWidget::isOutput() const {
-    return sockType_ == SocketType::ModulationOutput || 
-           sockType_ == SocketType::SignalOutput ||
-           sockType_ == SocketType::MidiOutput
+    return spec_.type == SocketType::ModulationOutput || 
+           spec_.type == SocketType::SignalOutput ||
+           spec_.type == SocketType::MidiOutput
     ;
 }
 

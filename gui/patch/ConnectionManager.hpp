@@ -27,7 +27,7 @@ public:
     void removeConnection(SocketWidget* socket);
     void removeConnection(ConnectionCable* cable);
 
-    void removeAllConnections(ModuleWidget* module);
+    void removeAllConnections(SocketContainerWidget* widget);
 
     const QList<ConnectionCable*>& getConnections() const { return connections_ ; }
 
@@ -36,7 +36,7 @@ private:
     bool canConnect(SocketWidget* from, SocketWidget* to) const ;
 
 private slots:
-    void onModulePositionChanged();
+    void onWidgetPositionChanged();
 
 };
 

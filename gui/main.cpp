@@ -3,7 +3,7 @@
 #include "core/ModuleContext.hpp"
 
 #include "core/Synth.hpp"
-#include "modules/Oscillator.hpp"
+#include "widgets/Oscillator.hpp"
 
 #include <QApplication>
 #include <qobject.h>
