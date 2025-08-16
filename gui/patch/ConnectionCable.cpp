@@ -54,9 +54,9 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
     case SocketType::ModulationOutput:
         return toType == SocketType::SignalInput || toType == SocketType::ModulationInput ;
     case SocketType::SignalInput:
-        return toType == SocketType::SignalInput ;
+        return toType == SocketType::SignalOutput ;
     case SocketType::SignalOutput:
-        return toType == SocketType::SignalOutput || toType == SocketType::ModulationInput ;
+        return toType == SocketType::SignalInput || toType == SocketType::ModulationInput ;
     default:
         return false ;
     }

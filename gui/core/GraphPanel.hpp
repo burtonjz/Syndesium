@@ -3,11 +3,13 @@
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include <vector>
 
 #include "core/ApiClient.hpp"
 #include "patch/SocketWidget.hpp"
 #include "types/ModuleType.hpp"
 #include "patch/ConnectionManager.hpp"
+
 
 class ModuleWidget ; // forward declaration
 
@@ -19,13 +21,16 @@ private:
     ApiClient* apiClient_ ;
     ConnectionManager* connectionManager_ ;
 
-    QList<ModuleWidget*> modules_ ;
+    std::vector<SocketContainerWidget*> widgets_ ;
 
 public:
     explicit GraphPanel(ApiClient* client, QWidget* parent = nullptr);
     ~GraphPanel();
 
     void addModule(int id, ModuleType type);
+    void addAudioOutput();
+    void addMidiInput();
+    
     void deleteSelectedModules();
 
 protected:

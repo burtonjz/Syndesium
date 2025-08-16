@@ -43,7 +43,9 @@ public:
 
     const QList<SocketWidget*>& getSockets() const { return sockets_ ; }
     const QString& getName() const { return name_ ; }
-    
+
+    void createSockets(std::initializer_list<SocketSpec> specs );
+    void createSockets(const std::vector<SocketSpec> specs );
 
 protected:
     // Graphics overrides
@@ -53,8 +55,6 @@ protected:
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override ;
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes
 
-    void createSockets(std::initializer_list<SocketSpec> specs );
-    void createSockets(const std::vector<SocketSpec> specs );
     void layoutSockets();
 
 signals:

@@ -31,7 +31,9 @@ GraphPanel::GraphPanel(ApiClient* client, QWidget* parent):
     apiClient_(client)
 {
     setupScene();
-
+    addMidiInput();
+    addAudioOutput();
+    
     setFocusPolicy(Qt::StrongFocus);
     setEnabled(true);
 
@@ -66,7 +68,28 @@ void GraphPanel::addModule(int id, ModuleType type){
     module->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
 
     connectWidgetSignals(module);
+    widgets_.push_back(module);
     qDebug() << "Created module:" << module->getName() << "at position:" << module->pos() ;
+}
+
+void GraphPanel::addAudioOutput(){
+    auto* container = new SocketContainerWidget("Audio Ouput Device");
+    container->createSockets({{SocketType::SignalInput, "Audio In"}});
+    scene_->addItem(container);
+
+    connectWidgetSignals(container);
+    widgets_.push_back(container);
+    qDebug() << "Created Audio Output Device Widget:" << container->getName() << "at position:" << container->pos() ;
+}
+
+void GraphPanel::addMidiInput(){
+    auto* container = new SocketContainerWidget("MIDI Input Device");
+    container->createSockets({{SocketType::MidiOutput, "MIDI Out"}});
+    scene_->addItem(container);
+
+    connectWidgetSignals(container);
+    widgets_.push_back(container);
+    qDebug() << "Created Midi Input Device Widget:" << container->getName() << "at position:" << container->pos() ;
 }
 
 void GraphPanel::connectWidgetSignals(SocketContainerWidget* widget){
@@ -84,7 +107,9 @@ void GraphPanel::deleteSelectedModules(){
     for ( QGraphicsItem* item: selectedItems ){
         if ( ModuleWidget* module = qgraphicsitem_cast<ModuleWidget*>(item) ){
             connectionManager_->removeAllConnections(module);
-            modules_.removeOne(module);
+            auto it = std::find(widgets_.begin(), widgets_.end(), module);
+            if ( it != widgets_.end() ) widgets_.erase(it) ;
+
             scene_->removeItem(module);
             module->deleteLater();
 
