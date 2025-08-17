@@ -5,7 +5,6 @@
 #include <QGraphicsScene>
 #include <vector>
 
-#include "core/ApiClient.hpp"
 #include "patch/SocketWidget.hpp"
 #include "types/ModuleType.hpp"
 #include "patch/ConnectionManager.hpp"
@@ -18,13 +17,12 @@ class GraphPanel : public QGraphicsView {
 
 private:
     QGraphicsScene* scene_ ;
-    ApiClient* apiClient_ ;
     ConnectionManager* connectionManager_ ;
 
     std::vector<SocketContainerWidget*> widgets_ ;
 
 public:
-    explicit GraphPanel(ApiClient* client, QWidget* parent = nullptr);
+    explicit GraphPanel(QWidget* parent = nullptr);
     ~GraphPanel();
 
     void addModule(int id, ModuleType type);

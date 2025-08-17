@@ -5,7 +5,6 @@
 #include "core/StateManager.hpp"
 
 struct ModuleContext {
-    ApiClient* apiClient ;
     StateManager* state ;
     QString objectName ;
 };

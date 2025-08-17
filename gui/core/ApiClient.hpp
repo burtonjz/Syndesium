@@ -10,8 +10,15 @@
 class ApiClient : public QObject
 {
     Q_OBJECT
+private:
+    QTcpSocket *socket ;
+    QByteArray buffer ;
+
+    explicit ApiClient(QObject* parent = nullptr);
+    ~ApiClient() = default ;
+    
 public:
-    explicit ApiClient(QObject *parent = nullptr);
+    static ApiClient* instance() ;
     void connectToBackend();
     void sendMessage(const QJsonObject &obj);
 
@@ -27,9 +34,6 @@ private slots:
     void onDisconnected();
     void onErrorOccurred(QAbstractSocket::SocketError socketError);
 
-private:
-    QTcpSocket *socket ;
-    QByteArray buffer ;
 };
 
 #endif // APICLIENT_HPP

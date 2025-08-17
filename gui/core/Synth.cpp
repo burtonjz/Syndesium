@@ -21,11 +21,11 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     setup_(nullptr)
 {
     // API connections
-    connect(ctx_.apiClient, &ApiClient::connected, this, &Synth::onApiConnected);
+    connect(ApiClient::instance(), &ApiClient::connected, this, &Synth::onApiConnected);
     
     ui_->setupUi(this);
 
-    graph_ = new GraphPanel(ctx_.apiClient, this);
+    graph_ = new GraphPanel(this);
     ui_->graphPanelContainer->layout()->addWidget(graph_);
 
     // widget config
@@ -52,7 +52,7 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     connect(this, &Synth::engineStatusChanged, this, &Synth::onEngineStatusChange);
     connect(ui_->setupButton, &QPushButton::clicked, this, &Synth::onSetupButtonClicked);
     connect(ui_->startStopButton, &QPushButton::clicked, this, &Synth::onStartStopButtonClicked);
-    connect(ctx_.apiClient, &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
+    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
     connect(ui_->addModuleBox, &QComboBox::currentIndexChanged, this, &Synth::onModuleAdded);
     connect(this, &Synth::moduleAdded, graph_, &GraphPanel::onModuleAdded);
 }
@@ -90,7 +90,7 @@ void Synth::onSetupButtonClicked(){
     qDebug() << "launching setup window" ;
     if ( !setup_ ){
         qDebug() << "Setup window does not exist, creating widget..." ;
-        ModuleContext ctx = {ctx_.apiClient, ctx_.state, "Setup"};
+        ModuleContext ctx = {ctx_.state, "Setup"};
         setup_ = new Setup(ctx, this) ;
         setup_->show();
     } else {
@@ -106,12 +106,12 @@ void Synth::onStartStopButtonClicked(){
         QJsonObject obj ;
         obj["action"] = "set_state" ;
         obj["state"] = "stop" ;
-        ctx_.apiClient->sendMessage(obj);
+        ApiClient::instance()->sendMessage(obj);
     } else {
         QJsonObject obj ;
         obj["action"] = "set_state" ;
         obj["state"] = "run" ;
-        ctx_.apiClient->sendMessage(obj);
+        ApiClient::instance()->sendMessage(obj);
     }
 }
 

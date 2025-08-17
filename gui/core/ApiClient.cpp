@@ -3,6 +3,14 @@
 
 #include <string>
 
+ApiClient* ApiClient::instance(){
+    static ApiClient* s_instance = nullptr ;
+    if ( !s_instance ){
+        s_instance = new ApiClient();
+    }
+    return s_instance ;
+}
+
 ApiClient::ApiClient(QObject *parent)
     : QObject{parent}, socket(new QTcpSocket(this)){
     connect(socket, &QTcpSocket::readyRead, this, &ApiClient::onReadyRead);

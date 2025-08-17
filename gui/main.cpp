@@ -10,22 +10,12 @@
 
 int main(int argc, char *argv[]){
     QApplication app(argc, argv);
+    ApiClient::instance() ; // initialize ApiClient singleton
 
-    ModuleContext ctx_{new ApiClient(), new StateManager(), "Synth"};
-
+    ModuleContext ctx_{new StateManager(), "Synth"};
     Synth* synth = new Synth(ctx_) ;
-    Oscillator* oscillator = new Oscillator(ctx_.apiClient, 0) ;
 
-    // connect client to backend service
-    ctx_.apiClient->connectToBackend();
-
-    // app logic routing
-    // QObject::connect(synth, &Setup::setupCompleted, [&](){
-        // oscillator->initialize();
-        // oscillator->show();
-    // });
-
-    // QObject::connect(&setup, &QObject::destroyed)
+    ApiClient::instance()->connectToBackend();
     synth->show();
 
     return app.exec() ;

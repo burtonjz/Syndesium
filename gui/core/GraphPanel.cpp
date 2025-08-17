@@ -26,19 +26,18 @@
 #include <qnamespace.h>
 #include <qvarlengtharray.h>
 
-GraphPanel::GraphPanel(ApiClient* client, QWidget* parent):
-    QGraphicsView(parent),
-    apiClient_(client)
+GraphPanel::GraphPanel(QWidget* parent):
+    QGraphicsView(parent)
 {
     setupScene();
     addMidiInput();
     addAudioOutput();
-    
+
     setFocusPolicy(Qt::StrongFocus);
     setEnabled(true);
 
     // connections
-    connect(apiClient_, &ApiClient::dataReceived, this, &GraphPanel::onApiDataReceived);
+    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &GraphPanel::onApiDataReceived);
 }
 
 GraphPanel::~GraphPanel(){
@@ -174,7 +173,7 @@ void GraphPanel::onModuleAdded(ModuleType type){
     obj["action"] = "add_module" ;
     obj["name"] = "placeholder" ;
     obj["type"] = static_cast<int>(type);
-    apiClient_->sendMessage(obj); 
+    ApiClient::instance()->sendMessage(obj); 
 }
 
 void GraphPanel::onApiDataReceived(const QJsonObject& json){

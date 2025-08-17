@@ -14,16 +14,16 @@ Setup::Setup(ModuleContext ctx, QWidget* parent):
 {
     qDebug() << "1" ;
     // create API connections
-    connect(ctx_.apiClient, &ApiClient::dataReceived, this, &Setup::onApiDataReceived);
+    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Setup::onApiDataReceived);
 
     qDebug() << "2" ;
 
     // ask backend for relevant data
     QJsonObject obj ;
     obj["action"] = "get_audio_devices" ;
-    ctx_.apiClient->sendMessage(obj);
+    ApiClient::instance()->sendMessage(obj);
     obj["action"] = "get_midi_devices" ;
-    ctx_.apiClient->sendMessage(obj); 
+    ApiClient::instance()->sendMessage(obj); 
 
     qDebug() << "3" ;
 
@@ -105,11 +105,11 @@ void Setup::onSetupSubmit(){
     QJsonObject obj ;
     obj["action"] = "set_audio_device" ;
     obj["device_id"] = ui_->comboAudioDevice->currentData().toInt();
-    ctx_.apiClient->sendMessage(obj);
+    ApiClient::instance()->sendMessage(obj);
 
     obj["action"] = "set_midi_device" ;
     obj["device_id"] = ui_->comboMidiDevice->currentData().toInt();
-    ctx_.apiClient->sendMessage(obj);
+    ApiClient::instance()->sendMessage(obj);
 }
 
 void Setup::onSetupCompleted(){
