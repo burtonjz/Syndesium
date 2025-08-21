@@ -2,7 +2,8 @@
 ✓ Implement colored sockets on ModuleWidget (midi, audio, modulation) based on ModuleRegistry info
 ✓ Implement ConnectionCable to draw connections from different sources
 - Implement right click on socket to expand a menu to delete specific connections
-- Implement API calls to tell backend when connections are added or removed
-- Create input/output widgets for midi and audio from/to hardware sources
+✓ Implement API calls to tell backend when connections are added 
+- Implement API calls to tell backend when connections are removed
+✓ Create input/output widgets for midi and audio from/to hardware sources
 - Create control parameter UI forms and controls for each ModuleType
 - Improve module add logic so they do not spawn on top of each other.
