@@ -32,6 +32,10 @@ public:
     }
 
     void addSink(Module::BaseModule* output){
+        if (!output){
+            std::cerr << "WARN: attempted to add nullptr as a sink. " << std::endl ;
+            return ;
+        }
         outputNodes_.insert(output);
     }
 

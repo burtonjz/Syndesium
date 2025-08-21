@@ -2,6 +2,7 @@
 #include "config/Config.hpp"
 #include "api/ApiHandler.hpp"
 #include "midi/MidiEventHandler.hpp"
+#include "midi/MidiEventListener.hpp"
 #include "midi/MidiEventQueue.hpp"
 #include "types/ModulatorType.hpp"
 #include "types/ModuleType.hpp"
@@ -104,6 +105,7 @@ int Engine::audioCallback(
     for ( unsigned int i = 0 ; i < nBufferFrames ; ++i ){
         sample = engine->moduleController.processFrame();
         engine->modulationController.tick(engine->getDeltaTime());
+        engine->midiController.tick(engine->getDeltaTime());
         buffer[i] = dsp::fastAtan(sample) ;
     }
     
@@ -143,9 +145,10 @@ Engine::Engine():
     availableMidiPorts_(),
     selectedMidiPort_(-1), // invalid device ID
     midiState_(),
-    midiController_(&midiState_),
+    midiDefaultHandler_(),
     moduleController(),
-    modulationController()
+    modulationController(),
+    midiController(&midiState_)
 {
     signal(SIGINT, Engine::signalHandler);
 }
@@ -203,7 +206,7 @@ RtMidiIn* Engine::getMidiIn(){
 }
 
 MidiController* Engine::getMidiController(){
-    return &midiController_ ;
+    return &midiController ;
 }
 
 double Engine::getDeltaTime() const {
@@ -242,7 +245,9 @@ void Engine::setup(){
     dt_ = 1.0 / sampleRate ;
 
     midiState_.reset();
-    midiController_.initialize() ;
+    midiState_.addHandler(&midiDefaultHandler_);
+
+    midiController.initialize() ;
 
     moduleController.setup();
 
@@ -252,4 +257,22 @@ void Engine::destroy(){
     modulationController.reset();
     moduleController.reset();
     midiState_.reset();
+}
+
+bool Engine::setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener){
+    // if inputMidi is not a valid handler, use the default handler
+    if ( !outputMidi ){
+        std::cerr << "WARN: outputMidi is a null pointer. Setting outputMidi to the default handler" << std::endl ;
+        outputMidi = &midiDefaultHandler_ ;
+    }
+
+    if ( !listener ){
+        std::cerr << "WARN: listener is a null pointer. Unable to successfully set a midi connection" << std::endl ;
+        return false ;
+    } 
+
+    midiController.addHandler(outputMidi);
+    outputMidi->addListener(listener);
+    
+    return true ;
 }

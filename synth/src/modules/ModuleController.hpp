@@ -19,7 +19,7 @@
 #include <type_traits>
 #include <unordered_map>
 
-using ModuleID = std::size_t ;
+using ModuleID = int ;
 using ModuleKey = std::pair<ModuleType, int>;
 
 #define HANDLE_CREATE_MODULE(Type) \
@@ -27,13 +27,16 @@ using ModuleKey = std::pair<ModuleType, int>;
         return create<ModuleType::Type>(name,  j.get<Type##Config>());
 
 struct ModuleKeyHash {
-    std::size_t operator()(const ModuleKey& key) const {
+    ModuleID operator()(const ModuleKey& key) const {
         return std::hash<int>()(static_cast<int>(key.first)) ^ (std::hash<int>()(key.second) << 1);
     }
 };
 
 class ModuleController{
 private:
+    static constexpr ModuleID HARDWARE_AUDIO_INPUT_ID = -1 ;
+    static constexpr ModuleID HARDWARE_AUDIO_OUTPUT_ID = -2 ;
+
     ModuleID nextID_ = 0 ;
     std::unordered_map<ModuleID, std::unique_ptr<Module::BaseModule>> Modules_ ;
     std::unordered_map<ModuleKey, ModuleID, ModuleKeyHash> typeLookup_;
@@ -71,6 +74,13 @@ public:
                 throw std::invalid_argument("Unsupported ModuleType");
         }
     }
+
+    bool isHardwareID(ModuleID id) const {
+        return id == HARDWARE_AUDIO_INPUT_ID || id == HARDWARE_AUDIO_OUTPUT_ID ;
+    }
+
+    ModuleID getAudioInputID() const { return HARDWARE_AUDIO_INPUT_ID ; }
+    ModuleID getAudioOutputID() const { return HARDWARE_AUDIO_OUTPUT_ID ; }
 
     Module::BaseModule* getRaw(ModuleID id){
         auto it = Modules_.find(id);

@@ -33,7 +33,7 @@ private:
 
     // midi manipulation
     MidiState        midiState_ ;
-    MidiController   midiController_ ;
+    MidiEventHandler midiDefaultHandler_ ;
 
 public:
     // set a flag for all threads to stop on
@@ -43,6 +43,7 @@ public:
     // publically available controllers
     ModuleController moduleController ;
     ModulationController modulationController ;
+    MidiController   midiController ;
 
     // static thread functions
     static void startAudio(Engine* engine);
@@ -83,6 +84,10 @@ public:
 
     const std::map<int,std::string> getAvailableMidiDevices() const ;
     const std::map<int,std::string> getAvailableAudioDevices() const ;
+
+    // connection logic
+    bool setMidiConnection(MidiEventHandler* handler, MidiEventListener* listener);
+
 
 
     

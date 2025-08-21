@@ -6,6 +6,7 @@
 
 #include "patch/ConnectionCable.hpp"
 #include "patch/SocketWidget.hpp"
+#include "widgets/SocketContainerWidget.hpp"
 
 class ConnectionManager: public QObject {
     Q_OBJECT
@@ -34,6 +35,7 @@ public:
 private:
     SocketWidget* findSocketAt(const QPointF& scenePos) const ;
     bool canConnect(SocketWidget* from, SocketWidget* to) const ;
+    void sendConnectionApiRequest(SocketWidget* fromSock, SocketWidget* toSock, SocketContainerWidget* fromWidget, SocketContainerWidget* toWidget);
 
 private slots:
     void onWidgetPositionChanged();

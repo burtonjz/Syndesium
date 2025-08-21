@@ -1,6 +1,8 @@
 #include "patch/ConnectionManager.hpp"
-#include "widgets/SocketContainerWidget.hpp"
 #include "patch/ConnectionCable.hpp"
+#include "widgets/ModuleWidget.hpp"
+#include "widgets/SocketContainerWidget.hpp"
+#include "core/ApiClient.hpp"
 
 #include <QGraphicsItem>
 #include <QDebug>
@@ -40,18 +42,20 @@ void ConnectionManager::finishConnection(const QPointF& scenePos){
         connections_.append(dragConnection_);
 
         // connect to position changes
-        SocketContainerWidget* fromModule = dragFromSocket_->getParent();
-        SocketContainerWidget* toModule = toSocket->getParent();
+        SocketContainerWidget* fromWidget = dragFromSocket_->getParent();
+        SocketContainerWidget* toWidget = toSocket->getParent();
 
         // Note: other logic prohibits self connections, and we won't get 
         // this far if these are null pointers, so let's not worry about safeguards
-        connect(fromModule, &SocketContainerWidget::positionChanged, 
+        connect(fromWidget, &SocketContainerWidget::positionChanged, 
             this, &ConnectionManager::onWidgetPositionChanged);
-        connect(toModule, &SocketContainerWidget::positionChanged, 
+        connect(toWidget, &SocketContainerWidget::positionChanged, 
             this, &ConnectionManager::onWidgetPositionChanged);
 
         qDebug() << "Connection created:" << dragFromSocket_->getName() 
                  << "to" << toSocket->getName() ;
+
+        sendConnectionApiRequest(dragFromSocket_, toSocket, fromWidget, toWidget);
     } else {
         // Invalid connection
         scene_->removeItem(dragConnection_);
@@ -139,6 +143,49 @@ void ConnectionManager::removeAllConnections(SocketContainerWidget* module){
         removeConnection(socket);
     }
 }
+
+
+void ConnectionManager::sendConnectionApiRequest(
+    SocketWidget* fromSock, SocketWidget* toSock, 
+    SocketContainerWidget* fromWidget, SocketContainerWidget* toWidget
+){
+    SocketWidget* outputSock ;
+    SocketWidget* inputSock ;
+    SocketContainerWidget* outputWidget ;
+    SocketContainerWidget* inputWidget ;
+
+    if ( fromSock->isInput() ){
+        inputSock = fromSock ;
+        inputWidget = fromWidget ;
+        outputSock = toSock ;
+        outputWidget = toWidget ;
+    } else {
+        inputSock = toSock ;
+        inputWidget = toWidget ;
+        outputSock = fromSock ;
+        outputWidget = fromWidget ;
+    }
+
+    QJsonObject obj ;
+    QJsonObject input ;
+    QJsonObject output ;
+
+    output["socket"] = static_cast<int>(outputSock->getType());
+    input["socket"] = static_cast<int>(inputSock->getType());
+    
+    // test to see if widget is module
+    auto outputModule = dynamic_cast<ModuleWidget*>(outputWidget);
+    auto inputModule = dynamic_cast<ModuleWidget*>(inputWidget);
+    if ( inputModule ) input["id"] = inputModule->getID();
+    if ( outputModule ) output["id"] = outputModule->getID();
+
+    obj["action"] = "create_connection" ;
+    obj["output"] = output ;
+    obj["input"] = input ;
+    
+    ApiClient::instance()->sendMessage(obj);
+}
+
 
 void ConnectionManager::onWidgetPositionChanged(){
     SocketContainerWidget* widget = dynamic_cast<SocketContainerWidget*>(sender());

@@ -21,6 +21,7 @@ private:
 public:
     explicit ModuleWidget(int id, ModuleType type, QGraphicsItem* parent = nullptr);
     const ModuleDescriptor& getModuleDescriptor() const { return descriptor_ ; }
+    const int getID() const { return moduleId_ ; }
 };
 
 #endif // __UI_MODULE_WIDGET_HPP_

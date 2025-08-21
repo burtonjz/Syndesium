@@ -25,6 +25,22 @@ void MidiController::initialize(){
     MidiController::computePitchbendScaleFactor() ; // precompute pitchbend
 }
 
+void MidiController::addHandler(MidiEventHandler* handler){ 
+    handlers_.insert(handler) ; 
+    state_->addHandler(handler) ;
+}
+ 
+void MidiController::removeHandler(MidiEventHandler* handler){ 
+    handlers_.erase(handler) ; 
+    state_->removeHandler(handler); 
+}
+
+void MidiController::tick(float dt){
+    for ( MidiEventHandler* h : handlers_ ){
+        h->tick(dt);
+    }
+}
+
 void MidiController::onMidiEvent(double deltaTime, std::vector<unsigned char> *message, void *userData){
     MidiController* self = static_cast<MidiController*>(userData);
     self->processMessage(deltaTime, message);    

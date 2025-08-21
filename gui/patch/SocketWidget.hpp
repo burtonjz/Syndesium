@@ -6,16 +6,9 @@
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
 
-class SocketContainerWidget ; // forward declaration
+#include "types/SocketType.hpp"
 
-enum class SocketType {
-    ModulationInput,
-    ModulationOutput,
-    SignalInput,
-    SignalOutput,
-    MidiInput,
-    MidiOutput
-};
+class SocketContainerWidget ; // forward declaration
 
 struct SocketSpec {
     SocketType type ;

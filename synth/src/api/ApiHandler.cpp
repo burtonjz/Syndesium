@@ -1,6 +1,7 @@
 #include "api/ApiHandler.hpp"
 #include "Engine.hpp"
 #include "config/Config.hpp"
+#include "types/SocketType.hpp"
 
 #include <iostream>
 #include <netinet/in.h>
@@ -119,6 +120,19 @@ void ApiHandler::sendApiResponse(int clientSock, json response){
 void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string jsonStr){
     json jResponse ;
     json jRequest ;
+
+    std::string err ;
+    auto sendError = [&](const std::string& message){
+        jResponse["status"] = "failed" ;
+        jResponse["error"] = message ;
+        sendApiResponse(clientSock, jResponse);
+    };
+
+    auto sendSuccess = [&](){
+        jResponse["status"] = "success" ;
+        sendApiResponse(clientSock, jResponse);
+    };
+
     try {
         jRequest = json::parse(jsonStr);
 
@@ -129,44 +143,48 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
 
         if ( action == "get_audio_devices" ) {
             jResponse["data"] = engine->getAvailableAudioDevices() ;
-            sendApiResponse(clientSock, jResponse);
+            sendSuccess();
             return ;
         }
+
         if ( action == "get_midi_devices" ){
             jResponse["data"] = engine->getAvailableMidiDevices() ;
-            sendApiResponse(clientSock, jResponse);
+            sendSuccess();
             return ;
         }
+
         if ( action == "set_audio_device" ){
             int deviceId = jRequest["device_id"] ;
             engine->setAudioDeviceId(deviceId);
-            jResponse["status"] = "success" ; 
-            sendApiResponse(clientSock, jResponse);
+            sendSuccess();
             return ;
         } 
         
         if ( action == "set_midi_device" ){
             int deviceId = jRequest["device_id"] ;
             engine->setMidiDeviceId(deviceId);
-            jResponse["status"] = "success" ; 
-            sendApiResponse(clientSock, jResponse);
+            sendSuccess();
             return ;
         }
+
         if ( action == "set_state" ){
             jResponse["state"] = jRequest["state"] ;
             if ( jResponse["state"] == "run" ){
                 std::cout << "Running engine. " << std::endl ;
                 engine->run();
-                jResponse["status"] = "success" ;
-                sendApiResponse(clientSock, jResponse);
-            } else if ( jResponse["state"] == "stop" ){
+                sendSuccess();
+                return ;
+            } 
+            
+            if ( jResponse["state"] == "stop" ){
                 std::cout << "Stopping engine. " << std::endl ;
                 engine->stop();
-                jResponse["status"] = "success" ;
-                sendApiResponse(clientSock, jResponse);
-            } else {
-                std::cout << "Unrecognized engine state requested: " << jResponse["state"] << std::endl ;
-            }
+                sendSuccess();
+                return ;
+            } 
+            
+            err = "Unrecognized engine state requested: " + jResponse["state"].get<std::string>() ;
+            sendError(err);
             return ;
         }
 
@@ -179,14 +197,13 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
                 Module::getDefaultConfig(type));
             jResponse["module_id"] = id ;
             jResponse["type"] = jRequest["type"];
-            jResponse["status"] = "success";
-            sendApiResponse(clientSock, jResponse);
+            sendSuccess();
             return ;
         }
 
         if ( action == "get_waveforms" ){
             jResponse["data"] = Waveform::getWaveforms() ;
-            sendApiResponse(clientSock, jResponse);
+            sendSuccess();
             return ;
         }
 
@@ -195,44 +212,113 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
             Module::BaseModule* module = engine->moduleController.getRaw(moduleID);
             if  (!module){
-                std::cerr << "unable to find modulator of with ID" << moduleID <<  std::endl ;
+                err = "Unable to find modulator of with ID" + std::to_string(moduleID) ;
+                sendError(err);
+                return ;
             }
             auto params = module->getParameters()->getBaseMap() ;
             auto it = params.find(p);
             if (it == params.end()){
-                std::cerr << "ParameterType " << static_cast<int>(p) << "is not present in map for ModuleID " << moduleID << std::endl ; 
+                err = "ParameterType " + parameter2String(p) + "is not present in map for ModuleID " + std::to_string(moduleID) ; 
+                sendError(err);
                 return ;
             }
             jRequest["data"] = ParameterMap::dispatchToJson(module->getParameters()->getValueDispatch(p));
+            sendSuccess();
+            return ;
         }
-        
-        // MODULATION
-        // TODO: write "set_modulator_parameter" )
+
         if ( action == "get_modulator_parameter" ){
             int modulatorID = jRequest["id"];
             ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
             Modulator* modulator = engine->modulationController.getRaw(modulatorID);
             if (!modulator){
-                std::cerr << "unable to find modulator of with ID" << modulatorID <<  std::endl ;
+                err = "Unable to find modulator of with ID" + std::to_string(modulatorID) ;
+                sendError(err);
                 return ;
             }
             auto params = modulator->getParameters()->getBaseMap() ;
             auto it = params.find(p);
             if (it == params.end()){
-                std::cerr << "ParameterType " << static_cast<int>(p) << "is not present in map for ModulatorID " << modulatorID << std::endl ; 
+                err = "ParameterType " + parameter2String(p) + " is not present in map for ModulatorID " + std::to_string(modulatorID) ; 
+                sendError(err);
                 return ;
             }
             jRequest["data"] = ParameterMap::dispatchToJson(modulator->getParameters()->getValueDispatch(p));
-             
-            sendApiResponse(clientSock, jResponse);
+            sendSuccess();
             return ;
         }
 
-        std::cerr << "Unknown action requested: " << action << std::endl ;
-        jResponse["status"] = "failed";
-        sendApiResponse(clientSock, jResponse);
-        
+        if ( action == "create_connection" ){
+            // define API variables
+            SocketType inputSocket = static_cast<SocketType>(jRequest["input"]["socket"]);
+            SocketType outputSocket = static_cast<SocketType>(jRequest["output"]["socket"]);
+            std::optional<int> inputID, outputID ; 
+            if ( jRequest["input"].contains("id") ) inputID = jRequest["input"]["id"] ;
+            if ( jRequest["output"].contains("id") ) outputID = jRequest["output"]["id"] ;
+            
+            // Case 1: Midi -> Midi
+            if ( outputSocket == SocketType::MidiOutput && inputSocket == SocketType::MidiInput){
+                // output midi should be a modulator (or nullptr for default handler )
+                MidiEventHandler*  handler ;
+                if ( outputID.has_value() ){
+                    handler = dynamic_cast<MidiEventHandler*> (engine->modulationController.getRaw(outputID.value()));
+                } else {
+                    handler = nullptr ; 
+                }
+
+                MidiEventListener* listener ;
+                if ( inputID.has_value() ){
+                    listener = dynamic_cast<MidiEventListener*>(engine->moduleController.getRaw(inputID.value()));
+                } else {
+                    // outbound hardware MIDI not yet implemented
+                    sendError("sending midi to an external device is not yet supported.");
+                    return ;
+                }
+                
+                if ( ! engine->setMidiConnection(handler, listener) ){
+                    sendError("midi connection not set successfully.");
+                    return ;
+                }
+                
+                sendSuccess();
+                return ;
+            }
+
+            // Case 2: Signal -> Signal
+            if ( outputSocket == SocketType::SignalOutput && inputSocket == SocketType::SignalInput ){
+                auto inputModule = engine->moduleController.getRaw(inputID.value_or(engine->moduleController.getAudioInputID()));
+                auto outputModule = engine->moduleController.getRaw(outputID.value_or(engine->moduleController.getAudioOutputID()));
+                
+                // if the source is hardware
+                if ( !outputID.has_value() ){
+                    sendError("receiving audio from an input device is not yet supported.");
+                    return ;
+                }
+
+                // if the destination is hardware
+                if ( !inputID.has_value() ){
+                    engine->moduleController.registerSink(outputModule);
+                    jResponse["status"] = "success" ;
+                    sendApiResponse(clientSock, jResponse);
+                    return ;
+                }
+                
+                engine->moduleController.connect(outputModule, inputModule);
+                jResponse["status"] = "success" ;
+                sendApiResponse(clientSock, jResponse);
+                return ;
+            }
+
+            // Case 3: Signal -> Modulator
+            sendSuccess();
+        }
+
+        err = "Unknown action requested: " + action ;
+        sendError(err);
+
     } catch (const std::exception& e){
-        std::cerr << "JSON parse error: " << e.what() << std::endl ;
+        err = "JSON parse error: " + std::string(e.what()) ;
+        sendError(err);
     }
 }
