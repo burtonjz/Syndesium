@@ -10,5 +10,6 @@ void ParameterBase::initializeDepth(){
 }
 
 Parameter<ParameterType::DEPTH>* ParameterBase::getDepth() {
+    initializeDepth();
     return modDepth_.get() ;
 }
