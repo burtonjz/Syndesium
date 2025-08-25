@@ -27,6 +27,7 @@
         }
     },
     "modulation": {
+        "max_depth": 2,
         "ADSREnvelope": {
             "attack": 0.1,
             "decay": 0.1,

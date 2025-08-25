@@ -6,6 +6,7 @@
 #include "params/ModulationParameter.hpp"
 #include "containers/RTMap.hpp"
 #include "containers/AtomicFloat.hpp"
+#include "config/Config.hpp"
 
 #include <nlohmann/json.hpp>
 #include <variant>
@@ -116,6 +117,8 @@ class ParameterMap {
         Parameter<ParameterType::DEPTH>* getParameterDepth(ParameterType typ, int depthLevel){
             auto it = parameters_.find(typ);
             if ( it == parameters_.end()) return nullptr ;
+
+            if ( depthLevel > Config::get<int>("modulation.max_depth")) return nullptr ;
 
             auto current = it->second->getDepth() ;
             if (!current) return nullptr ;
