@@ -16,6 +16,7 @@ Module::Oscillator::Oscillator(double sample_rate, std::size_t buf_size, Oscilla
     parameters_.add<ParameterType::WAVEFORM>(cfg.waveform,false);
     parameters_.add<ParameterType::AMPLITUDE>(1.0,true);
     parameters_.add<ParameterType::FREQUENCY>(cfg.frequency, true, 0.0, sample_rate / 2.0); // limit to nyquist frequency
+    parameters_.add<ParameterType::GAIN>(1.0,false);
 }
 
 Module::Oscillator::Oscillator(double sample_rate, std::size_t buf_size, ParameterMap& parent, double frequency):

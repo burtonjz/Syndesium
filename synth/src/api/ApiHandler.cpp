@@ -310,7 +310,8 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             }
 
             // Case 3: Signal -> Modulator
-            sendSuccess();
+            sendError("Signal -> Modulator is not yet supported");
+            return ;
         }
 
 

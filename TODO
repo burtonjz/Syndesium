@@ -5,7 +5,7 @@
 ✓ Implement API calls to tell backend when connections are added 
 - Implement API calls to tell backend when connections are removed
 ✓ Create input/output widgets for midi and audio from/to hardware sources
-- Fix Oscillator signal output gain variable issue.
+✓ Fix Oscillator signal output gain variable issue.
 - Add modulator add menu to synth UI and sync to backend
 - Implement modulation_connection add/remove logic
 ✓ Add Modulation Depth logic
