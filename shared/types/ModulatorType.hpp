@@ -19,4 +19,12 @@ constexpr int N_MODULATOR_TYPES = static_cast<int>(ModulatorType::N_MODULATORS) 
 
 template <ModulatorType Type> struct ModulatorTypeTraits ;
 
+enum class ModulationStrategy {
+    LINEAR,
+    EXPONENTIAL,
+    LOGARITHMIC,
+    MULTIPLICATIVE,
+    NONE
+};
+
 #endif // __MODULATOR_TYPE_HPP_

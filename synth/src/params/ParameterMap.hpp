@@ -106,6 +106,29 @@ class ParameterMap {
             throw std::runtime_error(err.str());
         }
 
+        /**
+         * @brief Get second-order+ modulation depth
+         * 
+         * @param typ The parameter to get depth for
+         * @param depthLevel how deep to delve (0=second-order )
+         * @return Parameter<ParameterType::DEPTH>* 
+         */
+        Parameter<ParameterType::DEPTH>* getParameterDepth(ParameterType typ, int depthLevel){
+            auto it = parameters_.find(typ);
+            if ( it == parameters_.end()) return nullptr ;
+
+            auto current = it->second->getDepth() ;
+            if (!current) return nullptr ;
+
+            // navigate down depth chain
+            for ( int i = 1; i < depthLevel && current; ++i){
+                current = current->getDepth();
+                if (!current) return nullptr ;
+            }
+
+            return current ;
+        }
+
         void setModulation(ParameterType typ, Modulator* modulator, ModulationData modData){
             auto it = parameters_.find(typ);
             if (it != parameters_.end() ){

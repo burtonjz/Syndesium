@@ -188,6 +188,11 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             return ;
         }
 
+        if ( action == "get_waveforms" ){
+            jResponse["data"] = Waveform::getWaveforms() ;
+            sendSuccess();
+            return ;
+        }
         // MODULES
         if ( action == "add_module"){
             ModuleType type = static_cast<ModuleType>(jRequest["type"]) ;
@@ -197,12 +202,6 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
                 Module::getDefaultConfig(type));
             jResponse["module_id"] = id ;
             jResponse["type"] = jRequest["type"];
-            sendSuccess();
-            return ;
-        }
-
-        if ( action == "get_waveforms" ){
-            jResponse["data"] = Waveform::getWaveforms() ;
             sendSuccess();
             return ;
         }
@@ -313,6 +312,7 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             // Case 3: Signal -> Modulator
             sendSuccess();
         }
+
 
         err = "Unknown action requested: " + action ;
         sendError(err);

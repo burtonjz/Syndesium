@@ -1,17 +1,23 @@
 #ifndef __PARAMETER_HPP_
 #define __PARAMETER_HPP_
 
+#include "types/ModulatorType.hpp"
 #include "types/ParameterType.hpp"
 #include "params/ModulationParameter.hpp"
 #include "modulation/Modulator.hpp"
 #include "containers/AtomicFloat.hpp"
 #include "containers/RTMap.hpp"
 
+// forward declaration
+template <ParameterType typ> class Parameter ;
+
 class ParameterBase {
 protected:
     ParameterType type_ ;
     bool modulatable_ ;
     Modulator* modulator_ ;
+    std::unique_ptr<Parameter<ParameterType::DEPTH>> modDepth_ ;
+    ModulationStrategy modStrategy_ ;
     ModulationData modData_ ;
     
 public:
@@ -24,22 +30,37 @@ public:
         type_(typ),
         modulatable_(modulatable),
         modulator_(modulator),
+        modDepth_(nullptr),
+        modStrategy_(ModulationStrategy::NONE),
         modData_(modData)
     {}
 
-    virtual void resetValue() = 0 ;
-    virtual void setModulatable(bool modulatable) = 0 ;
-    virtual bool isModulatable() const = 0 ;
-    virtual void modulate() = 0 ;
+    virtual void setModulatable(bool modulatable){
+        modulatable_ = modulatable ;
+        initializeDepth();
+    }
+
+    virtual bool isModulatable(){ 
+        return modulatable_ ; 
+    }
 
     void setModulation(Modulator* modulator, ModulationData modData){
         modData_ = modData ;
         modulator_ = modulator ;
     }
 
+    // valued functions need to be defined in template class
+    virtual void resetValue() = 0 ;
+    virtual void modulate() = 0 ;
+
     ModulationData* getModulationData(){
         return &modData_ ;
     }
+
+    Parameter<ParameterType::DEPTH>* getDepth();
+
+private:
+    void initializeDepth();
 };
 
 template <ParameterType typ>
@@ -97,18 +118,36 @@ class Parameter : public ParameterBase {
             return instantaneousValue_ ;
         }
 
-        void setModulatable(bool modulatable){
-            modulatable_ = modulatable ;
-        }
-
-        bool isModulatable() const {
-            return modulatable_ ;
-        }
-
         void modulate(){
-            if(!modulatable_ || !modulator_ ) return ;
-            setInstantaneousValue(modulator_->modulate(value_, &modData_));
+            // modulate this parameter's depth, if it exists
+            if (modDepth_ && modDepth_->isModulatable()){
+                modDepth_->modulate();
+            }
+
+            // now, modulate this parameter itself
+            if( !modulatable_ || !modulator_ ) return ;
+            if( modStrategy_ == ModulationStrategy::NONE ) return ;
+
+            switch(modStrategy_){
+            case ModulationStrategy::EXPONENTIAL:
+                setInstantaneousValue(value_ * exp2f(modDepth_->getInstantaneousValue() * modulator_->modulate(value_, &modData_)));
+                return ;
+            case ModulationStrategy::LINEAR:
+                setInstantaneousValue(value_ + modDepth_->getInstantaneousValue() * modulator_->modulate(value_, &modData_));
+                return ;
+            case ModulationStrategy::LOGARITHMIC:
+                setInstantaneousValue(value_ * exp2f(modDepth_->getInstantaneousValue() * modulator_->modulate(value_, &modData_)));
+                return ;
+            case ModulationStrategy::MULTIPLICATIVE:
+                setInstantaneousValue(value_ * ( 1 + modDepth_->getInstantaneousValue() * modulator_->modulate(value_, &modData_)));
+                return ;
+            default:
+                return ;
+
+                
+            }
         }
+
     private:
         void setInstantaneousValue(ValueType v){
             instantaneousValue_ = v ;

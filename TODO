@@ -8,6 +8,7 @@
 - Fix Oscillator signal output gain variable issue.
 - Add modulator add menu to synth UI and sync to backend
 - Implement modulation_connection add/remove logic
+- UI support modulation depth socket parameters (with nesting)
 - Create control parameter UI forms and controls for each ModuleType
 - Improve module add logic so they do not spawn on top of each other.
 - Create max zoom for gui graph panel
