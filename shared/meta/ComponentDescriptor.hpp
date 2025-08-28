@@ -5,10 +5,14 @@
 #include <string>
 #include <set>
 #include <cstdint>
+#include <nlohmann/json.hpp>
 
 #include "types/ParameterType.hpp"
 #include "types/ModuleType.hpp"
 #include "types/ModulatorType.hpp"
+
+
+using json = nlohmann::json ;
 
 struct ComponentType {
     uint32_t moduleType ;
@@ -70,6 +74,8 @@ struct ComponentDescriptor {
     size_t numAudioOutputs ;
     size_t numMidiInputs ;
     size_t numMidiOutputs ;
+
+    json defaultConfig ;
 
     bool isPolyphonic = false ;
 

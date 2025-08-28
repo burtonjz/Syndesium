@@ -11,8 +11,6 @@
 #include "types/ModuleType.hpp"
 #include "params/ParameterMap.hpp"
 
-namespace Module {
-
 class BaseModule {
 protected:
     ModuleType  type_ ;
@@ -98,7 +96,5 @@ protected:
     virtual void processBuffer(double* buf, size_t len){} 
     virtual void processBuffer(){}
 };
-
-}
 
 #endif // __MODULE_HPP_

@@ -13,7 +13,7 @@
 #include <iostream>
 
 
-Module::PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size, PolyOscillatorConfig cfg):
+PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size, PolyOscillatorConfig cfg):
     BaseModule(ModuleType::PolyOscillator, sample_rate, buf_size),
     MidiEventListener(),
     children_(),
@@ -27,37 +27,37 @@ Module::PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size,
     childPool_.initializeAll(sampleRate_, size_, parameters_, 0.0);
 }
 
-ParameterMap* Module::PolyOscillator::getParameters(){
+ParameterMap* PolyOscillator::getParameters(){
     return &parameters_ ;
 }
 
-bool Module::PolyOscillator::isGenerative() const {
+bool PolyOscillator::isGenerative() const {
     return true ;
 }
 
-void Module::PolyOscillator::calculateSample(){
-    childPool_.forEachActive([&](Module::Oscillator& obj, std::size_t index){
+void PolyOscillator::calculateSample(){
+    childPool_.forEachActive([&](Oscillator& obj, std::size_t index){
         obj.calculateSample();
         buffer_[index] += obj.data()[index];
     }, bufferIndex_);
 }
 
-void Module::PolyOscillator::tick(){
+void PolyOscillator::tick(){
     BaseModule::tick();
-    childPool_.forEachActive([&](Module::Oscillator& obj){
+    childPool_.forEachActive([&](Oscillator& obj){
         obj.tick();
     });
 }
 
-void Module::PolyOscillator::clearBuffer(){
+void PolyOscillator::clearBuffer(){
     std::fill(buffer_.get(), buffer_.get() + size_, 0.0);
     // now clear children
-    childPool_.forEachActive([](Module::Oscillator& obj){
+    childPool_.forEachActive([](Oscillator& obj){
         obj.clearBuffer();
     });
 }
 
-void Module::PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
+void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
     if ( rePress && children_.find(anote->note.getMidiNote())){
         Oscillator* osc = children_[anote->note.getMidiNote()] ;
         osc->setFrequency(anote->note.getFrequency());
@@ -99,7 +99,7 @@ void Module::PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress)
     } 
 }
 
-void Module::PolyOscillator::onKeyReleased(ActiveNote anote){
+void PolyOscillator::onKeyReleased(ActiveNote anote){
     auto it = children_.find(anote.note.getMidiNote());
     if ( it != children_.end() ){
         for ( auto p : it->second->getParameters()->getModulatableParameters()){
@@ -117,7 +117,7 @@ void Module::PolyOscillator::onKeyReleased(ActiveNote anote){
     }
 }
 
-void Module::PolyOscillator::onKeyOff(ActiveNote anote){
+void PolyOscillator::onKeyOff(ActiveNote anote){
     auto it = children_.find(anote.note.getMidiNote());
     if ( it != children_.end() ){
         childPool_.release(it->second);
@@ -125,14 +125,14 @@ void Module::PolyOscillator::onKeyOff(ActiveNote anote){
     }
 }
 
-void Module::PolyOscillator::setModulation(ParameterType p, Modulator* m, ModulationData d){
+void PolyOscillator::setModulation(ParameterType p, Modulator* m, ModulationData d){
     modulators_[p] = m ;
     modulationData_[p] = d ;
     MidiEventHandler* h = dynamic_cast<MidiEventHandler*>(m);
     if (h) h->addListener(this);
 }
 
-void Module::PolyOscillator::updateGain(){
+void PolyOscillator::updateGain(){
     auto s = std::string(Waveform::getWaveforms()[parameters_.getValue<ParameterType::WAVEFORM>()]) ;
     float gain = Config::get<float>("oscillator." + s + ".auto_gain").value() / 
         std::sqrt(Config::get<int>("oscillator.expected_voices").value()) ;

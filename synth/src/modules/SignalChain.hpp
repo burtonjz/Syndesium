@@ -12,10 +12,10 @@
 // through modules
 class SignalChain {
 private:
-    std::unordered_set<Module::BaseModule*> outputNodes_ ;
-    std::vector<Module::BaseModule*> topologicalOrder_ ;
+    std::unordered_set<BaseModule*> outputNodes_ ;
+    std::vector<BaseModule*> topologicalOrder_ ;
 
-    std::unordered_set<Module::BaseModule*> visited_  ;
+    std::unordered_set<BaseModule*> visited_  ;
 
 public:
     SignalChain():
@@ -23,15 +23,15 @@ public:
     {
     }
 
-    std::vector<Module::BaseModule*>& getModuleChain(){
+    std::vector<BaseModule*>& getModuleChain(){
         return topologicalOrder_ ;
     }
 
-    std::unordered_set<Module::BaseModule*>& getSinks(){
+    std::unordered_set<BaseModule*>& getSinks(){
         return outputNodes_ ;
     }
 
-    void addSink(Module::BaseModule* output){
+    void addSink(BaseModule* output){
         if (!output){
             std::cerr << "WARN: attempted to add nullptr as a sink. " << std::endl ;
             return ;
@@ -39,7 +39,7 @@ public:
         outputNodes_.insert(output);
     }
 
-    void removeSink(Module::BaseModule* output){
+    void removeSink(BaseModule* output){
         outputNodes_.erase(output);
     }
 
@@ -48,7 +48,7 @@ public:
         topologicalOrder_.clear();
         
         // global post-order depth-first search
-        for (Module::BaseModule* m : outputNodes_ ){
+        for (BaseModule* m : outputNodes_ ){
             topologicalSort(m, visited_, topologicalOrder_);
         }
     }
@@ -70,14 +70,14 @@ private:
      * @param result resulting ordered vector
      */
     void topologicalSort(
-        Module::BaseModule* module, 
-        std::unordered_set<Module::BaseModule*>& visited,
-        std::vector<Module::BaseModule*>& result    
+        BaseModule* module, 
+        std::unordered_set<BaseModule*>& visited,
+        std::vector<BaseModule*>& result    
     ){
         if (visited.count(module)) return ;
 
         visited.insert(module);
-        for (Module::BaseModule* m : module->getInputs()){
+        for (BaseModule* m : module->getInputs()){
             topologicalSort(m, visited, result);
         }
 

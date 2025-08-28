@@ -8,7 +8,7 @@
 
 template<typename T, size_t N>
 class FixedPool {
-    static_assert(std::is_base_of<Module::BaseModule, T>::value, "FixedPool<T>: T must derive from Module");
+    static_assert(std::is_base_of<BaseModule, T>::value, "FixedPool<T>: T must derive from Module");
 private:
     std::array<std::aligned_storage_t<sizeof(T), alignof(T)>, N> storage_ ;
     std::bitset<N> inUse_ ;

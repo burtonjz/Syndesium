@@ -5,6 +5,7 @@
 #include "modules/BaseModule.hpp"
 #include "modules/Oscillator.hpp"
 #include "modules/PolyOscillator.hpp"
+#include "configs/ModuleConfig.hpp"
 
 #include "params/Parameter.hpp"
 #include "types/ModuleType.hpp"
@@ -38,7 +39,7 @@ private:
     static constexpr ModuleID HARDWARE_AUDIO_OUTPUT_ID = -2 ;
 
     ModuleID nextID_ = 0 ;
-    std::unordered_map<ModuleID, std::unique_ptr<Module::BaseModule>> Modules_ ;
+    std::unordered_map<ModuleID, std::unique_ptr<BaseModule>> Modules_ ;
     std::unordered_map<ModuleKey, ModuleID, ModuleKeyHash> typeLookup_;
     std::unordered_map<std::string, ModuleID> nameLookup_ ;
     std::unordered_map<ModuleType, int> typeInstanceCount_ ;
@@ -46,9 +47,8 @@ private:
 
 public:
     template <ModuleType T>
-    ModuleID create(std::string name, ModuleConfig<T>::cfg cfg){
-        using ModType = typename ModuleTypeTraits<T>::ModType ;
-        static_assert(std::is_base_of<Module::BaseModule, ModType>::value, "Must be derived from Module");
+    ModuleID create(std::string name, ModuleConfig_t<T> cfg){
+        static_assert(std::is_base_of<BaseModule, ModuleType_t<T>>::value, "Must be derived from Module");
 
         Config::load();
         double sampleRate = Config::get<double>("audio.sample_rate").value();
@@ -57,7 +57,7 @@ public:
         int idx = ++typeInstanceCount_[T] ;
         ModuleID id = nextID_++ ;
         
-        auto m = std::make_unique<ModType>(sampleRate, bufferSize, cfg);
+        auto m = std::make_unique<ModuleType_t<T>>(sampleRate, bufferSize, cfg);
         Modules_[id] = std::move(m);
 
         typeLookup_[{T,idx}] = id ;
@@ -82,19 +82,19 @@ public:
     ModuleID getAudioInputID() const { return HARDWARE_AUDIO_INPUT_ID ; }
     ModuleID getAudioOutputID() const { return HARDWARE_AUDIO_OUTPUT_ID ; }
 
-    Module::BaseModule* getRaw(ModuleID id){
+    BaseModule* getRaw(ModuleID id){
         auto it = Modules_.find(id);
         if ( it == Modules_.end() ) return nullptr ;
         return it->second.get() ;
     }
 
     template<ModuleType T>
-    ModuleTypeTraits<T>::ModType* get(ModuleID id){
-        Module::BaseModule* m = getRaw(id);
+    ModuleType_t<T>* get(ModuleID id){
+        BaseModule* m = getRaw(id);
         if (!m) return nullptr ;
 
         if (m->getType() == T ){
-            return static_cast<ModuleTypeTraits<T>::ModType*>(m);
+            return static_cast<ModuleType_t<T>* >(m);
         }
 
         return nullptr ;
@@ -108,23 +108,23 @@ public:
         return get<T>(it->second) ;
     }
 
-    Module::BaseModule* getByName(const std::string& name){
+    BaseModule* getByName(const std::string& name){
         auto it = nameLookup_.find(name);
         if ( it == nameLookup_.end() ) return nullptr ;
         return Modules_[it->second].get() ;
     }
 
-    void connect(Module::BaseModule* from, Module::BaseModule* to){
+    void connect(BaseModule* from, BaseModule* to){
         if (!from) return ;
         if (!to) return ;
         to->connectInput(from);
     }
 
-    void registerSink(Module::BaseModule* output){
+    void registerSink(BaseModule* output){
         signalChain_.addSink(output);
     }
 
-    void unregisterSink(Module::BaseModule* output){
+    void unregisterSink(BaseModule* output){
         signalChain_.removeSink(output);
     }
 
@@ -133,7 +133,7 @@ public:
         auto sinks = signalChain_.getSinks();
 
         double output = 0 ; 
-        for (Module::BaseModule*  mod : chain){
+        for (BaseModule*  mod : chain){
             mod->calculateSample();
             // if it's a sink, add it to the output
             if ( sinks.count(mod) ){

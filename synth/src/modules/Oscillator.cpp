@@ -6,7 +6,7 @@
 #include <cmath>
 #include <cstdint>
 
-Module::Oscillator::Oscillator(double sample_rate, std::size_t buf_size, OscillatorConfig cfg):
+Oscillator::Oscillator(double sample_rate, std::size_t buf_size, OscillatorConfig cfg):
     BaseModule(ModuleType::Oscillator, sample_rate, buf_size),
     phase_(0),
     increment_(0)
@@ -19,7 +19,7 @@ Module::Oscillator::Oscillator(double sample_rate, std::size_t buf_size, Oscilla
     parameters_.add<ParameterType::GAIN>(1.0,false);
 }
 
-Module::Oscillator::Oscillator(double sample_rate, std::size_t buf_size, ParameterMap& parent, double frequency):
+Oscillator::Oscillator(double sample_rate, std::size_t buf_size, ParameterMap& parent, double frequency):
     BaseModule(ModuleType::Oscillator, sample_rate, buf_size),
     phase_(0),
     increment_(0)
@@ -31,11 +31,11 @@ Module::Oscillator::Oscillator(double sample_rate, std::size_t buf_size, Paramet
     parameters_.add<ParameterType::FREQUENCY>(frequency, true, 0.0, sample_rate / 2.0); // limit to nyquist frequency
 }
 
-bool Module::Oscillator::isGenerative() const {
+bool Oscillator::isGenerative() const {
     return true ;
 }
 
-void Module::Oscillator::calculateSample(){
+void Oscillator::calculateSample(){
     Waveform wf = Waveform::from_uint8(parameters_.getValue<ParameterType::WAVEFORM>()); 
     auto w = Wavetable::getWavetable(wf) ;
     double frac, wavetableIndex, sample ;
@@ -51,26 +51,26 @@ void Module::Oscillator::calculateSample(){
     buffer_[bufferIndex_] = sample ;
 }
 
-void Module::Oscillator::tick(){
+void Oscillator::tick(){
     BaseModule::tick();
     increment_ = parameters_.getInstantaneousValue<ParameterType::FREQUENCY>() / sampleRate_ ;
     phase_ = std::fmod(phase_ + increment_, 1.0);
     parameters_.modulate();
 }
 
-void Module::Oscillator::addReferenceParameters(ParameterMap& map){
+void Oscillator::addReferenceParameters(ParameterMap& map){
     parameters_.addReferences(map);
 }
 
-void Module::Oscillator::setWaveform(Waveform wave){
+void Oscillator::setWaveform(Waveform wave){
     parameters_.setValue<ParameterType::WAVEFORM>(wave) ;
 }
 
-void Module::Oscillator::setFrequency(double freq){
+void Oscillator::setFrequency(double freq){
     parameters_.setValue<ParameterType::FREQUENCY>(freq) ;
 }
 
-void Module::Oscillator::setAmplitude(double amp){
+void Oscillator::setAmplitude(double amp){
     parameters_.setValue<ParameterType::AMPLITUDE>(amp);
 }
 

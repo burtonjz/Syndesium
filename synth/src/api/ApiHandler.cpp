@@ -1,6 +1,7 @@
 #include "api/ApiHandler.hpp"
 #include "Engine.hpp"
 #include "config/Config.hpp"
+#include "configs/ModuleConfig.hpp"
 #include "types/SocketType.hpp"
 
 #include <iostream>
@@ -209,7 +210,7 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         if ( action == "get_module_parameter" ){
             int moduleID = jRequest["id"];
             ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
-            Module::BaseModule* module = engine->moduleController.getRaw(moduleID);
+            BaseModule* module = engine->moduleController.getRaw(moduleID);
             if  (!module){
                 err = "Unable to find modulator of with ID" + std::to_string(moduleID) ;
                 sendError(err);
