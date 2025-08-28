@@ -4,6 +4,9 @@
 #include "types/ModuleType.hpp"
 #include "types/Waveform.hpp"
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json ;
+
 // forward declare class
 class Oscillator ;
 

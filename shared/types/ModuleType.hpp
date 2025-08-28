@@ -1,9 +1,6 @@
 #ifndef __MODULE_TYPE_HPP_
 #define __MODULE_TYPE_HPP_
 
-#include "types/Waveform.hpp"
-#include <nlohmann/json.hpp>
-
 /**
  * @brief enumeration of modulation source classes
  * 

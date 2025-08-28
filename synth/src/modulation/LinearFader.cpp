@@ -7,12 +7,11 @@
 
 const ModulatorType LinearFader::staticType = ModulatorType::LinearFader ;
 
-LinearFader::LinearFader(MidiState* state):
-    Modulator(LinearFader::staticType),
-    state_(state)
+LinearFader::LinearFader(LinearFaderConfig cfg):
+    BaseModulator(staticType)
 {
-    parameters_->add<ParameterType::ATTACK>(Config::get<float>("modulation.LinearFader.attack").value(), true);
-    parameters_->add<ParameterType::RELEASE>(Config::get<float>("modulation.LinearFader.release").value(), true);
+    parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
+    parameters_->add<ParameterType::RELEASE>(cfg.release, true);
 }
 
 double LinearFader::modulate(double value, ModulationData* mData) const {

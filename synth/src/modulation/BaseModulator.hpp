@@ -15,15 +15,15 @@ using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PAR
 /**
  * @brief base class for all Modulators.
 */
-class Modulator {
+class BaseModulator {
 protected:
     ModulatorType type_ ;
     std::unique_ptr<ParameterMap> parameters_ ;
 
 public:
-    Modulator(ModulatorType typ);
+    BaseModulator(ModulatorType typ);
 
-    virtual ~Modulator() = default ;
+    virtual ~BaseModulator() = default ;
 
     virtual double modulate(double value, ModulationData* mdat ) const = 0 ;
 

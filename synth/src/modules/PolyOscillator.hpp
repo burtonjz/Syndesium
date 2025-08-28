@@ -19,7 +19,7 @@ private:
     FixedPool<Oscillator, 128> childPool_ ;
 
     // modulation
-    RTMap<ParameterType, Modulator*, N_PARAMETER_TYPES> modulators_ ;
+    RTMap<ParameterType, BaseModulator*, N_PARAMETER_TYPES> modulators_ ;
     RTMap<ParameterType, ModulationData, N_PARAMETER_TYPES> modulationData_ ;
     
 public:
@@ -40,7 +40,7 @@ public:
     void onKeyReleased(ActiveNote anote) override ;
     void onKeyOff(ActiveNote anote) override ;
 
-    void setModulation(ParameterType p, Modulator* m, ModulationData d = {} );
+    void setModulation(ParameterType p, BaseModulator* m, ModulationData d = {} );
 
     void updateGain();
 };  

@@ -27,19 +27,7 @@
         }
     },
     "modulation": {
-        "max_depth": 2,
-        "ADSREnvelope": {
-            "attack": 0.1,
-            "decay": 0.1,
-            "sustain": 0.8,
-            "release": 0.1
-        },
-        "LinearFader": {
-            "attack": 0.1,
-            "release": 0.1
-        }
-        
-    }
-        
+        "max_depth": 2        
+    } 
 }
 

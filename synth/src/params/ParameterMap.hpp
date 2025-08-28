@@ -21,7 +21,7 @@
 template<ParameterType typ>
 class Parameter ;
 class ParameterBase ;
-class Modulator ;
+class BaseModulator ;
 
 using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PARAMETERS> ;
 using params = RTMap<ParameterType, ParameterBase*, N_PARAMETER_TYPES> ;
@@ -46,7 +46,7 @@ class ParameterMap {
             bool modulatable,
             TYPE_TRAIT(typ) minValue = parameterLimits[static_cast<int>(typ)].first, 
             TYPE_TRAIT(typ) maxValue = parameterLimits[static_cast<int>(typ)].second, 
-            Modulator* modulator = nullptr, ModulationData modData = {}
+            BaseModulator* modulator = nullptr, ModulationData modData = {}
         ){
             auto it = parameters_.find(typ);
             if (it == parameters_.end()){
@@ -132,7 +132,7 @@ class ParameterMap {
             return current ;
         }
 
-        void setModulation(ParameterType typ, Modulator* modulator, ModulationData modData){
+        void setModulation(ParameterType typ, BaseModulator* modulator, ModulationData modData){
             auto it = parameters_.find(typ);
             if (it != parameters_.end() ){
                 it->second->setModulation(modulator, modData);

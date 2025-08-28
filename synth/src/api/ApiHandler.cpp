@@ -231,7 +231,7 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         if ( action == "get_modulator_parameter" ){
             int modulatorID = jRequest["id"];
             ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
-            Modulator* modulator = engine->modulationController.getRaw(modulatorID);
+            BaseModulator* modulator = engine->modulationController.getRaw(modulatorID);
             if (!modulator){
                 err = "Unable to find modulator of with ID" + std::to_string(modulatorID) ;
                 sendError(err);

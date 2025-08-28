@@ -4,14 +4,13 @@
 #include "types/ParameterType.hpp"
 #include <iostream>
 
-ADSREnvelope::ADSREnvelope(MidiState* state):
-    Modulator(staticType),
-    state_(state)
+ADSREnvelope::ADSREnvelope(ADSREnvelopeConfig cfg):
+    BaseModulator(staticType)
 {
-    parameters_.add<ParameterType::ATTACK>(0.2, true);
-    parameters_.add<ParameterType::DECAY>(0.2, true);
-    parameters_.add<ParameterType::SUSTAIN>(0.2, true);
-    parameters_.add<ParameterType::RELEASE>(0.2, true);
+    parameters_.add<ParameterType::ATTACK>(cfg.attack, true);
+    parameters_.add<ParameterType::DECAY>(cfg.decay, true);
+    parameters_.add<ParameterType::SUSTAIN>(cfg.sustain, true);
+    parameters_.add<ParameterType::RELEASE>(cfg.release, true);
 }
 
 double ADSREnvelope::modulate(double value, ModulationData* mData) const {

@@ -5,7 +5,7 @@
 #include "params/ParameterMap.hpp"
 #include "params/ModulationParameter.hpp"
 #include "types/ParameterType.hpp"
-#include "modulation/Modulator.hpp"
+#include "modulation/BaseModulator.hpp"
 #include "config/Config.hpp"
 
 #include <cmath>
@@ -125,7 +125,7 @@ void PolyOscillator::onKeyOff(ActiveNote anote){
     }
 }
 
-void PolyOscillator::setModulation(ParameterType p, Modulator* m, ModulationData d){
+void PolyOscillator::setModulation(ParameterType p, BaseModulator* m, ModulationData d){
     modulators_[p] = m ;
     modulationData_[p] = d ;
     MidiEventHandler* h = dynamic_cast<MidiEventHandler*>(m);

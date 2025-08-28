@@ -7,7 +7,6 @@
 #include "modules/PolyOscillator.hpp"
 #include "configs/ModuleConfig.hpp"
 
-#include "params/Parameter.hpp"
 #include "types/ModuleType.hpp"
 #include "types/Waveform.hpp"
 

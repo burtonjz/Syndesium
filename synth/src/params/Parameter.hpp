@@ -4,7 +4,7 @@
 #include "types/ModulatorType.hpp"
 #include "types/ParameterType.hpp"
 #include "params/ModulationParameter.hpp"
-#include "modulation/Modulator.hpp"
+#include "modulation/BaseModulator.hpp"
 #include "containers/AtomicFloat.hpp"
 #include "containers/RTMap.hpp"
 
@@ -15,7 +15,7 @@ class ParameterBase {
 protected:
     ParameterType type_ ;
     bool modulatable_ ;
-    Modulator* modulator_ ;
+    BaseModulator* modulator_ ;
     std::unique_ptr<Parameter<ParameterType::DEPTH>> modDepth_ ;
     ModulationStrategy modStrategy_ ;
     ModulationData modData_ ;
@@ -24,7 +24,7 @@ public:
     ParameterBase(
         ParameterType typ, 
         bool modulatable,
-        Modulator* modulator = nullptr,
+        BaseModulator* modulator = nullptr,
         ModulationData modData = {}
     ):
         type_(typ),
@@ -44,7 +44,7 @@ public:
         return modulatable_ ; 
     }
 
-    void setModulation(Modulator* modulator, ModulationData modData){
+    void setModulation(BaseModulator* modulator, ModulationData modData){
         modData_ = modData ;
         modulator_ = modulator ;
     }
@@ -80,7 +80,7 @@ class Parameter : public ParameterBase {
             ValueType defaultValue, bool modulatable, 
             ValueType minValue = parameterLimits[static_cast<int>(typ)].first, 
             ValueType maxValue = parameterLimits[static_cast<int>(typ)].second, 
-            Modulator* modulator = nullptr, ModulationData modData = {}
+            BaseModulator* modulator = nullptr, ModulationData modData = {}
         ):
             ParameterBase(typ,modulatable,modulator,modData),
             minValue_(minValue),

@@ -32,7 +32,11 @@ enum class ModulationStrategy {
 // must be defined in every Modulator Header
 template <ModulatorType Type> struct ModulatorTypeTraits ;
 
-// define configuration structures for module-specific arguments
+// helper aliases
+template<ModulatorType Type>
+using ModulatorType_t = typename ModulatorTypeTraits<Type>::type ;
 
+template<ModulatorType Type>
+using ModulatorConfig_t = typename ModulatorTypeTraits<Type>::config ;
 
 #endif // __MODULATOR_TYPE_HPP_
