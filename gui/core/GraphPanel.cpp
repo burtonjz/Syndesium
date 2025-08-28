@@ -112,7 +112,7 @@ void GraphPanel::deleteSelectedModules(){
             scene_->removeItem(module);
             module->deleteLater();
 
-            qDebug() << "Deleted module:" << module->getModuleDescriptor().name ;
+            qDebug() << "Deleted module:" << module->getComponentDescriptor().name ;
         }
     }
 }

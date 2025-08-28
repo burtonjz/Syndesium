@@ -1,7 +1,7 @@
 #include "core/Synth.hpp"
 #include "core/GraphPanel.hpp"
 #include "core/ApiClient.hpp"
-#include "meta/ModuleRegistry.hpp"
+#include "meta/ComponentRegistry.hpp"
 
 #include "ui_Synth.h"
 
@@ -39,13 +39,15 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
         if (item) item->setEnabled(false);
     }
 
-    auto reg = ModuleRegistry::getAllModuleDescriptors();
+    auto reg = ComponentRegistry::getAllComponentDescriptors();
     QString name ;
     int typ ;
     for ( auto item : reg ){
-        name = QString::fromStdString(item.second.name);
-        typ = static_cast<int>(item.second.type);
-        ui_->addModuleBox->addItem(name, typ);
+        if ( item.first.isModule() ){
+            name = QString::fromStdString(item.second.name);
+            typ = static_cast<int>(item.first.getModuleType());
+            ui_->addModuleBox->addItem(name, typ);
+        }
     }
 
     // connections

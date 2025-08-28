@@ -1,5 +1,4 @@
 #include "widgets/SocketContainerWidget.hpp"
-#include "meta/ModuleRegistry.hpp"
 #include "patch/SocketWidget.hpp"
 
 #include <QGraphicsSceneMouseEvent>

@@ -8,7 +8,7 @@
 #include <qnamespace.h>
 
 #include "widgets/SocketContainerWidget.hpp"
-#include "meta/ModuleDescriptor.hpp"
+#include "meta/ComponentDescriptor.hpp"
 #include "patch/SocketWidget.hpp"
 
 class ModuleWidget :  public SocketContainerWidget {
@@ -16,11 +16,11 @@ class ModuleWidget :  public SocketContainerWidget {
 
 private:
     int moduleId_ ;
-    ModuleDescriptor descriptor_ ;
+    ComponentDescriptor descriptor_ ;
     
 public:
     explicit ModuleWidget(int id, ModuleType type, QGraphicsItem* parent = nullptr);
-    const ModuleDescriptor& getModuleDescriptor() const { return descriptor_ ; }
+    const ComponentDescriptor& getComponentDescriptor() const { return descriptor_ ; }
     const int getID() const { return moduleId_ ; }
 };
 

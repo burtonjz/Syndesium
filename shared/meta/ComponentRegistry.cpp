@@ -1,15 +1,16 @@
-#include "meta/ModuleRegistry.hpp"
-#include "meta/ModuleDescriptor.hpp"
+#include "meta/ComponentRegistry.hpp"
+#include "meta/ComponentDescriptor.hpp"
+#include "types/ModuleType.hpp"
 #include "types/ParameterType.hpp"
 #include <stdexcept>
 
-const std::unordered_map<ModuleType, ModuleDescriptor>& ModuleRegistry::getAllModuleDescriptors(){
-    static const std::unordered_map<ModuleType, ModuleDescriptor> registry = {
+const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry::getAllComponentDescriptors(){
+    static const std::unordered_map<ComponentType, ComponentDescriptor> registry = {
         {
-            ModuleType::Oscillator, 
+            ComponentType(ModuleType::Oscillator),
             {
                 "Oscillator",
-                ModuleType::Oscillator,
+                ComponentType(ModuleType::Oscillator),
                 {ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, // modulatable params
                 {ParameterType::WAVEFORM, ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, //control params
                 0, // audio inputs
@@ -20,10 +21,10 @@ const std::unordered_map<ModuleType, ModuleDescriptor>& ModuleRegistry::getAllMo
             }
         },
         {
-            ModuleType::PolyOscillator, 
+            ComponentType(ModuleType::PolyOscillator), 
             {
                 "Polyphonic Oscillator",
-                ModuleType::PolyOscillator,
+                ComponentType(ModuleType::PolyOscillator),
                 {ParameterType::AMPLITUDE, ParameterType::FREQUENCY, ParameterType::GAIN}, // modulatable params
                 {ParameterType::WAVEFORM, ParameterType::AMPLITUDE}, //control params
                 0, // audio inputs
@@ -39,11 +40,19 @@ const std::unordered_map<ModuleType, ModuleDescriptor>& ModuleRegistry::getAllMo
     return registry ;
 }
 
-const ModuleDescriptor& ModuleRegistry::getModuleDescriptor(ModuleType type){
-    const auto& registry = ModuleRegistry::getAllModuleDescriptors();
+const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(ComponentType type){
+    const auto& registry = ComponentRegistry::getAllComponentDescriptors();
     auto  it =  registry.find(type);
     if (it != registry.end()){
         return  it->second ;
     }
-    throw std::runtime_error("Unknown ModuleType");
+    throw std::runtime_error("Unknown ComponentType");
+}
+
+const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(ModuleType type){
+    return getComponentDescriptor(ComponentType(type));
+}
+
+const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(ModulatorType type){
+    return getComponentDescriptor(ComponentType(type));
 }

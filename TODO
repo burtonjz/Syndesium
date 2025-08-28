@@ -1,5 +1,5 @@
 ✓ Allow Modules to be draggable
-✓ Implement colored sockets on ModuleWidget (midi, audio, modulation) based on ModuleRegistry info
+✓ Implement colored sockets on ModuleWidget (midi, audio, modulation) based on ComponentRegistry info
 ✓ Implement ConnectionCable to draw connections from different sources
 - Implement right click on socket to expand a menu to delete specific connections
 ✓ Implement API calls to tell backend when connections are added 

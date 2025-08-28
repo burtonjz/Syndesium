@@ -1,14 +1,14 @@
 #include "widgets/ModuleWidget.hpp"
-#include "meta/ModuleRegistry.hpp"
+#include "meta/ComponentRegistry.hpp"
 #include "patch/SocketWidget.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
 
 ModuleWidget::ModuleWidget(int id, ModuleType type, QGraphicsItem* parent): 
-    SocketContainerWidget(QString::fromStdString(ModuleRegistry::getModuleDescriptor(type).name), parent),
+    SocketContainerWidget(QString::fromStdString(ComponentRegistry::getComponentDescriptor(type).name), parent),
     moduleId_(id),
-    descriptor_(ModuleRegistry::getModuleDescriptor(type))
+    descriptor_(ComponentRegistry::getComponentDescriptor(type))
 {
     std::vector<SocketSpec> specs ;
 

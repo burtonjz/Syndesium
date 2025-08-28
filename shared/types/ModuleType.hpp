@@ -26,6 +26,7 @@ template <ModuleType Type> struct ModuleConfig ; // will specify the specific {M
 struct PolyOscillatorConfig {
     Waveform waveform = Waveform::SINE ;
 };
+
 template <> struct ModuleConfig<ModuleType::PolyOscillator>{ using cfg = PolyOscillatorConfig ;};
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PolyOscillatorConfig, waveform) // macro to serialize/deserialize json <-> structs
 
