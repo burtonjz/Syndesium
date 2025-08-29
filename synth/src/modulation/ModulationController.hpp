@@ -16,6 +16,10 @@
 using ModulatorID = std::size_t ;
 using ModulatorKey = std::pair<ModulatorType, int>;
 
+#define HANDLE_CREATE_MODULATOR(Type) \
+    case ModulatorType::Type: \
+        return create<ModulatorType::Type>(name,  j.get<Type##Config>());
+
 struct ModulatorKeyHash {
     std::size_t operator()(const ModulatorKey& key) const {
         return std::hash<int>()(static_cast<int>(key.first)) ^ (std::hash<int>()(key.second) << 1);
@@ -31,14 +35,14 @@ private:
     std::unordered_map<ModulatorType, int> typeInstanceCount_ ;
 
 public:
-    template <ModulatorType T, typename... Args>
-    ModulatorID create(std::string name, Args&&... args){
+    template <ModulatorType T>
+    ModulatorID create(std::string name, ModulatorConfig_t<T> cfg){
         static_assert(std::is_base_of<BaseModulator, ModulatorType_t<T>>::value, "Must be derived from Modulator");
 
         int idx = ++typeInstanceCount_[T] ;
         ModulatorID id = nextID_++ ;
         
-        auto m = std::make_unique<ModulatorType_t<T>>(std::forward<Args>(args)...);
+        auto m = std::make_unique<ModulatorType_t<T>>(cfg);
         modulators_[id] = std::move(m);
 
         typeLookup_[{T,idx}] = id ;
@@ -47,19 +51,28 @@ public:
         return id ;
     }
 
+    ModulatorID dispatchFromJson(ModulatorType type, const std::string& name, const json& j){
+        switch (type){
+            HANDLE_CREATE_MODULATOR(LinearFader)
+            HANDLE_CREATE_MODULATOR(ADSREnvelope)
+        default:
+            throw std::invalid_argument("Unsupported ModulatorType");
+        } 
+    }
+
     BaseModulator* getRaw(ModulatorID id){
         auto it = modulators_.find(id);
         if ( it == modulators_.end() ) return nullptr ;
         return it->second.get() ;
     }
 
-    template<typename T>
-    T* get(ModulatorID id){
+    template<ModulatorType T>
+    ModulatorType_t<T>* get(ModulatorID id){
         BaseModulator* m = getRaw(id);
         if (!m) return nullptr ;
 
-        if (m->getType() == T::staticType){
-            return static_cast<T*>(m);
+        if ( m->getType() == T ){
+            return static_cast<ModulatorType_t<T>*>(m);
         }
 
         return nullptr ;

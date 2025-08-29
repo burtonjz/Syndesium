@@ -1,7 +1,8 @@
 #include "core/GraphPanel.hpp"
 #include "core/ApiClient.hpp"
+#include "meta/ComponentRegistry.hpp"
 #include "widgets/SocketContainerWidget.hpp"
-#include "widgets/ModuleWidget.hpp"
+#include "widgets/ComponentWidget.hpp"
 #include "types/ModuleType.hpp"
 
 #include <QWheelEvent>
@@ -61,8 +62,8 @@ void GraphPanel::setupScene(){
     setResizeAnchor(QGraphicsView::AnchorUnderMouse);
 }
 
-void GraphPanel::addModule(int id, ModuleType type){
-    auto* module = new ModuleWidget(id, type);
+void GraphPanel::addComponent(int id, ComponentType type){
+    auto* module = new ComponentWidget(id, type);
     scene_->addItem(module);
     module->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
 
@@ -104,7 +105,7 @@ void GraphPanel::deleteSelectedModules(){
     QList<QGraphicsItem*> selectedItems = scene_->selectedItems() ;
 
     for ( QGraphicsItem* item: selectedItems ){
-        if ( ModuleWidget* module = qgraphicsitem_cast<ModuleWidget*>(item) ){
+        if ( ComponentWidget* module = qgraphicsitem_cast<ComponentWidget*>(item) ){
             connectionManager_->removeAllConnections(module);
             auto it = std::find(widgets_.begin(), widgets_.end(), module);
             if ( it != widgets_.end() ) widgets_.erase(it) ;
@@ -168,25 +169,37 @@ void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
 
 }
 
-void GraphPanel::onModuleAdded(ModuleType type){
+void GraphPanel::onComponentAdded(ComponentType type){
     QJsonObject obj ;
-    obj["action"] = "add_module" ;
-    obj["name"] = "placeholder" ;
-    obj["type"] = static_cast<int>(type);
+    obj["action"] = "add_component" ;
+    obj["name"] = QString::fromStdString(ComponentRegistry::getComponentDescriptor(type).name) ;
+    if ( type.isModule() ){
+        obj["is_module"] = true ;
+        obj["type"] = static_cast<int>(type.getModuleType());
+    } else {
+        obj["is_module"] = false ;
+        obj["type"] = static_cast<int>(type.getModulatorType());
+    }
     ApiClient::instance()->sendMessage(obj); 
 }
 
 void GraphPanel::onApiDataReceived(const QJsonObject& json){
     QString action = json["action"].toString();
 
-    if ( action == "add_module" ){
+    if ( action == "add_component" ){
         if ( json["status"] != "success" ){
             qDebug() << "module was not successfully added." ;
             return ;
         }
-        ModuleType type = static_cast<ModuleType>(json["type"].toInt());
-        int id = json["module_id"].toInt();
-        addModule(id,type);
+
+        int id = json["component_id"].toInt();
+        if ( json["is_module"].toBool() ){
+            ModuleType type = static_cast<ModuleType>(json["type"].toInt());
+            addComponent(id,type);
+        } else {
+            ModulatorType type = static_cast<ModulatorType>(json["type"].toInt());
+            addComponent(id,type);
+        }
     }
 }
 

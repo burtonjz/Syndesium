@@ -75,8 +75,6 @@ struct ComponentDescriptor {
     size_t numMidiInputs ;
     size_t numMidiOutputs ;
 
-    json defaultConfig ;
-
     bool isPolyphonic = false ;
 
 };

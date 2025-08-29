@@ -5,12 +5,12 @@
 #include <QGraphicsScene>
 #include <vector>
 
+#include "meta/ComponentDescriptor.hpp"
 #include "patch/SocketWidget.hpp"
-#include "types/ModuleType.hpp"
 #include "patch/ConnectionManager.hpp"
 
 
-class ModuleWidget ; // forward declaration
+class ComponentWidget ; // forward declaration
 
 class GraphPanel : public QGraphicsView {
     Q_OBJECT
@@ -25,7 +25,7 @@ public:
     explicit GraphPanel(QWidget* parent = nullptr);
     ~GraphPanel();
 
-    void addModule(int id, ModuleType type);
+    void addComponent(int id, ComponentType type);
     void addAudioOutput();
     void addMidiInput();
     
@@ -53,7 +53,7 @@ private slots:
     void onConnectionEnded(SocketWidget* socket, QPointF scenePos);
 
 public  slots:
-    void onModuleAdded(ModuleType type);
+    void onComponentAdded(ComponentType type);
 
 
 

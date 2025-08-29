@@ -1,6 +1,6 @@
 #include "patch/ConnectionManager.hpp"
 #include "patch/ConnectionCable.hpp"
-#include "widgets/ModuleWidget.hpp"
+#include "widgets/ComponentWidget.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "core/ApiClient.hpp"
 
@@ -174,10 +174,16 @@ void ConnectionManager::sendConnectionApiRequest(
     input["socket"] = static_cast<int>(inputSock->getType());
     
     // test to see if widget is module
-    auto outputModule = dynamic_cast<ModuleWidget*>(outputWidget);
-    auto inputModule = dynamic_cast<ModuleWidget*>(inputWidget);
-    if ( inputModule ) input["id"] = inputModule->getID();
-    if ( outputModule ) output["id"] = outputModule->getID();
+    auto outputModule = dynamic_cast<ComponentWidget*>(outputWidget);
+    auto inputModule = dynamic_cast<ComponentWidget*>(inputWidget);
+    if ( inputModule ){
+        input["id"] = inputModule->getID();
+        input["isModule"] = inputModule->getComponentDescriptor().type.isModule();
+    }
+    if ( outputModule ){
+        output["id"] = outputModule->getID();
+        output["isModule"] = outputModule->getComponentDescriptor().type.isModule();
+    } 
 
     obj["action"] = "create_connection" ;
     obj["output"] = output ;

@@ -92,7 +92,7 @@ public:
         BaseModule* m = getRaw(id);
         if (!m) return nullptr ;
 
-        if (m->getType() == T ){
+        if ( m->getType() == T ){
             return static_cast<ModuleType_t<T>* >(m);
         }
 

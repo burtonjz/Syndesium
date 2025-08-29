@@ -33,6 +33,34 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 0, // midi outputs
                 true  // polyphonic
             }
+        },
+        {
+            ComponentType(ModulatorType::LinearFader),
+            {
+                "Linear Fader",
+                ComponentType(ModulatorType::LinearFader),
+                {ParameterType::ATTACK, ParameterType::RELEASE},
+                {ParameterType::ATTACK, ParameterType::RELEASE},
+                0,
+                0,
+                1,
+                1,
+                false
+            }
+        },
+        {
+            ComponentType(ModulatorType::ADSREnvelope),
+            {
+                "ADSR Envelope",
+                ComponentType(ModulatorType::ADSREnvelope),
+                {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
+                {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
+                0,
+                0,
+                1,
+                1,
+                false
+            }
         }
 
     };

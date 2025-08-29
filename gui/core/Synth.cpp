@@ -33,20 +33,35 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     ui_->addModuleBox->setCurrentIndex(0);
     ui_->addModuleBox->insertSeparator(1);
 
+    ui_->addModulatorBox->addItem("Add a Modulator...");
+    ui_->addModulatorBox->setCurrentIndex(0);
+    ui_->addModulatorBox->insertSeparator(1);
+
+    // force that first index to be a label and not enabled to select
     QStandardItemModel* m = qobject_cast<QStandardItemModel*>(ui_->addModuleBox->model());
     if(m){
         QStandardItem* item = m->item(0);
         if (item) item->setEnabled(false);
     }
 
+    m = qobject_cast<QStandardItemModel*>(ui_->addModulatorBox->model());
+    if(m){
+        QStandardItem* item = m->item(0);
+        if (item) item->setEnabled(false);
+    }
+
+    // now loop through descriptors and add them to the appropriate box
     auto reg = ComponentRegistry::getAllComponentDescriptors();
     QString name ;
     int typ ;
     for ( auto item : reg ){
+        name = QString::fromStdString(item.second.name);
         if ( item.first.isModule() ){
-            name = QString::fromStdString(item.second.name);
             typ = static_cast<int>(item.first.getModuleType());
             ui_->addModuleBox->addItem(name, typ);
+        } else if ( item.first.isModulator() ){
+            typ = static_cast<int>(item.first.getModulatorType());
+            ui_->addModulatorBox->addItem(name, typ);
         }
     }
 
@@ -55,8 +70,11 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     connect(ui_->setupButton, &QPushButton::clicked, this, &Synth::onSetupButtonClicked);
     connect(ui_->startStopButton, &QPushButton::clicked, this, &Synth::onStartStopButtonClicked);
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
-    connect(ui_->addModuleBox, &QComboBox::currentIndexChanged, this, &Synth::onModuleAdded);
-    connect(this, &Synth::moduleAdded, graph_, &GraphPanel::onModuleAdded);
+    connect(ui_->addModuleBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
+        this, [this](int index){ onComponentAdded(index, true); });
+    connect(ui_->addModulatorBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
+        this, [this](int index){ onComponentAdded(index, false); });
+    connect(this, &Synth::componentAdded, graph_, &GraphPanel::onComponentAdded);
 }
 
 Synth::~Synth(){
@@ -127,9 +145,15 @@ void Synth::onEngineStatusChange(bool status){
     }
 }
 
-void Synth::onModuleAdded(int index){
-    if ( index == 0 ) return ; // placeholder 
-    ModuleType typ = static_cast<ModuleType>(ui_->addModuleBox->itemData(index).toInt());
-    ui_->addModuleBox->setCurrentIndex(0); // reset the combo box
-    emit moduleAdded(typ);
+void Synth::onComponentAdded(int index, bool isModule){
+    if ( index == 0 ) return ;
+    if ( isModule ){
+        ComponentType typ = static_cast<ModuleType>(ui_->addModuleBox->itemData(index).toInt());
+        ui_->addModuleBox->setCurrentIndex(0); // reset the combo box
+        emit componentAdded(typ);
+    } else {
+        ComponentType typ = static_cast<ModulatorType>(ui_->addModulatorBox->itemData(index).toInt());
+        ui_->addModulatorBox->setCurrentIndex(0); // reset the combo box
+        emit componentAdded(typ);
+    }
 }

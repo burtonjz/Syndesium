@@ -1,11 +1,11 @@
-#include "widgets/ModuleWidget.hpp"
+#include "widgets/ComponentWidget.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "patch/SocketWidget.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
 
-ModuleWidget::ModuleWidget(int id, ModuleType type, QGraphicsItem* parent): 
+ComponentWidget::ComponentWidget(int id, ComponentType type, QGraphicsItem* parent): 
     SocketContainerWidget(QString::fromStdString(ComponentRegistry::getComponentDescriptor(type).name), parent),
     moduleId_(id),
     descriptor_(ComponentRegistry::getComponentDescriptor(type))
@@ -31,6 +31,10 @@ ModuleWidget::ModuleWidget(int id, ModuleType type, QGraphicsItem* parent):
 
     for (int i = 0; i < descriptor_.numMidiOutputs; ++i){
         specs.push_back({SocketType::MidiOutput, QString("MIDI OUT %1").arg(i+1)});
+    }
+
+    if ( descriptor_.type.isModulator()){
+        specs.push_back({SocketType::ModulationOutput, QString("MODULATION OUT")});
     }
 
     createSockets(specs);

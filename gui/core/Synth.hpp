@@ -13,7 +13,7 @@
 #include "core/GraphPanel.hpp"
 #include "core/Setup.hpp"
 
-#include "types/ModuleType.hpp"
+#include "meta/ComponentDescriptor.hpp"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -34,7 +34,7 @@ public:
 
 signals:
     void engineStatusChanged(bool status);
-    void moduleAdded(ModuleType typ);
+    void componentAdded(ComponentType typ);
 
 private slots:
     void onApiConnected();
@@ -42,7 +42,7 @@ private slots:
     void onSetupButtonClicked();
     void onStartStopButtonClicked();
     void onEngineStatusChange(bool status);
-    void onModuleAdded(int index);
+    void onComponentAdded(int index, bool isModule = true);
 
 
 };

@@ -22,16 +22,16 @@ protected:
     QList<SocketWidget*> sockets_ ; 
     QGraphicsTextItem* titleText_ ;
     
-    static constexpr qreal MODULE_WIDTH = 120.0 ;
-    static constexpr qreal MODULE_HEIGHT = 80.0 ;
-    static constexpr qreal MODULE_ROUNDED_RADIUS = 5.0 ;
-    static constexpr qreal MODULE_BORDER_WIDTH = 2.0 ;
-    static constexpr qreal MODULE_TEXT_PADDING = 5.0 ;
+    static constexpr qreal COMPONENT_WIDTH = 120.0 ;
+    static constexpr qreal COMPONENT_HEIGHT = 80.0 ;
+    static constexpr qreal COMPONENT_ROUNDED_RADIUS = 5.0 ;
+    static constexpr qreal COMPONENT_BORDER_WIDTH = 2.0 ;
+    static constexpr qreal COMPONENT_TEXT_PADDING = 5.0 ;
     static constexpr qreal HIGHLIGHT_BUFFER = 2.0 ; 
     static constexpr qreal HIGHLIGHT_WIDTH = 3.0 ;
     
-    static constexpr QColor MODULE_TEXT_COLOR = QColor(250,250,250);
-    static constexpr QColor MODULE_BACKGROUND_COLOR = QColor(60,60,60);
+    static constexpr QColor COMPONENT_TEXT_COLOR = QColor(250,250,250);
+    static constexpr QColor COMPONENT_BACKGROUND_COLOR = QColor(60,60,60);
     
     static constexpr qreal SOCKET_SPACING = 15.0 ;
 

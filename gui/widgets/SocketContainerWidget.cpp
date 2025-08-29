@@ -15,14 +15,14 @@ SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent
     setAcceptHoverEvents(true);
 
     titleText_ = new QGraphicsTextItem(name_, this);
-    titleText_->setDefaultTextColor(MODULE_TEXT_COLOR);
-    titleText_->setPos(MODULE_TEXT_PADDING,MODULE_TEXT_PADDING);
-    titleText_->setTextWidth(MODULE_WIDTH - MODULE_TEXT_PADDING * 2);
+    titleText_->setDefaultTextColor(COMPONENT_TEXT_COLOR);
+    titleText_->setPos(COMPONENT_TEXT_PADDING,COMPONENT_TEXT_PADDING);
+    titleText_->setTextWidth(COMPONENT_WIDTH - COMPONENT_TEXT_PADDING * 2);
 }
 
 QRectF SocketContainerWidget::boundingRect() const {
     qreal delta = HIGHLIGHT_BUFFER + HIGHLIGHT_WIDTH ;
-    return QRectF(0, 0, MODULE_WIDTH, MODULE_HEIGHT)
+    return QRectF(0, 0, COMPONENT_WIDTH, COMPONENT_HEIGHT)
         .adjusted(-delta, -delta, delta, delta);
 }
 
@@ -31,10 +31,10 @@ void SocketContainerWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
     Q_UNUSED(widget)
 
     // draw background
-    QRectF baseRect(0, 0,MODULE_WIDTH, MODULE_HEIGHT);
-    painter->setBrush(MODULE_BACKGROUND_COLOR);
-    painter->setPen(QPen(Qt::white,MODULE_BORDER_WIDTH));
-    painter->drawRoundedRect(baseRect, MODULE_ROUNDED_RADIUS, MODULE_ROUNDED_RADIUS);
+    QRectF baseRect(0, 0,COMPONENT_WIDTH, COMPONENT_HEIGHT);
+    painter->setBrush(COMPONENT_BACKGROUND_COLOR);
+    painter->setPen(QPen(Qt::white,COMPONENT_BORDER_WIDTH));
+    painter->drawRoundedRect(baseRect, COMPONENT_ROUNDED_RADIUS, COMPONENT_ROUNDED_RADIUS);
 
     // when selected, draw an indicator around the object
     if (isSelected()){
@@ -42,7 +42,7 @@ void SocketContainerWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
         painter->setBrush(Qt::NoBrush);
         painter->drawRoundedRect(
             baseRect.adjusted(-HIGHLIGHT_BUFFER,-HIGHLIGHT_BUFFER,HIGHLIGHT_BUFFER,HIGHLIGHT_BUFFER),
-            MODULE_ROUNDED_RADIUS,MODULE_ROUNDED_RADIUS
+            COMPONENT_ROUNDED_RADIUS,COMPONENT_ROUNDED_RADIUS
         );
     }
 }
@@ -98,13 +98,13 @@ void SocketContainerWidget::layoutSockets(){
 
     // right
     for ( int i = 0; i < rightSockets.size(); ++i ){
-        rightSockets[i]->setPos(MODULE_WIDTH + 6, startY + i * SOCKET_SPACING);
+        rightSockets[i]->setPos(COMPONENT_WIDTH + 6, startY + i * SOCKET_SPACING);
     }
 
     qreal startX = 0 ;
     // bottom
     for ( int i = 0; i < bottomSockets.size(); ++i ){
-        bottomSockets[i]->setPos(startX + i * SOCKET_SPACING, MODULE_HEIGHT + 6 );
+        bottomSockets[i]->setPos(startX + i * SOCKET_SPACING, COMPONENT_HEIGHT + 6 );
     }
 
     // top

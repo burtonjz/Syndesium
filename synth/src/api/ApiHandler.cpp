@@ -1,7 +1,9 @@
 #include "api/ApiHandler.hpp"
 #include "Engine.hpp"
 #include "config/Config.hpp"
+#include "configs/ModulatorConfig.hpp"
 #include "configs/ModuleConfig.hpp"
+#include "meta/ComponentDescriptor.hpp"
 #include "types/SocketType.hpp"
 
 #include <iostream>
@@ -194,17 +196,32 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             sendSuccess();
             return ;
         }
-        // MODULES
-        if ( action == "add_module"){
-            ModuleType type = static_cast<ModuleType>(jRequest["type"]) ;
-            ModuleID id = engine->moduleController.dispatchFromJson(
-                type,
-                jRequest["name"], 
-                Module::getDefaultConfig(type));
-            jResponse["module_id"] = id ;
-            jResponse["type"] = jRequest["type"];
-            sendSuccess();
-            return ;
+        // COMPONENTS
+        if ( action == "add_component"){
+            jResponse["is_module"] = jRequest["is_module"] ;
+            jResponse["type"] = jRequest["type"] ;
+            jResponse["name"] = jRequest["name"] ;
+            if( jResponse["is_module"] ){
+                ModuleType type = static_cast<ModuleType>(jRequest["type"]);
+                ModuleID id = engine->moduleController.dispatchFromJson(
+                    type,
+                    jRequest["name"], 
+                    Module::getDefaultConfig(type)
+                );
+                jResponse["component_id"] = id ;
+                sendSuccess();
+                return ;
+            } else {
+                ModulatorType type = static_cast<ModulatorType>(jRequest["type"]);
+                ModulatorID id = engine->modulationController.dispatchFromJson(
+                    type,
+                    jRequest["name"],
+                    Modulator::getDefaultConfig(type)
+                );
+                jResponse["component_id"] = id ;
+                sendSuccess();
+                return ;
+            }
         }
 
         if ( action == "get_module_parameter" ){
