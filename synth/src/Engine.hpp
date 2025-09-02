@@ -87,6 +87,7 @@ public:
 
     // connection logic
     bool setMidiConnection(MidiEventHandler* handler, MidiEventListener* listener);
+    bool registerMidiHandler(MidiEventHandler* handler);
 
 
 

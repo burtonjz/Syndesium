@@ -173,16 +173,16 @@ void ConnectionManager::sendConnectionApiRequest(
     output["socket"] = static_cast<int>(outputSock->getType());
     input["socket"] = static_cast<int>(inputSock->getType());
     
-    // test to see if widget is module
+    // if the widgets are component widgets, then we collect the additional information
     auto outputModule = dynamic_cast<ComponentWidget*>(outputWidget);
     auto inputModule = dynamic_cast<ComponentWidget*>(inputWidget);
     if ( inputModule ){
         input["id"] = inputModule->getID();
-        input["isModule"] = inputModule->getComponentDescriptor().type.isModule();
+        input["is_module"] = inputModule->getComponentDescriptor().type.isModule();
     }
     if ( outputModule ){
         output["id"] = outputModule->getID();
-        output["isModule"] = outputModule->getComponentDescriptor().type.isModule();
+        output["is_module"] = outputModule->getComponentDescriptor().type.isModule();
     } 
 
     obj["action"] = "create_connection" ;

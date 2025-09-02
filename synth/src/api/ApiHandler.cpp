@@ -11,6 +11,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <thread>
+#include <optional>
 
 void ApiHandler::start(Engine* engine){
     int serverPort = Config::get<int>("server.port").value() ;
@@ -267,71 +268,19 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         }
 
         if ( action == "create_connection" ){
-            // define API variables
-            SocketType inputSocket = static_cast<SocketType>(jRequest["input"]["socket"]);
-            SocketType outputSocket = static_cast<SocketType>(jRequest["output"]["socket"]);
-            std::optional<int> inputID, outputID ; 
-            if ( jRequest["input"].contains("id") ) inputID = jRequest["input"]["id"] ;
-            if ( jRequest["output"].contains("id") ) outputID = jRequest["output"]["id"] ;
-            
-            // Case 1: Midi -> Midi
-            if ( outputSocket == SocketType::MidiOutput && inputSocket == SocketType::MidiInput){
-                // output midi should be a modulator (or nullptr for default handler )
-                MidiEventHandler*  handler ;
-                if ( outputID.has_value() ){
-                    handler = dynamic_cast<MidiEventHandler*> (engine->modulationController.getRaw(outputID.value()));
-                } else {
-                    handler = nullptr ; 
-                }
+            // save variables into response
+            jResponse["input"] = jRequest["input"] ;
+            jResponse["output"] = jRequest["output"] ;
 
-                MidiEventListener* listener ;
-                if ( inputID.has_value() ){
-                    listener = dynamic_cast<MidiEventListener*>(engine->moduleController.getRaw(inputID.value()));
-                } else {
-                    // outbound hardware MIDI not yet implemented
-                    sendError("sending midi to an external device is not yet supported.");
-                    return ;
-                }
-                
-                if ( ! engine->setMidiConnection(handler, listener) ){
-                    sendError("midi connection not set successfully.");
-                    return ;
-                }
-                
+            ConnectionRequest request = parseConnectionRequest(jRequest);
+            if ( routeConnectionRequest(engine, request)){
                 sendSuccess();
                 return ;
-            }
-
-            // Case 2: Signal -> Signal
-            if ( outputSocket == SocketType::SignalOutput && inputSocket == SocketType::SignalInput ){
-                auto inputModule = engine->moduleController.getRaw(inputID.value_or(engine->moduleController.getAudioInputID()));
-                auto outputModule = engine->moduleController.getRaw(outputID.value_or(engine->moduleController.getAudioOutputID()));
-                
-                // if the source is hardware
-                if ( !outputID.has_value() ){
-                    sendError("receiving audio from an input device is not yet supported.");
-                    return ;
-                }
-
-                // if the destination is hardware
-                if ( !inputID.has_value() ){
-                    engine->moduleController.registerSink(outputModule);
-                    jResponse["status"] = "success" ;
-                    sendApiResponse(clientSock, jResponse);
-                    return ;
-                }
-                
-                engine->moduleController.connect(outputModule, inputModule);
-                jResponse["status"] = "success" ;
-                sendApiResponse(clientSock, jResponse);
+            } else {
+                sendError("failed to make requested connection");
                 return ;
             }
-
-            // Case 3: Signal -> Modulator
-            sendError("Signal -> Modulator is not yet supported");
-            return ;
         }
-
 
         err = "Unknown action requested: " + action ;
         sendError(err);
@@ -340,4 +289,137 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         err = "JSON parse error: " + std::string(e.what()) ;
         sendError(err);
     }
+}
+
+ConnectionRequest ApiHandler::parseConnectionRequest(json request){
+    ConnectionRequest req ;
+    // define API variables
+    req.inboundSocket = static_cast<SocketType>(request["input"]["socket"]);
+    req.outboundSocket = static_cast<SocketType>(request["output"]["socket"]);
+    if ( request["input"].contains("id")) req.inboundID = request["input"]["id"];
+    if ( request["output"].contains("id")) req.outboundID = request["output"]["id"];
+    if ( request["input"].contains("is_module")) req.inboundIsModule = request["input"]["is_module"];
+    if ( request["output"].contains("is_module")) req.outboundIsModule = request["output"]["is_module"];
+
+    return req ;
+}
+
+bool ApiHandler::routeConnectionRequest(Engine* engine, ConnectionRequest request){
+    if ( request.inboundSocket == SocketType::MidiInput && request.outboundSocket == SocketType::MidiOutput )
+        return handleMidiConnection(engine, request);
+    
+    if ( request.inboundSocket == SocketType::SignalInput && request.outboundSocket == SocketType::SignalOutput )
+        return handleSignalConnection(engine, request);
+
+    if ( request.inboundSocket == SocketType::ModulationInput && request.outboundSocket == SocketType::ModulationOutput )
+        return handleModulationConnection(engine, request);
+
+    std::cerr << "WARN: socket types are incompatible. No connection will be made" << std::endl ;
+    return false ;
+}
+
+bool ApiHandler::handleSignalConnection(Engine* engine, ConnectionRequest request){
+    BaseModule* inbound = nullptr ;
+    BaseModule* outbound = nullptr ;
+
+    inbound = engine->moduleController.getRaw(request.inboundID.value_or(-1));
+    outbound = engine->moduleController.getRaw(request.outboundID.value_or(-1));
+    
+    
+    // if the source is an external endpoint
+    if ( ! request.outboundID.has_value() ){
+        std::cerr << "receiving audio from an input device is not yet supported." << std::endl ;
+        return false ;
+    }
+
+    // if the destination is an external endpoint
+    if ( ! request.inboundID.has_value() ){
+        engine->moduleController.registerSink(outbound);
+        return true ;
+    }
+    
+    engine->moduleController.connect(outbound, inbound);
+    return true ;
+}
+
+bool ApiHandler::handleMidiConnection(Engine* engine, ConnectionRequest request){
+    if ( ! request.outboundID.has_value() && ! request.inboundID.has_value() ){
+        std::cerr << "WARN: midi connection was requested with an invalid object (no id supplied for inbound or outbound objects)." << std::endl ;
+        return false ;
+    }
+
+    if ( request.outboundID.has_value() && request.inboundID.has_value() ){
+        // this is a standard connection between a handler and a listener
+        MidiEventHandler* handler ;
+        MidiEventListener* listener ;
+
+        if ( request.inboundIsModule.value() ){
+            listener = dynamic_cast<MidiEventListener*>(engine->moduleController.getRaw(request.inboundID.value()));
+        } else {
+            listener = dynamic_cast<MidiEventListener*>(engine->modulationController.getRaw(request.inboundID.value()));
+        }
+
+        if ( !listener ){
+            std::cerr << "WARN: No valid MidiEventListener found from connection request configuration" << std::endl ;
+            return false ;
+        }
+
+        if ( request.outboundIsModule.value() ){
+            handler = dynamic_cast<MidiEventHandler*>(engine->moduleController.getRaw(request.outboundID.value()));
+        } else {
+            handler = dynamic_cast<MidiEventHandler*>(engine->modulationController.getRaw(request.outboundID.value()));
+        }
+        
+        if ( !handler ){
+            std::cerr << "WARN: No valid MidiEventHandler found from connection request configuration" << std::endl ;
+            return false ;
+        }
+
+        return engine->setMidiConnection(handler, listener);    
+    }
+
+    if ( ! request.outboundID.has_value() && request.inboundID.has_value() ){
+        // if we are connecting from a outbound system MIDI
+        // this is most common if we are connecting the raw MIDI to a MidiEventHandler
+        // but it can also connect straight to a listener if desired
+        MidiEventHandler* inboundHandler ;
+        MidiEventListener* inboundListener ;
+
+        // and it can be cast from either a module or modulator
+        if ( request.inboundIsModule.value() ){
+            inboundHandler = dynamic_cast<MidiEventHandler*>(engine->moduleController.getRaw(request.inboundID.value()));
+            inboundListener = dynamic_cast<MidiEventListener*>(engine->moduleController.getRaw(request.inboundID.value()));
+        } else {
+            inboundHandler = dynamic_cast<MidiEventHandler*>(engine->modulationController.getRaw(request.inboundID.value()));
+            inboundListener = dynamic_cast<MidiEventListener*>(engine->modulationController.getRaw(request.inboundID.value()));
+        }
+
+        if (inboundHandler){
+            // we register the handler to our midi state
+            engine->registerMidiHandler(inboundHandler);
+            return true ;
+        }
+
+        if (inboundListener){
+            // we register the listener to the default handler
+            engine->setMidiConnection(nullptr, inboundListener);
+            return true ;
+        }
+
+        std::cerr << "WARN: midi connection was requested with an invalid object." << std::endl ;
+        return false ;
+    }
+
+    std::cerr << "WARN: only setting an outbound midi connection is not yet supported. " << std::endl ;
+    return false ;
+}
+
+bool ApiHandler::handleModulationConnection(Engine* engine, ConnectionRequest request){
+    if ( ! request.outboundID.has_value() || ! request.inboundID.has_value() ){
+        std::cerr << "WARN: modulation connections must have valid IDs for both inbound and outbound objects." << std::endl ;
+        return false ;
+    }
+
+    // TODO
+    return false ;
 }

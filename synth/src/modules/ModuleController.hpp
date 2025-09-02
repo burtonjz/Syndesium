@@ -34,8 +34,6 @@ struct ModuleKeyHash {
 
 class ModuleController{
 private:
-    static constexpr ModuleID HARDWARE_AUDIO_INPUT_ID = -1 ;
-    static constexpr ModuleID HARDWARE_AUDIO_OUTPUT_ID = -2 ;
 
     ModuleID nextID_ = 0 ;
     std::unordered_map<ModuleID, std::unique_ptr<BaseModule>> Modules_ ;
@@ -73,13 +71,6 @@ public:
                 throw std::invalid_argument("Unsupported ModuleType");
         }
     }
-
-    bool isHardwareID(ModuleID id) const {
-        return id == HARDWARE_AUDIO_INPUT_ID || id == HARDWARE_AUDIO_OUTPUT_ID ;
-    }
-
-    ModuleID getAudioInputID() const { return HARDWARE_AUDIO_INPUT_ID ; }
-    ModuleID getAudioOutputID() const { return HARDWARE_AUDIO_OUTPUT_ID ; }
 
     BaseModule* getRaw(ModuleID id){
         auto it = Modules_.find(id);

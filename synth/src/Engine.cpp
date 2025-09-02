@@ -244,9 +244,6 @@ void Engine::setup(){
     unsigned int sampleRate = Config::get<unsigned int>("audio.sample_rate").value() ;
     dt_ = 1.0 / sampleRate ;
 
-    midiState_.reset();
-    midiState_.addHandler(&midiDefaultHandler_);
-
     midiController.initialize() ;
 
     moduleController.setup();
@@ -274,5 +271,14 @@ bool Engine::setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* 
     midiController.addHandler(outputMidi);
     outputMidi->addListener(listener);
     
+    return true ;
+}
+
+bool Engine::registerMidiHandler(MidiEventHandler* handler){
+    if ( !handler ){
+        std::cerr << "WARN: handler is a null pointer. Unable to register." << std::endl ;
+        return false ;
+    }
+    midiState_.addHandler(handler);
     return true ;
 }
