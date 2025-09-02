@@ -11,6 +11,12 @@ ADSREnvelope::ADSREnvelope(ADSREnvelopeConfig cfg):
     parameters_.add<ParameterType::DECAY>(cfg.decay, true);
     parameters_.add<ParameterType::SUSTAIN>(cfg.sustain, true);
     parameters_.add<ParameterType::RELEASE>(cfg.release, true);
+
+    requiredParams_ = {
+        ModulationParameter::MIDI_NOTE, 
+        ModulationParameter::INITIAL_VALUE,
+        ModulationParameter::LAST_VALUE
+    };
 }
 
 double ADSREnvelope::modulate(double value, ModulationData* mData) const {

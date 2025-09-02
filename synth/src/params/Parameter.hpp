@@ -7,6 +7,7 @@
 #include "modulation/BaseModulator.hpp"
 #include "containers/AtomicFloat.hpp"
 #include "containers/RTMap.hpp"
+#include <iostream>
 
 // forward declaration
 template <ParameterType typ> class Parameter ;
@@ -17,6 +18,7 @@ protected:
     bool modulatable_ ;
     BaseModulator* modulator_ ;
     std::unique_ptr<Parameter<ParameterType::DEPTH>> modDepth_ ;
+    int modDepthLevel_ ;
     ModulationStrategy modStrategy_ ;
     ModulationData modData_ ;
     
@@ -31,8 +33,24 @@ public:
         modulatable_(modulatable),
         modulator_(modulator),
         modDepth_(nullptr),
+        modDepthLevel_(0),
         modStrategy_(ModulationStrategy::NONE),
         modData_(modData)
+    {}
+
+    // for depth
+    ParameterBase(
+        ParameterType typ, 
+        bool modulatable,
+        int depthLevel = 0
+    ):
+        type_(typ),
+        modulatable_(modulatable),
+        modulator_(nullptr),
+        modDepth_(nullptr),
+        modDepthLevel_(depthLevel),
+        modStrategy_(ModulationStrategy::NONE),
+        modData_({})
     {}
 
     virtual void setModulatable(bool modulatable){
@@ -45,8 +63,13 @@ public:
     }
 
     void setModulation(BaseModulator* modulator, ModulationData modData){
-        modData_ = modData ;
-        modulator_ = modulator ;
+        if ( modulator){
+            modData_ = modData ;
+            modulator_ = modulator ;
+        } else {
+            std::cerr << "WARN: attempted to set modulator, but the pointer is null." << std::endl;
+        }
+        
     }
 
     // valued functions need to be defined in template class
@@ -88,6 +111,18 @@ class Parameter : public ParameterBase {
             value_(limitToRange(defaultValue)),
             instantaneousValue_(value_),
             defaultValue_(value_)
+        {
+            modStrategy_ = ParameterTypeTraits<typ>::defaultStrategy ;
+        }
+
+        // overload for depth parameter
+        Parameter(ValueType defaultValue, bool modulatable, int depth):
+            ParameterBase(typ, modulatable, depth),
+            minValue_(parameterLimits[static_cast<int>(typ)].first),
+            maxValue_(parameterLimits[static_cast<int>(typ)].second),
+            value_(limitToRange(defaultValue)),
+            instantaneousValue_(value_),
+            defaultValue_(value_)
         {}
 
         /**
@@ -120,7 +155,8 @@ class Parameter : public ParameterBase {
 
         void modulate(){
             // modulate this parameter's depth, if it exists
-            if (modDepth_ && modDepth_->isModulatable()){
+            auto* depth = getDepth();
+            if ( depth  && depth->isModulatable()){
                 modDepth_->modulate();
             }
 
@@ -143,8 +179,6 @@ class Parameter : public ParameterBase {
                 return ;
             default:
                 return ;
-
-                
             }
         }
 
@@ -153,5 +187,6 @@ class Parameter : public ParameterBase {
             instantaneousValue_ = v ;
         }
 };
+
 
 #endif // __PARAMETER_HPP_

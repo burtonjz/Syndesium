@@ -125,7 +125,13 @@ void PolyOscillator::onKeyOff(ActiveNote anote){
     }
 }
 
-void PolyOscillator::setModulation(ParameterType p, BaseModulator* m, ModulationData d){
+void PolyOscillator::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
+    if ( d.empty() ){
+        auto required = m->getRequiredModulationParameters();
+        for ( auto mp : required ){
+            d[mp];
+        }
+    }
     modulators_[p] = m ;
     modulationData_[p] = d ;
     MidiEventHandler* h = dynamic_cast<MidiEventHandler*>(m);

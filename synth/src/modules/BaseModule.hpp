@@ -92,6 +92,16 @@ public:
     virtual bool isGenerative() const { return false; }
     virtual bool isPolyphonic() const { return false; }
 
+    virtual void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ){
+        if ( d.empty() ){
+            auto required = m->getRequiredModulationParameters();
+            for ( auto mp : required ){
+                d[mp];
+            }
+        }
+        parameters_.setModulation(p,m,d);
+    }
+
 protected:
     virtual void processBuffer(double* buf, size_t len){} 
     virtual void processBuffer(){}

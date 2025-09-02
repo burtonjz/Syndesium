@@ -3,6 +3,7 @@
 
 #include <nlohmann/json.hpp>
 #include "types/SocketType.hpp"
+#include "types/ParameterType.hpp"
 
 using json = nlohmann::json ;
 
@@ -17,6 +18,7 @@ struct ConnectionRequest {
     std::optional<int> outboundID ;
     std::optional<bool> inboundIsModule ;
     std::optional<bool> outboundIsModule ;
+    std::optional<ParameterType> inboundParameter ;
 };
 
 class ApiHandler {

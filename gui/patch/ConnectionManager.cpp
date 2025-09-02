@@ -1,5 +1,7 @@
 #include "patch/ConnectionManager.hpp"
 #include "patch/ConnectionCable.hpp"
+#include "types/ParameterType.hpp"
+#include "types/SocketType.hpp"
 #include "widgets/ComponentWidget.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "core/ApiClient.hpp"
@@ -184,6 +186,11 @@ void ConnectionManager::sendConnectionApiRequest(
         output["id"] = outputModule->getID();
         output["is_module"] = outputModule->getComponentDescriptor().type.isModule();
     } 
+
+    // if it's modulation, we need to capture the parameter to be modulated
+    if ( inputSock->getType() == SocketType::ModulationInput ){
+        input["parameter"] = static_cast<int>(parameterFromString(inputSock->getName().toStdString()));
+    }
 
     obj["action"] = "create_connection" ;
     obj["output"] = output ;

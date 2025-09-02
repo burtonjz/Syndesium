@@ -13,3 +13,18 @@ ModulatorType BaseModulator::getType() const {
 ParameterMap* BaseModulator::getParameters(){
     return parameters_.get() ;
 }
+
+void BaseModulator::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d ){
+    if ( ! parameters_ ) return ;
+    if ( d.empty() ){
+        auto required = m->getRequiredModulationParameters();
+        for ( auto mp : required ){
+            d[mp];
+        }
+    }
+    parameters_->setModulation(p,m,d);
+}
+
+void BaseModulator::tick(){
+    if (parameters_) parameters_->modulate() ;
+}

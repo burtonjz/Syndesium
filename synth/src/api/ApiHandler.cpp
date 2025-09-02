@@ -300,6 +300,7 @@ ConnectionRequest ApiHandler::parseConnectionRequest(json request){
     if ( request["output"].contains("id")) req.outboundID = request["output"]["id"];
     if ( request["input"].contains("is_module")) req.inboundIsModule = request["input"]["is_module"];
     if ( request["output"].contains("is_module")) req.outboundIsModule = request["output"]["is_module"];
+    if ( request["input"].contains("parameter")) req.inboundParameter = static_cast<ParameterType>(request["input"]["parameter"]);
 
     return req ;
 }
@@ -420,6 +421,13 @@ bool ApiHandler::handleModulationConnection(Engine* engine, ConnectionRequest re
         return false ;
     }
 
-    // TODO
-    return false ;
+    BaseModulator* modulator = engine->modulationController.getRaw(request.outboundID.value());
+
+    if ( request.inboundIsModule.value() ){
+        engine->moduleController.getRaw(request.inboundID.value())->setParameterModulation(request.inboundParameter.value(), modulator);
+    } else {
+        engine->modulationController.getRaw(request.inboundID.value())->setParameterModulation(request.inboundParameter.value(), modulator);
+    }
+
+    return true ;
 }

@@ -12,36 +12,44 @@ LinearFader::LinearFader(LinearFaderConfig cfg):
 {
     parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
     parameters_->add<ParameterType::RELEASE>(cfg.release, true);
+
+    requiredParams_ = {
+        ModulationParameter::MIDI_NOTE, 
+        ModulationParameter::INITIAL_VALUE,
+        ModulationParameter::LAST_VALUE
+    };
 }
 
 double LinearFader::modulate(double value, ModulationData* mData) const {
-    double output = value ;
+    double output = 0.0 ;
 
     // check required data
-    if ( !mData ) return value ; 
-    if ( mData->find(ModulationParameter::MIDI_NOTE)     == mData->end() ){ return value ; }
-    if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){ return value ; }
-    if ( mData->find(ModulationParameter::LAST_VALUE)    == mData->end() ){ return value ; }
+    if ( !mData ) return output ; 
+    if ( mData->find(ModulationParameter::MIDI_NOTE)     == mData->end() ){ return output ; }
+    if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){ return output ; }
+    if ( mData->find(ModulationParameter::LAST_VALUE)    == mData->end() ){ return output ; }
     
     uint8_t midiNote = static_cast<uint8_t>((*mData)[ModulationParameter::MIDI_NOTE].get()) ;
-
     auto it = notes_.find(midiNote) ;
-    if ( it == notes_.end() ){ return value ; }
+    if ( it == notes_.end() ){ return output ; }
 
     float start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get();
     
     if ( it->second.note.getStatus() ){
-        // then note is pressed
+        // note is pressed
         float attack = parameters_->getInstantaneousValue<ParameterType::ATTACK>() ;
         if ( it->second.time <= attack ) {
-            output = start_level + ( value - start_level ) * (it->second.time / attack) ;
+            output = start_level + (1.0f - start_level) * (it->second.time / attack) ;
+        } else {
+            output = 1.0f ; // full modulation
         }
     } else {
+        // note is released
         float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
         if ( it->second.time >= release ){
             output = 0.0 ;
         } else {
-            output = start_level * (1 - (it->second.time / release)) ;
+            output =  start_level * (1.0f - ( it->second.time / release )); 
         }
     }
 

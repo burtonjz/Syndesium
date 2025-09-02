@@ -55,6 +55,7 @@ constexpr std::array<std::string, N_PARAMETER_TYPES> parameterStrings({
     "q factor"
 });
 const std::string& parameter2String(ParameterType p);
+ParameterType parameterFromString(std::string str);
 
 /**
  * @brief a std::pair containing the min and max for each parameter type

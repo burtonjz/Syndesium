@@ -40,7 +40,7 @@ public:
     void onKeyReleased(ActiveNote anote) override ;
     void onKeyOff(ActiveNote anote) override ;
 
-    void setModulation(ParameterType p, BaseModulator* m, ModulationData d = {} );
+    void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
 
     void updateGain();
 };  
