@@ -21,7 +21,7 @@ PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size, PolyOsc
     modulationData_()
 {
     parameters_.add<ParameterType::WAVEFORM>(cfg.waveform,false);
-    parameters_.add<ParameterType::GAIN>(1.0 , true);
+    parameters_.add<ParameterType::GAIN>(1.0 , false);
     updateGain();
 
     childPool_.initializeAll(sampleRate_, size_, parameters_, 0.0);

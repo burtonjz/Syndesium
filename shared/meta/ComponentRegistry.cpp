@@ -25,7 +25,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 "Polyphonic Oscillator",
                 ComponentType(ModuleType::PolyOscillator),
-                {ParameterType::AMPLITUDE, ParameterType::FREQUENCY, ParameterType::GAIN}, // modulatable params
+                {ParameterType::AMPLITUDE, ParameterType::FREQUENCY, ParameterType::PHASE}, // modulatable params
                 {ParameterType::WAVEFORM, ParameterType::AMPLITUDE}, //control params
                 0, // audio inputs
                 1, // audio outputs
