@@ -21,10 +21,11 @@ based on the type of variable it is. This is overridable at the
 Parameter level. 
 */ 
 enum class ModulationStrategy {
-    LINEAR,
+    ADDITIVE,
+    MULTIPLICATIVE, 
     EXPONENTIAL,
     LOGARITHMIC,
-    MULTIPLICATIVE,
+    REPLACE,
     NONE
 };
 

@@ -1,15 +1,30 @@
-✓ Allow Modules to be draggable
-✓ Implement colored sockets on ModuleWidget (midi, audio, modulation) based on ComponentRegistry info
-✓ Implement ConnectionCable to draw connections from different sources
+CORE FUNCTIONALITY TODO:
+
 - Implement right click on socket to expand a menu to delete specific connections
-✓ Implement API calls to tell backend when connections are added 
 - Implement API calls to tell backend when connections are removed
-✓ Create input/output widgets for midi and audio from/to hardware sources
-✓ Fix Oscillator signal output gain variable issue.
-- Add modulator add menu to synth UI and sync to backend
-- Implement modulation_connection add/remove logic
-✓ Add Modulation Depth logic
+- Implement modulation connection removal logic
 - UI support modulation depth socket parameters (with nesting)
-- Create control parameter UI forms and controls for each ModuleType
+- Create control parameter UI forms and controls for each module/modulator (or default forms with standard knobs for simple modules/modulators)
 - Improve module add logic so they do not spawn on top of each other.
 - Create max zoom for gui graph panel
+- Improve UI workflow (e.g., setup must be done before play, we need to get these safegaurds in place )
+
+COMPONENTS TO ADD:
+- Oscillator (extend to be a modulator)
+- Filter (Module + Modulator)
+- Sequencer (MidiEventHandler)
+- MidiModulator (start with pitchbend, maybe extend to )
+- Panner
+- Phaser
+- Mixer (with different mixing strategies so this can support ring modulation, for example)
+- Sample & Hold
+- Bitcrusher
+
+IMPROVEMENTS:
+- Phase syncing to minimize wave interference?
+- Tempo Utility? (support multiple independent sequencers staying in sync)
+- Support multiple modulation sources connecting to a single parameter (reorderable modulation chain? Or does modulation depth / second order modulation capture this?)
+
+ONE DAY...:
+- Envelope that supports drawing curve
+- Custom Wavetable Drawing

@@ -1,13 +1,11 @@
 #include "params/Parameter.hpp"
-#include "config/Config.hpp"
 
 void ParameterBase::initializeDepth(){
+    // depth will recurse until MAX_DEPTH, determined by it being identified as a modulatable parameter
     if (!modulatable_ && !modDepth_) return ;
-    
-    int maxDepth = Config::get<int>("modulation.max_depth").value() ;
-    if ( modDepthLevel_ >= maxDepth ) return ;
+    if ( modDepthLevel_ >= MAX_DEPTH ) return ;
 
-    bool nextModulatable = (modDepthLevel_ + 1) < maxDepth ; // only modulate depth so far!
+    bool nextModulatable = (modDepthLevel_ + 1) < MAX_DEPTH ;
 
     modDepth_ = std::make_unique<Parameter<ParameterType::DEPTH>>(
         parameterDefaults[static_cast<float>(ParameterType::DEPTH)],

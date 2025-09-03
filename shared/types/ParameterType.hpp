@@ -127,7 +127,7 @@ template <> struct ParameterTypeTraits<ParameterType::FREQUENCY>{
 
 template <> struct ParameterTypeTraits<ParameterType::AMPLITUDE>{
     using ValueType = double;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LINEAR ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC ;
 };
 
 template <> struct ParameterTypeTraits<ParameterType::GAIN>{
@@ -137,12 +137,12 @@ template <> struct ParameterTypeTraits<ParameterType::GAIN>{
 
 template <> struct ParameterTypeTraits<ParameterType::PHASE>{
     using ValueType = double;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LINEAR ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
 };
 
 template <> struct ParameterTypeTraits<ParameterType::PAN>{
     using ValueType = float;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LINEAR ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
 };
 
 template <> struct ParameterTypeTraits<ParameterType::DETUNE>{
@@ -162,7 +162,7 @@ template <> struct ParameterTypeTraits<ParameterType::DECAY>{
 
 template <> struct ParameterTypeTraits<ParameterType::SUSTAIN>{
     using ValueType = float;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LINEAR ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
 };
 
 template <> struct ParameterTypeTraits<ParameterType::RELEASE>{
