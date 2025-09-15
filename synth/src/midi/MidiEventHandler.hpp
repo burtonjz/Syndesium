@@ -5,6 +5,7 @@
 #include "midi/MidiEventListener.hpp"
 #include "midi/MidiEventQueue.hpp"
 
+#include <iostream>
 #include <vector>
 #include <algorithm>
 
@@ -102,6 +103,8 @@ public:
 
     void tick(float dt){
         processEvents();
+
+        // also, the handler will check if a note should be killed (e.g., if enough time has passed that a release stage is concluded)
         for (auto it = notes_.begin(); it != notes_.end(); ++it ){
             if ( shouldKillNote(it->second) ){
                 MidiEvent e = {MidiEvent::Type::NoteOff, it->second};

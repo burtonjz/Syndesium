@@ -28,7 +28,8 @@ public:
     void calculateSample() override ; 
 
     void tick() override ;
-
+    void reset();
+    
     // getters/setters
     void addReferenceParameters(ParameterMap& map);
     void setWaveform(Waveform wave);

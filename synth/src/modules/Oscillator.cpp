@@ -47,7 +47,6 @@ void Oscillator::calculateSample(){
     frac = wavetableIndex - index_floor ;
     sample = ( 1.0 - frac ) * w.first[index_floor] + frac * w.first[index_floor+1];
     sample *= parameters_.getInstantaneousValue<ParameterType::AMPLITUDE>() * parameters_.getInstantaneousValue<ParameterType::GAIN>();
-    
     buffer_[bufferIndex_] = sample ;
 }
 

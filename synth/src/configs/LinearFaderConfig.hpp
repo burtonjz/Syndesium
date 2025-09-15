@@ -11,8 +11,8 @@ class LinearFader ;
 
 // define default configuration
 struct LinearFaderConfig {
-    double attack = 1.0 ;
-    double release = 1.0 ; 
+    double attack = 0.2 ;
+    double release = 0.2 ; 
 };
 
 // Type Traits Specification

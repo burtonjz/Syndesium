@@ -26,6 +26,7 @@ void MidiController::initialize(){
 }
 
 void MidiController::addHandler(MidiEventHandler* handler){ 
+    if (std::find(handlers_.begin(), handlers_.end(), handler) != handlers_.end()) return ;
     handlers_.insert(handler) ; 
     state_->addHandler(handler) ;
 }

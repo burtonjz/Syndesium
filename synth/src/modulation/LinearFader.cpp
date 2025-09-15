@@ -15,30 +15,34 @@ LinearFader::LinearFader(LinearFaderConfig cfg):
 
     requiredParams_ = {
         ModulationParameter::MIDI_NOTE, 
-        ModulationParameter::INITIAL_VALUE,
-        ModulationParameter::LAST_VALUE
+        ModulationParameter::INITIAL_VALUE
     };
 }
 
 double LinearFader::modulate(double value, ModulationData* mData) const {
     double output = 0.0 ;
 
-    // check required data
+    // check required data / set to defaults
     if ( !mData ) return output ; 
     if ( mData->find(ModulationParameter::MIDI_NOTE)     == mData->end() ){ return output ; }
-    if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){ return output ; }
-    if ( mData->find(ModulationParameter::LAST_VALUE)    == mData->end() ){ return output ; }
+    if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){ 
+        (*mData)[ModulationParameter::INITIAL_VALUE] = 0.0f ;     
+    }
+    if ( mData->find(ModulationParameter::LAST_VALUE)    == mData->end() ){ 
+        (*mData)[ModulationParameter::LAST_VALUE] = 0.0f ;    
+    }
     
     uint8_t midiNote = static_cast<uint8_t>((*mData)[ModulationParameter::MIDI_NOTE].get()) ;
     auto it = notes_.find(midiNote) ;
     if ( it == notes_.end() ){ return output ; }
 
-    float start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get();
+    float start_level ;
     
     if ( it->second.note.getStatus() ){
         // note is pressed
         float attack = parameters_->getInstantaneousValue<ParameterType::ATTACK>() ;
         if ( it->second.time <= attack ) {
+            start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get();
             output = start_level + (1.0f - start_level) * (it->second.time / attack) ;
         } else {
             output = 1.0f ; // full modulation
@@ -46,9 +50,13 @@ double LinearFader::modulate(double value, ModulationData* mData) const {
     } else {
         // note is released
         float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
+        if ( it->second.time == 0.0 ){
+            (*mData)[ModulationParameter::INITIAL_VALUE].set((*mData)[ModulationParameter::LAST_VALUE].get()) ;
+        }
         if ( it->second.time >= release ){
             output = 0.0 ;
         } else {
+            start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get();
             output =  start_level * (1.0f - ( it->second.time / release )); 
         }
     }

@@ -1,6 +1,7 @@
 #ifndef __MODULATOR_HPP_
 #define __MODULATOR_HPP_
 
+#include "midi/MidiNote.hpp"
 #include "types/ModulatorType.hpp"
 #include "types/ParameterType.hpp"
 #include "params/ModulationParameter.hpp"
@@ -14,6 +15,10 @@
 class ParameterMap ; 
 
 using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PARAMETERS> ;
+
+struct ModulationContext {
+    const MidiNote* note = nullptr ;
+};
 
 /**
  * @brief base class for all Modulators.

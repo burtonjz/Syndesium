@@ -134,12 +134,14 @@ class ParameterMap {
 
         void setModulation(ParameterType typ, BaseModulator* modulator, ModulationData modData){
             auto it = parameters_.find(typ);
-            if (it != parameters_.end() ){
-                it->second->setModulation(modulator, modData);
+            if (it == parameters_.end() ){
+                std::cout << "ParameterMap: WARN failed to set modulation for parameter " << static_cast<int>(typ)
+                          << " as parameter does not exist in map." << std::endl ;    
                 return ;
             }
-            std::cout << "ParameterMap: WARN failed to set modulation for parameter " << static_cast<int>(typ)
-                << " as parameter does not exist in map." << std::endl ;
+            it->second->setModulation(modulator, modData);
+            // std::cout << "Priming Modulation...\n" ; 
+            // it->second->modulate(); // prime modulator
         }
 
         ModulationData* getModulationData(ParameterType typ){

@@ -103,10 +103,10 @@ int Engine::audioCallback(
 
     double sample ;
     for ( unsigned int i = 0 ; i < nBufferFrames ; ++i ){
+        sample = engine->moduleController.processFrame();
         engine->modulationController.tick(engine->getDeltaTime());
         engine->midiController.tick(engine->getDeltaTime());
-        sample = engine->moduleController.processFrame();
-        buffer[i] = dsp::fastAtan(sample) ;
+        buffer[i] = sample ; // buffer[i] = dsp::fastAtan(sample) ;
     }
     
     return 0 ;

@@ -62,17 +62,20 @@ void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
         Oscillator* osc = children_[anote->note.getMidiNote()] ;
         osc->setFrequency(anote->note.getFrequency());
         osc->setAmplitude(anote->note.getMidiVelocity() / 127.0 );
-        for ( auto p : osc->getParameters()->getModulatableParameters()){
-            if ( modulators_.find(p) != modulators_.end() ){
-                auto d = osc->getParameters()->getModulationData(p);
-                if ( 
-                    d->find(ModulationParameter::INITIAL_VALUE) != modulationData_[p].end() &&
-                    d->find(ModulationParameter::LAST_VALUE)    != modulationData_[p].end()
-                ){
-                    (*d)[ModulationParameter::INITIAL_VALUE].set((*d)[ModulationParameter::LAST_VALUE].get()) ;
-                }
-            }
-        } 
+
+        // for every modulated parameter, we need to update modulation data to let it know that we are entering the next stage
+        // for ( auto p : osc->getParameters()->getModulatableParameters()){
+        //     if ( modulators_.find(p) != modulators_.end() ){
+        //         auto d = osc->getParameters()->getModulationData(p);
+        //         if ( 
+        //             d->find(ModulationParameter::INITIAL_VALUE) != modulationData_[p].end() &&
+        //             d->find(ModulationParameter::LAST_VALUE)    != modulationData_[p].end()
+        //         ){
+        //             (*d)[ModulationParameter::INITIAL_VALUE].set((*d)[ModulationParameter::LAST_VALUE].get()) ;
+        //         }
+        //     }
+        // } 
+        
         return ;
     }
 
@@ -85,16 +88,13 @@ void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
         // handle modulation updates
         for ( auto p : osc->getParameters()->getModulatableParameters()){
             if ( modulators_.find(p) != modulators_.end() ){
-                if ( modulationData_[p].find(ModulationParameter::MIDI_NOTE) != modulationData_[p].end() ){
-                    modulationData_[p][ModulationParameter::MIDI_NOTE].set(anote->note.getMidiNote()) ;
-                }
-                if ( modulationData_[p].find(ModulationParameter::INITIAL_VALUE) != modulationData_[p].end() ){
-                    modulationData_[p][ModulationParameter::INITIAL_VALUE].set(0.0f) ;
+                auto modParams = modulators_[p]->getRequiredModulationParameters();
+                if ( modParams.contains(ModulationParameter::MIDI_NOTE)){
+                    modulationData_[p][ModulationParameter::MIDI_NOTE].set(anote->note.getMidiNote());
                 }
                 osc->getParameters()->setModulation(p, modulators_[p], modulationData_[p]);
             }
         }
-        osc->getParameters()->modulate() ; // prime modulation to not click on first sample
         children_.insert(std::make_pair(anote->note.getMidiNote(),osc));
     } 
 }
@@ -113,7 +113,6 @@ void PolyOscillator::onKeyReleased(ActiveNote anote){
                 }
             }
         }
-    // set modulation
     }
 }
 
@@ -134,8 +133,6 @@ void PolyOscillator::setParameterModulation(ParameterType p, BaseModulator* m, M
     }
     modulators_[p] = m ;
     modulationData_[p] = d ;
-    MidiEventHandler* h = dynamic_cast<MidiEventHandler*>(m);
-    if (h) h->addListener(this);
 }
 
 void PolyOscillator::updateGain(){
