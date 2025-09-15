@@ -140,8 +140,8 @@ class ParameterMap {
                 return ;
             }
             it->second->setModulation(modulator, modData);
-            // std::cout << "Priming Modulation...\n" ; 
-            // it->second->modulate(); // prime modulator
+            std::cout << "Priming Modulation...\n" ; 
+            it->second->modulate(); // prime modulator
         }
 
         ModulationData* getModulationData(ParameterType typ){
