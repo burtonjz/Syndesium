@@ -43,7 +43,6 @@ public:
     // processing messages
     void processMsgNoteOn(int midiNote, int velocity){
         std::cout << "\tMSG_ON [" << midiNote << " " << velocity << "]" << std::endl ;
-        std::cout << "notifying " << handlers_.size() << " handler(s) " << std::endl ; 
         notes_[midiNote].setMidiNote(midiNote);
         notes_[midiNote].setMidiVelocity(velocity);
         notes_[midiNote].setStatus(true);
