@@ -57,8 +57,9 @@ QColor SocketWidget::getSocketColor() const {
         case SocketType::MidiInput:
         case SocketType::MidiOutput:
             return QColor(100,100,255); // blue
+        default: 
+            return Qt::gray ;
     }
-    return Qt::gray ; // shouldn't happen
 }
 
 bool SocketWidget::isOutput() const {

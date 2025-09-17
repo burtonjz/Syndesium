@@ -87,6 +87,8 @@ void SocketContainerWidget::layoutSockets(){
         case SocketType::ModulationOutput:
             topSockets.append(socket);
             break ;
+        default:
+            break ;
         }
     }
 
@@ -101,7 +103,7 @@ void SocketContainerWidget::layoutSockets(){
         rightSockets[i]->setPos(COMPONENT_WIDTH + 6, startY + i * SOCKET_SPACING);
     }
 
-    qreal startX = 0 ;
+    qreal startX = 4 ;
     // bottom
     for ( int i = 0; i < bottomSockets.size(); ++i ){
         bottomSockets[i]->setPos(startX + i * SOCKET_SPACING, COMPONENT_HEIGHT + 6 );
@@ -109,7 +111,7 @@ void SocketContainerWidget::layoutSockets(){
 
     // top
     for ( int i = 0; i < topSockets.size(); ++i ){
-        topSockets[i]->setPos(startX + i * SOCKET_SPACING, -6);
+        topSockets[i]->setPos(COMPONENT_WIDTH - 6 - i * SOCKET_SPACING, -6);
     }
 }
 
