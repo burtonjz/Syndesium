@@ -43,6 +43,9 @@ public:
     void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
 
     void updateGain();
+private:
+    void updateModulationInitialValue(Oscillator* osc);
+
 };  
 
 #endif // __MODULE_POLYOSCILLATOR_HPP_

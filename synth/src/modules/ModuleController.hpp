@@ -124,12 +124,13 @@ public:
 
         double output = 0 ; 
         for (BaseModule*  mod : chain){
+            mod->tick();
             mod->calculateSample();
+
             // if it's a sink, add it to the output
             if ( sinks.count(mod) ){
                 output += mod->getCurrentSample() ;
             }
-            mod->tick();
         }
 
         return output ;

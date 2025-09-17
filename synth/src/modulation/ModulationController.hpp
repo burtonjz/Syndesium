@@ -95,8 +95,8 @@ public:
     void tick(float dt){
         for (auto it = modulators_.begin(); it != modulators_.end(); ++it){
             it->second->tick(); // modulate parameters owned by modulator
-            MidiEventHandler* h = dynamic_cast<MidiEventHandler*>(it->second.get());
-            if (h) h->tick(dt);
+            // MidiEventHandler* h = dynamic_cast<MidiEventHandler*>(it->second.get());
+            // if (h) h->tick(dt);
         }
     }
 

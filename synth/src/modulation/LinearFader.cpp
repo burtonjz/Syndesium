@@ -36,13 +36,12 @@ double LinearFader::modulate(double value, ModulationData* mData) const {
     auto it = notes_.find(midiNote) ;
     if ( it == notes_.end() ){ return output ; }
 
-    float start_level ;
+    float start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get() ;
     
     if ( it->second.note.getStatus() ){
         // note is pressed
         float attack = parameters_->getInstantaneousValue<ParameterType::ATTACK>() ;
         if ( it->second.time <= attack ) {
-            start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get();
             output = start_level + (1.0f - start_level) * (it->second.time / attack) ;
         } else {
             output = 1.0f ; // full modulation
@@ -50,13 +49,9 @@ double LinearFader::modulate(double value, ModulationData* mData) const {
     } else {
         // note is released
         float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
-        if ( it->second.time == 0.0 ){
-            (*mData)[ModulationParameter::INITIAL_VALUE].set((*mData)[ModulationParameter::LAST_VALUE].get()) ;
-        }
         if ( it->second.time >= release ){
             output = 0.0 ;
         } else {
-            start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get();
             output =  start_level * (1.0f - ( it->second.time / release )); 
         }
     }
