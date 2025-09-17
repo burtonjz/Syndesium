@@ -1,7 +1,8 @@
 #include "types/ParameterType.hpp"
+#include <algorithm>
 
-const std::string& parameter2String(ParameterType p){
-    return parameterStrings[static_cast<int>(p)];
+const std::string parameter2String(ParameterType p){
+    return std::string(parameterStrings[static_cast<int>(p)]);
 }
 
 ParameterType parameterFromString(std::string str) {

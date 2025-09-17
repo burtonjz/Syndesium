@@ -32,8 +32,8 @@ public:
 
     const QList<ConnectionCable*>& getConnections() const { return connections_ ; }
 
-private:
     SocketWidget* findSocketAt(const QPointF& scenePos) const ;
+private:
     bool canConnect(SocketWidget* from, SocketWidget* to) const ;
     void sendConnectionApiRequest(SocketWidget* fromSock, SocketWidget* toSock, SocketContainerWidget* fromWidget, SocketContainerWidget* toWidget);
 

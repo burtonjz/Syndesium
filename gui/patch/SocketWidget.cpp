@@ -12,6 +12,8 @@ SocketWidget::SocketWidget(SocketSpec spec, SocketContainerWidget* parent):
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::LeftButton);
     setZValue(10); // ensures sockets are on top
+
+    setToolTip(spec_.name);
 }
 
 QRectF SocketWidget::boundingRect() const {
@@ -73,6 +75,7 @@ bool SocketWidget::isInput() const {
 QPointF SocketWidget::getConnectionPoint() const {
     return mapToScene(0,0);
 }
+
 void SocketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
     if ( event->button() == Qt::LeftButton ){
         isDragging_ = true ;

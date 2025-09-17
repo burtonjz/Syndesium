@@ -17,6 +17,7 @@
 #include <QSpinBox>
 #include <QDoubleSpinBox>
 #include <QPushButton>
+#include <QToolTip>
 
 #include <QJsonObject>
 #include <qdebug.h>
@@ -39,6 +40,8 @@ GraphPanel::GraphPanel(QWidget* parent):
 
     // connections
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &GraphPanel::onApiDataReceived);
+
+    
 }
 
 GraphPanel::~GraphPanel(){
@@ -216,6 +219,17 @@ void GraphPanel::onConnectionStarted(SocketWidget* socket){
 void GraphPanel::onConnectionDragging(SocketWidget* socket, QPointF scenePos){
     Q_UNUSED(socket);
     connectionManager_->updateDragConnection(scenePos);
+
+    // manually show tool tip if hovering
+    SocketWidget* w = connectionManager_->findSocketAt(scenePos);
+    
+    if (w && !w->toolTip().isEmpty()){
+        QToolTip::showText(QCursor::pos(), w->toolTip());
+        return ;
+    }
+
+    // hide tool tip if no longer found
+    QToolTip::hideText();
 }
 
 void GraphPanel::onConnectionEnded(SocketWidget* socket, QPointF scenePos){

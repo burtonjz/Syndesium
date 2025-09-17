@@ -8,7 +8,7 @@
 #include <utility>
 #include <limits>
 #include <cstdint>
-
+#include <string_view>
 
 /**
  * @brief types of parameters that might exist within any given module
@@ -36,7 +36,7 @@ enum class ParameterType {
 
 constexpr int N_PARAMETER_TYPES = static_cast<int>(ParameterType::N_PARAMETERS) ;
 
-constexpr std::array<std::string, N_PARAMETER_TYPES> parameterStrings({
+constexpr std::array<std::string_view, N_PARAMETER_TYPES> parameterStrings({
     "depth",
     "status",
     "waveform",
@@ -54,7 +54,7 @@ constexpr std::array<std::string, N_PARAMETER_TYPES> parameterStrings({
     "cutoff",
     "q factor"
 });
-const std::string& parameter2String(ParameterType p);
+const std::string parameter2String(ParameterType p);
 ParameterType parameterFromString(std::string str);
 
 /**

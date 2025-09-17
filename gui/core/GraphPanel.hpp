@@ -3,6 +3,7 @@
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
+#include <QTimer>
 #include <vector>
 
 #include "meta/ComponentDescriptor.hpp"
