@@ -1,5 +1,6 @@
 #include "core/GraphPanel.hpp"
 #include "core/ApiClient.hpp"
+#include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "widgets/ComponentWidget.hpp"
@@ -67,11 +68,16 @@ void GraphPanel::setupScene(){
 
 void GraphPanel::addComponent(int id, ComponentType type){
     auto* module = new ComponentWidget(id, type);
+    auto* detail = new ModuleDetailWidget(id,type);
+
+    widgets_.push_back(module);
+    details_.push_back(detail);
+
     scene_->addItem(module);
     module->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
 
     connectWidgetSignals(module);
-    widgets_.push_back(module);
+    
     qDebug() << "Created module:" << module->getName() << "at position:" << module->pos() ;
 }
 
@@ -96,7 +102,7 @@ void GraphPanel::addMidiInput(){
 }
 
 void GraphPanel::connectWidgetSignals(SocketContainerWidget* widget){
-    connect(widget, &SocketContainerWidget::doubleClicked, this, &GraphPanel::onWidgetDoubleClicked);
+    // connect(widget, &SocketContainerWidget::doubleClicked, this, &GraphPanel::onWidgetDoubleClicked);
     for (SocketWidget* socket : widget->getSockets() ){
         connect(socket, &SocketWidget::connectionStarted, this, &GraphPanel::onConnectionStarted);
         connect(socket, &SocketWidget::connectionDragging, this, &GraphPanel::onConnectionDragging);
@@ -142,6 +148,18 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
 
     QGraphicsView::mousePressEvent(event); // pass event through
 }
+
+void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
+    QPointF scenePos = mapToScene(event->pos());
+
+    QGraphicsItem* item = scene()->itemAt(scenePos, transform());
+
+    if ( ComponentWidget* w = dynamic_cast<ComponentWidget*>(item)){
+        qDebug() << "Component Clicked!";
+        onComponentDoubleClicked(w);
+    }
+}
+
 
 void GraphPanel::wheelEvent(QWheelEvent* event){
     if ( event->angleDelta().y() > 0 ){
@@ -206,9 +224,20 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
     }
 }
 
-void GraphPanel::onWidgetDoubleClicked(SocketContainerWidget* widget){
-    // TODO -- use this to launch module specific control UIs
-    qDebug() << "Module double-clicked:" << widget->getName() ;
+void GraphPanel::onComponentDoubleClicked(ComponentWidget* widget){
+    int id = widget->getID();
+    ComponentType type = widget->getComponentDescriptor().type ;
+
+    for ( auto d : details_ ){
+        if( d->getID() == id && d->getType() == type ){
+            d->show();
+            d->raise();
+            d->activateWindow();
+            return ;
+        }
+    }
+
+    qDebug() << "No detail component found.";
 }
 
 void GraphPanel::onConnectionStarted(SocketWidget* socket){

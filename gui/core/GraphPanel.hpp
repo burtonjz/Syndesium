@@ -7,9 +7,9 @@
 #include <vector>
 
 #include "meta/ComponentDescriptor.hpp"
-#include "patch/SocketWidget.hpp"
 #include "patch/ConnectionManager.hpp"
-
+#include "widgets/SocketContainerWidget.hpp"
+#include "widgets/ModuleDetailWidget.hpp"
 
 class ComponentWidget ; // forward declaration
 
@@ -21,6 +21,7 @@ private:
     ConnectionManager* connectionManager_ ;
 
     std::vector<SocketContainerWidget*> widgets_ ;
+    std::vector<ModuleDetailWidget*> details_ ;
 
 public:
     explicit GraphPanel(QWidget* parent = nullptr);
@@ -35,6 +36,7 @@ public:
 protected:
     void keyPressEvent(QKeyEvent* event) override ;
     void mousePressEvent(QMouseEvent* event) override ;
+    void mouseDoubleClickEvent(QMouseEvent* event) override ;
     void wheelEvent(QWheelEvent* event) override ;
 
 private:
@@ -48,7 +50,7 @@ private:
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
-    void onWidgetDoubleClicked(SocketContainerWidget* widget);
+    void onComponentDoubleClicked(ComponentWidget* widget);
     void onConnectionStarted(SocketWidget* socket);
     void onConnectionDragging(SocketWidget* socket, QPointF scenePos);
     void onConnectionEnded(SocketWidget* socket, QPointF scenePos);

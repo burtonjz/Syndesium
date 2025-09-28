@@ -8,7 +8,6 @@
 #include <array>
 #include <cstdint> 
 #include <type_traits>
-#include <optional>
 
 using json = nlohmann::json ;
 
@@ -66,6 +65,10 @@ public:
         return static_cast<Wave>(static_cast<std::underlying_type_t<Wave>>(val));
     }
 
+    uint8_t to_uint8(){
+        return static_cast<uint8_t>(waveform_) ;
+    }
+
 private:
     Wave waveform_ ;
 };
@@ -77,27 +80,5 @@ inline void to_json(json& j, const Waveform& w){
 inline void from_json(const json& j, Waveform& w){
     w = Waveform(j.get<std::string>());
 }
-
-
-// support json string serialization for Waveform class
-// NLOHMANN_JSON_NAMESPACE_BEGIN
-//     template <>
-//     struct adl_serializer<std::optional<Waveform>> {
-//         static inline void to_json(json& j, const std::optional<Waveform>& opt) {
-//             j = opt.has_value() ? opt->toString() : nullptr ;
-//         }
-
-//         static inline void from_json(const json& j, std::optional<Waveform>& opt) {
-//             if (j.is_null()) {
-//                 opt = std::nullopt;
-//             } else if (j.is_string()) {
-//                 opt = Waveform(j.get<std::string>());
-//             } else {
-//                 throw std::invalid_argument("Waveform must be string or null");
-//             }
-//         }
-//     };
-// NLOHMANN_JSON_NAMESPACE_END
-
 
 #endif // __WAVEFORM_HPP_

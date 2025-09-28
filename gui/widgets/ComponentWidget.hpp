@@ -15,13 +15,13 @@ class ComponentWidget :  public SocketContainerWidget {
     Q_OBJECT
 
 private:
-    int moduleId_ ;
+    int componentId_ ;
     ComponentDescriptor descriptor_ ;
     
 public:
     explicit ComponentWidget(int id, ComponentType type, QGraphicsItem* parent = nullptr);
     const ComponentDescriptor& getComponentDescriptor() const { return descriptor_ ; }
-    const int getID() const { return moduleId_ ; }
+    const int getID() const { return componentId_ ; }
 };
 
 #endif // __UI_COMPONENT_WIDGET_HPP_

@@ -7,7 +7,7 @@
 
 ComponentWidget::ComponentWidget(int id, ComponentType type, QGraphicsItem* parent): 
     SocketContainerWidget(QString::fromStdString(ComponentRegistry::getComponentDescriptor(type).name), parent),
-    moduleId_(id),
+    componentId_(id),
     descriptor_(ComponentRegistry::getComponentDescriptor(type))
 {
     std::vector<SocketSpec> specs ;
