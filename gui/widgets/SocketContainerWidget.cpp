@@ -17,6 +17,7 @@
 
 #include "widgets/SocketContainerWidget.hpp"
 #include "patch/SocketWidget.hpp"
+#include "core/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 
@@ -32,7 +33,7 @@ SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent
     setAcceptHoverEvents(true);
 
     titleText_ = new QGraphicsTextItem(name_, this);
-    titleText_->setDefaultTextColor(COMPONENT_TEXT_COLOR);
+    titleText_->setDefaultTextColor(Theme::COMPONENT_TEXT);
     titleText_->setPos(COMPONENT_TEXT_PADDING,COMPONENT_TEXT_PADDING);
     titleText_->setTextWidth(COMPONENT_WIDTH - COMPONENT_TEXT_PADDING * 2);
 }
@@ -49,13 +50,13 @@ void SocketContainerWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
 
     // draw background
     QRectF baseRect(0, 0,COMPONENT_WIDTH, COMPONENT_HEIGHT);
-    painter->setBrush(COMPONENT_BACKGROUND_COLOR);
-    painter->setPen(QPen(Qt::white,COMPONENT_BORDER_WIDTH));
+    painter->setBrush(Theme::COMPONENT_BACKGROUND);
+    painter->setPen(QPen(Theme::COMPONENT_BORDER,COMPONENT_BORDER_WIDTH));
     painter->drawRoundedRect(baseRect, COMPONENT_ROUNDED_RADIUS, COMPONENT_ROUNDED_RADIUS);
 
     // when selected, draw an indicator around the object
     if (isSelected()){
-        painter->setPen(QPen(Qt::yellow, HIGHLIGHT_WIDTH, Qt::DashLine));
+        painter->setPen(QPen(Theme::COMPONENT_BORDER_SELECTED, HIGHLIGHT_WIDTH, Qt::SolidLine));
         painter->setBrush(Qt::NoBrush);
         painter->drawRoundedRect(
             baseRect.adjusted(-HIGHLIGHT_BUFFER,-HIGHLIGHT_BUFFER,HIGHLIGHT_BUFFER,HIGHLIGHT_BUFFER),

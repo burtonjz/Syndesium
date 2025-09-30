@@ -17,6 +17,7 @@
 
 #include "core/GraphPanel.hpp"
 #include "core/ApiClient.hpp"
+#include "core/Theme.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "widgets/SocketContainerWidget.hpp"
@@ -187,7 +188,7 @@ void GraphPanel::wheelEvent(QWheelEvent* event){
 
 void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
     // Draw Grid
-    painter->setPen(QPen(GRAPH_GRID_COLOR, 1));
+    painter->setPen(QPen(Theme::GRAPH_GRID_COLOR, 1));
 
     qreal left = int(rect.left()) - (int(rect.left()) % int(GRID_SIZE));
     qreal top = int(rect.top()) - (int(rect.top()) % int(GRID_SIZE));

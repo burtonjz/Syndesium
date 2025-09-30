@@ -17,6 +17,7 @@
 
 #include "patch/ConnectionCable.hpp"
 #include "patch/SocketWidget.hpp"
+#include "core/Theme.hpp"
 
 #include <QPainter>
 #include <QGraphicsScene>
@@ -135,13 +136,13 @@ QColor ConnectionCable::getCableColor() const
     switch (fromSocket_->getType()) {
         case SocketType::ModulationInput:
         case SocketType::ModulationOutput:
-            return QColor(255, 80, 80); // red
+            return Theme::CABLE_MODULATION ;
         case SocketType::SignalInput:
         case SocketType::SignalOutput:
-            return QColor(80, 255, 80); // green
+            return Theme::CABLE_AUDIO ;
         case SocketType::MidiInput:
         case SocketType::MidiOutput:
-            return QColor(80, 80, 255); // blue
+            return Theme::CABLE_MIDI ;
     }
     return Qt::gray;
 }
@@ -151,7 +152,7 @@ void ConnectionCable::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
     
     // Draw a subtle shadow first
     QPen shadowPen = pen();
-    shadowPen.setColor(QColor(0, 0, 0, 50));
+    shadowPen.setColor(Theme::CABLE_SHADOW);
     shadowPen.setWidth(pen().width() + 2);
     painter->setPen(shadowPen);
     painter->drawPath(path().translated(1, 1));

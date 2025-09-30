@@ -40,7 +40,7 @@ private:
     SocketContainerWidget* parent_ ;
     bool isHovered_ = false ;
     bool isDragging_ = false ;
-    QColor getSocketColor() const ;
+    QColor getSocketColor(bool isHovered) const ;
 
     static constexpr qreal SOCKET_RADIUS = 6.0 ;
 

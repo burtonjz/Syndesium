@@ -63,7 +63,6 @@ private:
     
     static constexpr qreal GRID_SIZE = 20.0 ;
     static constexpr qreal WHEEL_SCALE_FACTOR = 1.15 ;
-    static constexpr QColor GRAPH_GRID_COLOR = QColor(50,50,50);
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);

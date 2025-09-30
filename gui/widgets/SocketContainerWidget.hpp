@@ -46,10 +46,6 @@ protected:
     static constexpr qreal COMPONENT_TEXT_PADDING = 5.0 ;
     static constexpr qreal HIGHLIGHT_BUFFER = 2.0 ; 
     static constexpr qreal HIGHLIGHT_WIDTH = 3.0 ;
-    
-    static constexpr QColor COMPONENT_TEXT_COLOR = QColor(250,250,250);
-    static constexpr QColor COMPONENT_BACKGROUND_COLOR = QColor(60,60,60);
-    
     static constexpr qreal SOCKET_SPACING = 15.0 ;
 
 public:

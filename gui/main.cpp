@@ -18,14 +18,17 @@
 #include "core/ApiClient.hpp"
 #include "core/StateManager.hpp"
 #include "core/ModuleContext.hpp"
-
+#include "core/Theme.hpp"
 #include "core/Synth.hpp"
+
 #include "widgets/Oscillator.hpp"
 
 #include <QApplication>
 #include <qobject.h>
 
 int main(int argc, char *argv[]){
+    Theme::applyDarkTheme();
+    
     QApplication app(argc, argv);
     ApiClient::instance() ; // initialize ApiClient singleton
 

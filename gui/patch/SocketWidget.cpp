@@ -17,6 +17,7 @@
 
 #include "patch/SocketWidget.hpp"
 #include "widgets/SocketContainerWidget.hpp"
+#include "core/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 
@@ -44,11 +45,8 @@ void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
     painter->setRenderHint(QPainter::Antialiasing);
     
     // Draw circle
-    QColor socketColor = getSocketColor();
-    if ( isHovered_ ){
-        socketColor = socketColor.lighter(150);
-    }
-
+    QColor socketColor = getSocketColor(isHovered_);
+    
     painter->setBrush(socketColor);
     painter->setPen(QPen(Qt::black, 2));
     painter->drawEllipse(boundingRect());
@@ -63,17 +61,17 @@ void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 
 }
 
-QColor SocketWidget::getSocketColor() const {
+QColor SocketWidget::getSocketColor(bool isHovered) const {
     switch(spec_.type){
         case SocketType::ModulationInput:
         case SocketType::ModulationOutput:
-            return QColor(255, 100, 100); // red
+            return isHovered ? Theme::SOCKET_MODULATION_LIGHT : Theme::SOCKET_MODULATION ;
         case SocketType::SignalInput:
         case SocketType::SignalOutput:
-            return QColor(100,255,100); // green
+            return isHovered ? Theme::SOCKET_AUDIO_LIGHT : Theme::SOCKET_AUDIO ;
         case SocketType::MidiInput:
         case SocketType::MidiOutput:
-            return QColor(100,100,255); // blue
+            return isHovered ? Theme::SOCKET_MIDI_LIGHT : Theme::SOCKET_MIDI ;
         default: 
             return Qt::gray ;
     }
