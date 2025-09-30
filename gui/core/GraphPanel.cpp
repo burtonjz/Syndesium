@@ -119,7 +119,6 @@ void GraphPanel::addMidiInput(){
 }
 
 void GraphPanel::connectWidgetSignals(SocketContainerWidget* widget){
-    // connect(widget, &SocketContainerWidget::doubleClicked, this, &GraphPanel::onWidgetDoubleClicked);
     for (SocketWidget* socket : widget->getSockets() ){
         connect(socket, &SocketWidget::connectionStarted, this, &GraphPanel::onConnectionStarted);
         connect(socket, &SocketWidget::connectionDragging, this, &GraphPanel::onConnectionDragging);

@@ -132,11 +132,6 @@ void SocketContainerWidget::layoutSockets(){
     }
 }
 
-void SocketContainerWidget::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event){
-    emit doubleClicked(this);
-    event->accept();
-}
-
 void SocketContainerWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
     if (event->button() == Qt::LeftButton) {
         isDragging_ = true;

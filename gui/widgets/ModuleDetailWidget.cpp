@@ -30,6 +30,7 @@ ModuleDetailWidget::ModuleDetailWidget(int id, ComponentType type, QWidget* pare
     componentId_(id),
     descriptor_(ComponentRegistry::getComponentDescriptor(type))
 {
+    setWindowTitle(QString::fromStdString(descriptor_.name));
     for ( auto p: descriptor_.controllableParameters ){
         createParameter(p);
     }
@@ -77,18 +78,20 @@ void ModuleDetailWidget::createWaveformWidget(){
 }
 
 void ModuleDetailWidget::createSpinWidget(ParameterType p){
-    auto w = new QSpinBox(this);
+    auto w = new QDoubleSpinBox(this);
     float defaultValue = parameterDefaults[static_cast<uint8_t>(p)];
     auto limit = parameterLimits[static_cast<uint8_t>(p)];
     w->setRange(limit.first, limit.second);
-    w->setSingleStep((limit.second - limit.first) / 100.0 );
+    w->setSingleStep(0.01);
     w->setValue(defaultValue);
+
+    parameterWidgets_[p] = w ;
 }
 
 void ModuleDetailWidget::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    QHBoxLayout* buttonLayout = new QHBoxLayout(this);
-    QHBoxLayout* parameterLayout = new QHBoxLayout(this);
+    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    QHBoxLayout* parameterLayout = new QHBoxLayout();
 
     // parameters
     parameterLayout->setSpacing(PARAMETER_WIDGET_SPACING);
@@ -96,9 +99,7 @@ void ModuleDetailWidget::setupLayout(){
     for ( auto it = parameterWidgets_.begin(); it != parameterWidgets_.end(); ++it){
         ParameterType p = it.key(); 
         QWidget* w = it.value();
-
         QVBoxLayout* column = new QVBoxLayout();
-
         QString labelText = QString::fromStdString(parameter2String(p));
         QLabel* label = new QLabel(labelText, this);
 

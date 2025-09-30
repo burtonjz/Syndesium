@@ -23,7 +23,7 @@
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QPushButton>
-#include <QSpinBox>
+#include <QDoubleSpinBox>
 #include <QComboBox>
 #include <QMap>
 #include <QEvent>

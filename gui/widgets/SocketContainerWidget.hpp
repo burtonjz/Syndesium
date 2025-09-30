@@ -66,7 +66,6 @@ public:
 
 protected:
     // Graphics overrides
-    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event) override ;
     void mousePressEvent(QGraphicsSceneMouseEvent *event) override ;
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override ;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override ;
@@ -75,7 +74,6 @@ protected:
     void layoutSockets();
 
 signals:
-    void doubleClicked(SocketContainerWidget* module);
     void positionChanged();
 
 
