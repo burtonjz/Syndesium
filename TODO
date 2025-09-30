@@ -10,9 +10,8 @@ CORE FUNCTIONALITY TODO:
 - Improve UI workflow (e.g., setup must be done before play, we need to get these safegaurds in place )
 
 PERFORMANCE:
-- parameter get depth needs to be readdressed to remove dynamic allocation
+✓ parameter get depth needs to be readdressed to remove dynamic allocation
 - use of sets are slower than vectors, I should switch all sets to vector and manage pushes to vector to not include duplicates
-- rework polyoscillator oscillator pool to reduce bitset tests?
 
 COMPONENTS TO ADD:
 - Oscillator (extend to be a modulator)

@@ -2,6 +2,20 @@
 
 A fully modular synthesizer application that lets you build any synthesizer you want through a flexible, connection-based architecture.
 
+## License
+
+This project is licensed under the GNU Lesser General Public License v3.0 - 
+see the [LICENSE](LICENSE) file for details.
+
+## Third-Party Libraries
+
+This project uses:
+- Qt6 (LGPL v3)
+- RtMidi (MIT-style)
+- RtAudio (MIT-style)
+
+See [THIRD_PARTY_LICENSES.txt](THIRD_PARTY_LICENSES.txt) for complete license information.
+
 ## Overview
 
 Syndesium is a standalone modular synthesis environment where you can create, connect, and configure audio modules to design custom synthesizers.
@@ -15,20 +29,8 @@ Syndesium is a standalone modular synthesis environment where you can create, co
 - **Flexible Modulation System**: Every parameter can be modulated by any source through the ParameterMap design
 - **Visual Patch Bay**: Draw connections between modules using an intuitive Qt6 interface
 - **MIDI Support**: Connect and use any MIDI device for performance control via RtMidi
-- **Multi-Output Audio**: Select your desired audio output device with RtAudio support
+- **Audio**: Select your desired audio output device with RtAudio support
 - **Extensible Design**: Clean separation between frontend and backend enables easy addition of new modules and potential development onto other platforms
-
-## Architecture
-
-### Frontend
-- **Technology**: Qt6
-- **Purpose**: Visual interface for module creation, connection management, and device configuration
-
-### Backend
-- **Technology**: C++
-- **Audio Engine**: RTAudio
-- **MIDI Engine**: RtMidi
-- **Communication**: TCP with JSON messaging between frontend and backend
 
 ## Current Status
 
@@ -41,9 +43,9 @@ The codebase uses cross-platform libraries (Qt6, RTAudio, RtMidi) and is designe
 ### Build Dependencies
 - C++20 or later
 - Qt6 development libraries
-- RTAudio
+- RtAudio
 - RtMidi
-- CMake (recommended for building)
+- CMake
 
 ### Runtime Requirements
 - Linux operating system
@@ -105,11 +107,7 @@ The modular architecture makes it straightforward to add new components:
 
 Built with:
 - [Qt6](https://www.qt.io/) - Cross-platform GUI framework
-- [RTAudio](https://www.music.mcgill.ca/~gary/rtaudio/) - Cross-platform audio I/O
-- [RtMidi](https://www.music.mcgill.ca/~gary/rtmidi/) - Cross-platform MIDI I/O
-
-## Contact
-
-Project Link: [https://github.com/burtonjz/Syndesium](https://github.com/burtonjz/Syndesium)
+- [RtAudio](https://github.com/thestk/rtaudio) - Cross-platform audio I/O
+- [RtMidi](https://github.com/thestk/rtmidi) - Cross-platform MIDI I/O
 
 ---
