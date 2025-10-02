@@ -50,6 +50,7 @@ protected:
 
 public:
     explicit SocketContainerWidget(QString name, QGraphicsItem* parent = nullptr);
+    virtual ~SocketContainerWidget() = default ;
 
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr ) override ;
@@ -62,15 +63,13 @@ public:
 
 protected:
     // Graphics overrides
-    void mousePressEvent(QGraphicsSceneMouseEvent *event) override ;
-    void mouseMoveEvent(QGraphicsSceneMouseEvent *event) override ;
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent *event) override ;
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes
 
     void layoutSockets();
 
 signals:
     void positionChanged();
+    void needsZUpdate();
 
 
 };

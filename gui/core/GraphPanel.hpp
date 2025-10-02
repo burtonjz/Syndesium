@@ -20,7 +20,7 @@
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
-#include <QTimer>
+#include <QPointer>
 #include <vector>
 
 #include "meta/ComponentDescriptor.hpp"
@@ -39,7 +39,7 @@ private:
 
     // logic for managing socket hovers
     bool isDraggingConnection_ = false ;
-    SocketWidget* lastHovered_ = nullptr ;
+    QPointer<SocketWidget> lastHovered_ = nullptr ;
 
     std::vector<SocketContainerWidget*> widgets_ ;
     std::vector<ModuleDetailWidget*> details_ ;
@@ -65,19 +65,18 @@ protected:
 private:
     void setupScene() ;
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
+    void componentDoubleClicked(ComponentWidget* widget);
 
+    static constexpr int DOUBLE_CLICK_MS = 300 ;
     static constexpr qreal GRID_SIZE = 20.0 ;
     static constexpr qreal WHEEL_SCALE_FACTOR = 1.15 ;
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
-    void onComponentDoubleClicked(ComponentWidget* widget);
     
-
 public  slots:
     void onComponentAdded(ComponentType type);
-
-
+    void onWidgetZUpdate();
 
 };
 

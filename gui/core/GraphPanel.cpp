@@ -86,16 +86,18 @@ void GraphPanel::setupScene(){
 }
 
 void GraphPanel::addComponent(int id, ComponentType type){
-    auto* module = new ComponentWidget(id, type);
+    auto* component = new ComponentWidget(id, type);
     auto* detail = new ModuleDetailWidget(id,type);
 
-    widgets_.push_back(module);
+    widgets_.push_back(component);
     details_.push_back(detail);
 
-    scene_->addItem(module);
-    module->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
+    connect(component, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
+
+    scene_->addItem(component);
+    component->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
     
-    qDebug() << "Created module:" << module->getName() << "at position:" << module->pos() ;
+    qDebug() << "Created component:" << component->getName() << "at position:" << component->pos() ;
 }
 
 void GraphPanel::addAudioOutput(){
@@ -104,6 +106,8 @@ void GraphPanel::addAudioOutput(){
     scene_->addItem(container);
 
     widgets_.push_back(container);
+    connect(container, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
+
     qDebug() << "Created Audio Output Device Widget:" << container->getName() << "at position:" << container->pos() ;
 }
 
@@ -113,6 +117,8 @@ void GraphPanel::addMidiInput(){
     scene_->addItem(container);
 
     widgets_.push_back(container);
+    connect(container, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
+    
     qDebug() << "Created Midi Input Device Widget:" << container->getName() << "at position:" << container->pos() ;
 }
 
@@ -202,6 +208,19 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
     QGraphicsView::mousePressEvent(event); // pass event through
 }
 
+void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
+    QPointF scenePos = mapToScene(event->pos());
+
+    // Launch ComponentWidget
+    QGraphicsItem* item = scene()->itemAt(scenePos, transform());
+    while (item){
+        if ( ComponentWidget* w = dynamic_cast<ComponentWidget*>(item)){ 
+            componentDoubleClicked(w);
+        } 
+        item = item->parentItem();
+    }
+}
+
 void GraphPanel::mouseReleaseEvent(QMouseEvent* event){
     QPointF scenePos = mapToScene(event->pos());
 
@@ -214,21 +233,6 @@ void GraphPanel::mouseReleaseEvent(QMouseEvent* event){
 
     QGraphicsView::mouseReleaseEvent(event);
 }
-
-void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
-    QPointF scenePos = mapToScene(event->pos());
-
-    QGraphicsItem* item = scene()->itemAt(scenePos, transform());
-
-    if ( ComponentWidget* w = dynamic_cast<ComponentWidget*>(item)){
-        qDebug() << "Component Clicked!";
-        onComponentDoubleClicked(w);
-        return ;
-    }
-
-    QGraphicsView::mouseDoubleClickEvent(event);
-}
-
 
 void GraphPanel::wheelEvent(QWheelEvent* event){
     if ( event->angleDelta().y() > 0 ){
@@ -293,7 +297,7 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
     }
 }
 
-void GraphPanel::onComponentDoubleClicked(ComponentWidget* widget){
+void GraphPanel::componentDoubleClicked(ComponentWidget* widget){
     int id = widget->getID();
     ComponentType type = widget->getComponentDescriptor().type ;
 
@@ -307,4 +311,15 @@ void GraphPanel::onComponentDoubleClicked(ComponentWidget* widget){
     }
 
     qDebug() << "No detail component found.";
+}
+
+void GraphPanel::onWidgetZUpdate(){
+    SocketContainerWidget* widget = dynamic_cast<SocketContainerWidget*>(sender());
+    int maxZ = 0 ;
+    for ( auto w : widgets_ ){
+        if ( w != widget && w->zValue() > maxZ ){
+            maxZ = w->zValue();
+        }
+    }
+    widget->setZValue(maxZ+1);
 }

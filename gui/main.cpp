@@ -21,8 +21,6 @@
 #include "core/Theme.hpp"
 #include "core/Synth.hpp"
 
-#include "widgets/Oscillator.hpp"
-
 #include <QApplication>
 #include <qobject.h>
 

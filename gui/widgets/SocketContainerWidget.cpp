@@ -33,6 +33,8 @@ SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent
     setAcceptHoverEvents(true);
 
     titleText_ = new QGraphicsTextItem(name_, this);
+    titleText_->setAcceptedMouseButtons(Qt::NoButton);
+
     titleText_->setDefaultTextColor(Theme::COMPONENT_TEXT);
     titleText_->setPos(COMPONENT_TEXT_PADDING,COMPONENT_TEXT_PADDING);
     titleText_->setTextWidth(COMPONENT_WIDTH - COMPONENT_TEXT_PADDING * 2);
@@ -133,31 +135,14 @@ void SocketContainerWidget::layoutSockets(){
     }
 }
 
-void SocketContainerWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
-    if (event->button() == Qt::LeftButton) {
-        isDragging_ = true;
-        dragStartPos_ = event->pos();
-    }
-    QGraphicsObject::mousePressEvent(event);
-}
-
-void SocketContainerWidget::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
-    if (isDragging_) {
-        // Handle dragging the module
-        QGraphicsObject::mouseMoveEvent(event);
-    }
-}
-
-void SocketContainerWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event){
-    if (event->button() == Qt::LeftButton) {
-        isDragging_ = false;
-    }
-    QGraphicsObject::mouseReleaseEvent(event);
-}
-
 QVariant SocketContainerWidget::itemChange(GraphicsItemChange change, const QVariant& value ){
     if ( change == ItemPositionChange || change == ItemPositionHasChanged ){
         emit positionChanged() ;
+    }
+
+    // if the item is selected, we need to inform graph panel to move it to the top
+    if ( change == ItemSelectedChange ){
+        if ( value.toBool()) emit needsZUpdate();
     }
     return QGraphicsObject::itemChange(change, value);
 }
