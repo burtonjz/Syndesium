@@ -20,18 +20,20 @@
 #include "core/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
+#include <qgraphicsitem.h>
 
 SocketWidget::SocketWidget(SocketSpec spec, SocketContainerWidget* parent):
-    QGraphicsObject(parent),
+    QGraphicsObject(nullptr),
     spec_(spec),
     parent_(parent)
 {
     setFlag(QGraphicsItem::ItemIsSelectable, false);
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::LeftButton);
-    setZValue(10); // ensures sockets are on top
+    setZValue(-0.2); // we want the sockets just behind the SocketContainerWidget, with room to place the cable between
 
     setToolTip(spec_.name);
+    show();
 }
 
 QRectF SocketWidget::boundingRect() const {

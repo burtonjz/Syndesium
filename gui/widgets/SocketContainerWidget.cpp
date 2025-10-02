@@ -20,6 +20,7 @@
 #include "core/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
+#include <qpoint.h>
 
 SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent): 
     QGraphicsObject(parent),
@@ -70,73 +71,80 @@ void SocketContainerWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
 void SocketContainerWidget::createSockets(std::initializer_list<SocketSpec> specs ){
     for ( const auto& s : specs ){
         SocketWidget* socket = new SocketWidget(s, this);
-        sockets_.append(socket);
+        sockets_.push_back(socket);
     }
 
     layoutSockets();
+    positionSockets();
 }
 
 void SocketContainerWidget::createSockets(std::vector<SocketSpec> specs){
     for ( const auto& s : specs ){
         SocketWidget* socket = new SocketWidget(s, this);
-        sockets_.append(socket);
+        sockets_.push_back(socket);
     }
 
     layoutSockets();
+    positionSockets();
 }
 
 void SocketContainerWidget::layoutSockets(){
-    QList<SocketWidget*> leftSockets ; // audio / midi inputs
-    QList<SocketWidget*> rightSockets ; // audio / midi outputs
-    QList<SocketWidget*> bottomSockets ; // modulatable inputs
-    QList<SocketWidget*> topSockets ; // modulatable outputs
+    leftSockets_.clear();
+    rightSockets_.clear();
+    topSockets_.clear();
+    bottomSockets_.clear();
 
     for (SocketWidget* socket : sockets_){
         switch(socket->getType()){
         case SocketType::MidiInput:
         case SocketType::SignalInput:
-            leftSockets.append(socket);
+            leftSockets_.push_back(socket);
             break ;
         case SocketType::MidiOutput:
         case SocketType::SignalOutput:
-            rightSockets.append(socket);
+            rightSockets_.push_back(socket);
             break ;
         case SocketType::ModulationInput:
-            bottomSockets.append(socket);
+            bottomSockets_.push_back(socket);
             break ;
         case SocketType::ModulationOutput:
-            topSockets.append(socket);
+            topSockets_.push_back(socket);
             break ;
         default:
             break ;
         }
     }
+}
+
+void SocketContainerWidget::positionSockets(QPointF newPos){
+    QPointF scenePos = newPos;
 
     qreal startY = 25 ; // below the title
     // left
-    for ( int i = 0; i < leftSockets.size(); ++i ){
-        leftSockets[i]->setPos(-6, startY + i * SOCKET_SPACING);
+    for ( int i = 0; i < leftSockets_.size(); ++i ){
+        leftSockets_[i]->setPos(scenePos + QPointF(-6, startY + i * SOCKET_SPACING));
     }
 
     // right
-    for ( int i = 0; i < rightSockets.size(); ++i ){
-        rightSockets[i]->setPos(COMPONENT_WIDTH + 6, startY + i * SOCKET_SPACING);
+    for ( int i = 0; i < rightSockets_.size(); ++i ){
+        rightSockets_[i]->setPos(scenePos + QPointF(COMPONENT_WIDTH + 6, startY + i * SOCKET_SPACING));
     }
 
     qreal startX = 4 ;
     // bottom
-    for ( int i = 0; i < bottomSockets.size(); ++i ){
-        bottomSockets[i]->setPos(startX + i * SOCKET_SPACING, COMPONENT_HEIGHT + 6 );
+    for ( int i = 0; i < bottomSockets_.size(); ++i ){
+        bottomSockets_[i]->setPos(scenePos + QPointF(startX + i * SOCKET_SPACING, COMPONENT_HEIGHT + 6 ));
     }
 
     // top
-    for ( int i = 0; i < topSockets.size(); ++i ){
-        topSockets[i]->setPos(COMPONENT_WIDTH - 6 - i * SOCKET_SPACING, -6);
+    for ( int i = 0; i < topSockets_.size(); ++i ){
+        topSockets_[i]->setPos(scenePos + QPointF(COMPONENT_WIDTH - 6 - i * SOCKET_SPACING, -6));
     }
 }
 
 QVariant SocketContainerWidget::itemChange(GraphicsItemChange change, const QVariant& value ){
-    if ( change == ItemPositionChange || change == ItemPositionHasChanged ){
+    if ( change == ItemPositionChange ){
+        positionSockets(value.toPointF());
         emit positionChanged() ;
     }
 

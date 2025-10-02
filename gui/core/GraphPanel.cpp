@@ -95,6 +95,10 @@ void GraphPanel::addComponent(int id, ComponentType type){
     connect(component, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
 
     scene_->addItem(component);
+    for ( auto socket : component->getSockets() ){
+        scene_->addItem(socket);
+    }
+    
     component->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
     
     qDebug() << "Created component:" << component->getName() << "at position:" << component->pos() ;
@@ -106,6 +110,10 @@ void GraphPanel::addAudioOutput(){
     scene_->addItem(container);
 
     widgets_.push_back(container);
+    for ( auto socket : container->getSockets() ){
+        scene_->addItem(socket);
+    }
+
     connect(container, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
 
     qDebug() << "Created Audio Output Device Widget:" << container->getName() << "at position:" << container->pos() ;
@@ -117,8 +125,11 @@ void GraphPanel::addMidiInput(){
     scene_->addItem(container);
 
     widgets_.push_back(container);
-    connect(container, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
+    for ( auto socket : container->getSockets() ){
+        scene_->addItem(socket);
+    }
     
+    connect(container, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
     qDebug() << "Created Midi Input Device Widget:" << container->getName() << "at position:" << container->pos() ;
 }
 
@@ -321,5 +332,24 @@ void GraphPanel::onWidgetZUpdate(){
             maxZ = w->zValue();
         }
     }
-    widget->setZValue(maxZ+1);
+
+    if ( maxZ != 0 && widget->zValue() == maxZ ) return ;
+
+    qDebug() << "updating widget z value from " << widget->zValue() << " -> " << maxZ + 1 ;
+    widget->setZValue( maxZ + 1 );
+
+    // cables go ahead of sockets, behind widgets
+    auto widgetCables = connectionManager_->getWidgetConnections(widget);
+    for ( auto* cable : widgetCables ){
+        qDebug() << "updating cable z value from " << cable->zValue() << " -> " << maxZ + 0.9 ;
+        cable->setZValue( maxZ + 0.9 ); 
+    }
+
+    // lastly, sockets (this doesn't work because sockets are parented :( )
+    auto sockets = widget->getSockets();
+    for ( auto* socket: sockets){
+        qDebug() << "updating socket z value from " << socket->zValue() << " -> " << maxZ + 0.8 ;
+        socket->setZValue(maxZ + 0.8);
+    }
+ 
 }

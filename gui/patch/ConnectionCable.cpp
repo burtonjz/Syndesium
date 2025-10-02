@@ -24,12 +24,12 @@
 #include <QGraphicsSceneMouseEvent>
 #include <cmath>
 
-ConnectionCable::ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocket, QGraphicsItem* parent): 
-    QGraphicsPathItem(parent), 
+ConnectionCable::ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocket): 
+    QGraphicsPathItem(nullptr), 
     fromSocket_(fromSocket), 
     toSocket_(toSocket)
 {
-    setZValue(5); // Below sockets but above container widget
+    setZValue(-0.1); // above socket, below container
     setPen(QPen(getCableColor(), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if (!toSocket) endpoint_ = fromSocket_->getConnectionPoint() + QPoint(5,5); // set initial endpoint on creation, offset slightly so visible
     updatePath();

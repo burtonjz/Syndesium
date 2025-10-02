@@ -26,14 +26,14 @@
 #include <QGraphicsItem>
 #include <QDebug>
 #include <qdebug.h>
+#include <qgraphicsitem.h>
 
 ConnectionManager::ConnectionManager(QGraphicsScene* scene, QObject* parent): 
     QObject(parent), 
     scene_(scene), 
     dragConnection_(nullptr), 
     dragFromSocket_(nullptr)
-{
-}
+{}
 
 void ConnectionManager::startConnection(SocketWidget* fromSocket){
     if (!fromSocket) return ;
@@ -61,7 +61,7 @@ void ConnectionManager::finishConnection(const QPointF& scenePos){
     if (toSocket && canConnect(dragFromSocket_, toSocket)) {
         // Complete the connection
         dragConnection_->setToSocket(toSocket);
-        connections_.append(dragConnection_);
+        connections_.push_back(dragConnection_);
 
 
         // connect to position changes
@@ -157,7 +157,7 @@ void ConnectionManager::removeConnection(ConnectionCable* cable){
     if ( cable->scene() ){
         cable->scene()->removeItem(cable);
     }
-    connections_.removeAll(cable);
+    connections_.erase(std::remove(connections_.begin(), connections_.end(), cable), connections_.end());
     delete cable ;
 }
 
@@ -167,6 +167,13 @@ void ConnectionManager::removeAllConnections(SocketContainerWidget* module){
     }
 }
 
+const std::vector<ConnectionCable*> ConnectionManager::getWidgetConnections(SocketContainerWidget* widget){
+    std::vector<ConnectionCable*> widgetCables ;
+    for ( auto cable : connections_ ){
+        if (cable->involvesWidget(widget)) widgetCables.push_back(cable);
+    }
+    return widgetCables ;
+}
 
 void ConnectionManager::sendConnectionApiRequest(
     SocketWidget* fromSock, SocketWidget* toSock, 

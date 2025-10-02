@@ -29,7 +29,7 @@ class ConnectionManager: public QObject {
     Q_OBJECT
 private:
     QGraphicsScene* scene_ ;
-    QList<ConnectionCable*> connections_ ;
+    std::vector<ConnectionCable*> connections_ ;
 
     ConnectionCable* dragConnection_ ;
     SocketWidget* dragFromSocket_ ;
@@ -47,7 +47,7 @@ public:
 
     void removeAllConnections(SocketContainerWidget* widget);
 
-    const QList<ConnectionCable*>& getConnections() const { return connections_ ; }
+    const std::vector<ConnectionCable*> getWidgetConnections(SocketContainerWidget* widget);
 
     SocketWidget* findSocketAt(const QPointF& scenePos) const ;
 private:

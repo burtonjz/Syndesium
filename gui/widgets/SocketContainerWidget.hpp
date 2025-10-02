@@ -35,8 +35,13 @@ private:
     QPointF dragStartPos_ ;
     QString name_ ;
 
+    std::vector<SocketWidget*> leftSockets_ ; // audio / midi inputs
+    std::vector<SocketWidget*> rightSockets_ ; // audio / midi outputs
+    std::vector<SocketWidget*> bottomSockets_ ; // modulatable inputs
+    std::vector<SocketWidget*> topSockets_ ; // modulatable outputs
+
 protected:
-    QList<SocketWidget*> sockets_ ; 
+    std::vector<SocketWidget*> sockets_ ; 
     QGraphicsTextItem* titleText_ ;
     
     static constexpr qreal COMPONENT_WIDTH = 120.0 ;
@@ -55,7 +60,7 @@ public:
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr ) override ;
 
-    const QList<SocketWidget*>& getSockets() const { return sockets_ ; }
+    const std::vector<SocketWidget*>& getSockets() const { return sockets_ ; }
     const QString& getName() const { return name_ ; }
 
     void createSockets(std::initializer_list<SocketSpec> specs );
@@ -66,6 +71,7 @@ protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes
 
     void layoutSockets();
+    void positionSockets(QPointF newPos = QPointF(0,0)); 
 
 signals:
     void positionChanged();

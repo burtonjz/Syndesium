@@ -29,7 +29,7 @@ private:
     QPointF endpoint_ ;
 
 public:
-    ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocket = nullptr, QGraphicsItem* parent = nullptr);
+    ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocket = nullptr);
 
     SocketWidget* getFromSocket() const { return fromSocket_ ; }
     SocketWidget* getToSocket() const { return toSocket_ ; }
