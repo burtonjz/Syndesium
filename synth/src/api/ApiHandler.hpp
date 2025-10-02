@@ -57,7 +57,7 @@ private:
     static bool handleModulationConnection(Engine* engine, ConnectionRequest request);
 
     // utility functions
-    static ParameterValue json2Variant(const json& j);
+    // static ParameterValue json2Variant(const json& j);
 };
 
 

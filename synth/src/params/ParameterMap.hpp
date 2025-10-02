@@ -42,7 +42,6 @@ class BaseModulator ;
 
 using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PARAMETERS> ;
 using params = RTMap<ParameterType, ParameterBase*, N_PARAMETER_TYPES> ;
-using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
 using json = nlohmann::json ;
 
 class ParameterMap {
@@ -186,38 +185,38 @@ class ParameterMap {
         }
 
         // Dispatchers (for API getters/setters)
-        bool setValueDispatch(ParameterType p, const ParameterValue& value){
+        bool setValueDispatch(ParameterType p, const json& value){
             switch (p){
                 case ParameterType::STATUS: 
-                    return setValue<ParameterType::STATUS>(std::get<TYPE_TRAIT(ParameterType::STATUS)>(value)); 
+                    return setValue<ParameterType::STATUS>(value); 
                 case ParameterType::WAVEFORM: 
-                    return setValue<ParameterType::WAVEFORM>(std::get<TYPE_TRAIT(ParameterType::WAVEFORM)>(value)); 
+                    return setValue<ParameterType::WAVEFORM>(value); 
                 case ParameterType::FREQUENCY: 
-                    return setValue<ParameterType::FREQUENCY>(std::get<TYPE_TRAIT(ParameterType::FREQUENCY)>(value)); 
+                    return setValue<ParameterType::FREQUENCY>(value); 
                 case ParameterType::AMPLITUDE: 
-                    return setValue<ParameterType::AMPLITUDE>(std::get<TYPE_TRAIT(ParameterType::AMPLITUDE)>(value)); 
+                    return setValue<ParameterType::AMPLITUDE>(value); 
                 case ParameterType::GAIN: 
-                    return setValue<ParameterType::GAIN>(std::get<TYPE_TRAIT(ParameterType::GAIN)>(value)); 
+                    return setValue<ParameterType::GAIN>(value); 
                 case ParameterType::PHASE: 
-                    return setValue<ParameterType::PHASE>(std::get<TYPE_TRAIT(ParameterType::PHASE)>(value)); 
+                    return setValue<ParameterType::PHASE>(value); 
                 case ParameterType::PAN: 
-                    return setValue<ParameterType::PAN>(std::get<TYPE_TRAIT(ParameterType::PAN)>(value)); 
+                    return setValue<ParameterType::PAN>(value); 
                 case ParameterType::DETUNE: 
-                    return setValue<ParameterType::DETUNE>(std::get<TYPE_TRAIT(ParameterType::DETUNE)>(value)); 
+                    return setValue<ParameterType::DETUNE>(value); 
                 case ParameterType::ATTACK: 
-                    return setValue<ParameterType::ATTACK>(std::get<TYPE_TRAIT(ParameterType::ATTACK)>(value)); 
+                    return setValue<ParameterType::ATTACK>(value); 
                 case ParameterType::DECAY: 
-                    return setValue<ParameterType::DECAY>(std::get<TYPE_TRAIT(ParameterType::DECAY)>(value)); 
+                    return setValue<ParameterType::DECAY>(value); 
                 case ParameterType::SUSTAIN: 
-                    return setValue<ParameterType::SUSTAIN>(std::get<TYPE_TRAIT(ParameterType::SUSTAIN)>(value)); 
+                    return setValue<ParameterType::SUSTAIN>(value); 
                 case ParameterType::RELEASE:  
-                    return setValue<ParameterType::RELEASE>(std::get<TYPE_TRAIT(ParameterType::RELEASE)>(value)); 
+                    return setValue<ParameterType::RELEASE>(value); 
                 case ParameterType::FILTER_TYPE: 
-                    return setValue<ParameterType::FILTER_TYPE>(std::get<TYPE_TRAIT(ParameterType::FILTER_TYPE)>(value)); 
+                    return setValue<ParameterType::FILTER_TYPE>(value); 
                 case ParameterType::CUTOFF: 
-                    return setValue<ParameterType::CUTOFF>(std::get<TYPE_TRAIT(ParameterType::CUTOFF)>(value)); 
+                    return setValue<ParameterType::CUTOFF>(value); 
                 case ParameterType::Q_FACTOR: 
-                    return setValue<ParameterType::Q_FACTOR>(std::get<TYPE_TRAIT(ParameterType::Q_FACTOR)>(value)); 
+                    return setValue<ParameterType::Q_FACTOR>(value); 
                 default:
                     return false ;
             }

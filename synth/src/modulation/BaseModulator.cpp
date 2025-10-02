@@ -46,7 +46,7 @@ void BaseModulator::tick(){
     if (parameters_) parameters_->modulate() ;
 }
 
-bool BaseModulator::setParameterValue(ParameterType t, const ParameterValue& value){
+bool BaseModulator::setParameterValue(ParameterType t, const json& value){
     parameters_->setValueDispatch(t,value);
     return true ; 
 }

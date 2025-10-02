@@ -64,9 +64,12 @@ private:
 
 signals:
     void widgetClosed();
+    void parameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value);
 
 private slots:
     void onCloseButtonClicked();
+    void onValueChange();
+    void onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value);
 
 };
 

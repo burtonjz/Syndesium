@@ -245,13 +245,12 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         if ( action == "set_component_parameter"){
             int componentId = jRequest["componentId"];
             ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
-            ParameterValue val = json2Variant(jRequest["value"]);
             bool isModule = jRequest["isModule"];
 
             if ( isModule ){
-                jRequest["status"] = engine->moduleController.setComponentParameter(componentId, p, val);
+                jRequest["status"] = engine->moduleController.setComponentParameter(componentId, p, jRequest["value"]);
             } else {
-                jRequest["status"] = engine->modulationController.setComponentParameter(componentId, p, val);
+                jRequest["status"] = engine->modulationController.setComponentParameter(componentId, p, jRequest["value"]);
             }
 
             if ( jRequest["status"] ){
@@ -470,23 +469,24 @@ bool ApiHandler::handleModulationConnection(Engine* engine, ConnectionRequest re
     return true ;
 }
 
-// utility function to convert a json field to a variant
-ParameterValue ApiHandler::json2Variant(const json& j) {
-    if (j.is_boolean()) return j.get<bool>() ;
+// // utility function to convert a json field to a variant
+// ParameterValue ApiHandler::json2Variant(const json& j) {
+//     std::cout << "json2Variant" << j << "\n" ;
+//     if (j.is_boolean()) return j.get<bool>() ;
     
-    if (j.is_number()) {
-        if (j.is_number_integer()) {
-            int val = j.get<int>();
-            if (val >= 0 && val <= 255) {
-                return static_cast<uint8_t>(val);
-            }
-            return val;
-        }
+//     if (j.is_number()) {
+//         if (j.is_number_integer()) {
+//             int val = j.get<int>();
+//             if (val >= 0 && val <= 255) {
+//                 return static_cast<uint8_t>(val);
+//             }
+//             return val;
+//         }
         
-        if (j.is_number_float()) {
-            return j.get<double>();
-        }
-    }
+//         if (j.is_number_float()) {
+//             return j.get<double>();
+//         }
+//     }
     
-    throw std::runtime_error("Unsupported JSON type");
-}
+//     throw std::runtime_error("Unsupported JSON type");
+// }

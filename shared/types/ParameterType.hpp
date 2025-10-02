@@ -21,11 +21,14 @@
 #include "types/ModulatorType.hpp"
 #include "types/Waveform.hpp"
 
+#include <variant>
 #include <array>
 #include <utility>
 #include <limits>
 #include <cstdint>
 #include <string_view>
+
+using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
 
 /**
  * @brief types of parameters that might exist within any given module

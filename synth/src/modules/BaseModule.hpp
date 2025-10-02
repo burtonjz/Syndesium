@@ -124,7 +124,7 @@ public:
         parameters_.setModulation(p,m,d);
     }
 
-    bool setParameterValue(ParameterType t, const ParameterValue& value){
+    bool setParameterValue(ParameterType t, const json& value){
         parameters_.setValueDispatch(t,value);
         return true ; 
     }

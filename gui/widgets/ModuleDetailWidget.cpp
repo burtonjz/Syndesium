@@ -18,12 +18,14 @@
 #include "widgets/ModuleDetailWidget.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
+#include "types/ModulatorType.hpp"
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
-#include <qboxlayout.h>
-#include <qevent.h>
-#include <qobject.h>
-#include <qpushbutton.h>
+#include "core/ApiClient.hpp"
+
+#include <QJsonObject>
+#include <QEvent>
+#include <QCloseEvent>
 
 ModuleDetailWidget::ModuleDetailWidget(int id, ComponentType type, QWidget* parent):
     QWidget(parent),
@@ -36,6 +38,8 @@ ModuleDetailWidget::ModuleDetailWidget(int id, ComponentType type, QWidget* pare
     }
 
     setupLayout();
+
+    connect(this, &ModuleDetailWidget::parameterChanged, &ModuleDetailWidget::onParameterChanged);
 }
 
 int ModuleDetailWidget::getID() const {
@@ -75,6 +79,7 @@ void ModuleDetailWidget::createWaveformWidget(){
     } 
 
     parameterWidgets_[ParameterType::WAVEFORM] = w ;
+    connect(w, &QComboBox::currentTextChanged, this, &ModuleDetailWidget::onValueChange);
 }
 
 void ModuleDetailWidget::createSpinWidget(ParameterType p){
@@ -86,6 +91,7 @@ void ModuleDetailWidget::createSpinWidget(ParameterType p){
     w->setValue(defaultValue);
 
     parameterWidgets_[p] = w ;
+    connect(w, &QDoubleSpinBox::valueChanged, this, &ModuleDetailWidget::onValueChange);
 }
 
 void ModuleDetailWidget::setupLayout(){
@@ -134,3 +140,31 @@ void ModuleDetailWidget::onCloseButtonClicked(){
     emit widgetClosed();
 }
 
+void ModuleDetailWidget::onValueChange(){
+    auto widget = dynamic_cast<QWidget*>(sender());
+    
+    auto it = std::find(parameterWidgets_.begin(), parameterWidgets_.end(), widget);
+    if ( it == parameterWidgets_.end() ) return ;
+    
+    ParameterType p = it.key();
+    ParameterValue v ;
+    if ( auto cb = dynamic_cast<QComboBox*>(it.value())){
+        v = cb->itemData(cb->currentIndex()).value<uint8_t>();
+    } else if ( auto sb = dynamic_cast<QDoubleSpinBox*>(it.value())){
+        v = sb->value();
+    }
+
+    emit parameterChanged(componentId_, descriptor_, p, v);
+    
+}
+
+void ModuleDetailWidget::onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value){
+    QJsonObject obj ;
+    obj["action"] = "set_component_parameter" ;
+    obj["componentId"] = componentId ;
+    obj["parameter"] = static_cast<int>(p);
+    obj["value"] = QVariant::fromStdVariant(value).toJsonValue();
+    obj["isModule"] = descriptor_.type.isModule() ;
+
+    ApiClient::instance()->sendMessage(obj); 
+}

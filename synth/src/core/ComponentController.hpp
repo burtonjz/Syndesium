@@ -118,7 +118,7 @@ public:
         typeInstanceCount_.clear() ;
     }
 
-    bool setComponentParameter(ComponentId id, ParameterType t, const ParameterValue& value){
+    bool setComponentParameter(ComponentId id, ParameterType t, const json& value){
         auto component = getRaw(id);
         if (!component){
             std::cerr << "WARN: module with id " << id << " not found in controller.\n" ;

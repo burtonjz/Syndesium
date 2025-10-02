@@ -31,7 +31,6 @@
 
 // forward declaration
 class ParameterMap ; 
-using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
 
 using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PARAMETERS> ;
 
@@ -67,7 +66,7 @@ public:
 
     void tick();
 
-    bool setParameterValue(ParameterType t, const ParameterValue& value);
+    bool setParameterValue(ParameterType t, const json& value);
 
 };
 
