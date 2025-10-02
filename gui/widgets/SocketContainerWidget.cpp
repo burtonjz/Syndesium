@@ -41,6 +41,12 @@ SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent
     titleText_->setTextWidth(COMPONENT_WIDTH - COMPONENT_TEXT_PADDING * 2);
 }
 
+SocketContainerWidget::~SocketContainerWidget(){
+    for ( auto socket : sockets_ ){
+        socket->deleteLater();
+    }
+}
+
 QRectF SocketContainerWidget::boundingRect() const {
     qreal delta = HIGHLIGHT_BUFFER + HIGHLIGHT_WIDTH ;
     return QRectF(0, 0, COMPONENT_WIDTH, COMPONENT_HEIGHT)

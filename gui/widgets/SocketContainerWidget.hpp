@@ -55,7 +55,7 @@ protected:
 
 public:
     explicit SocketContainerWidget(QString name, QGraphicsItem* parent = nullptr);
-    virtual ~SocketContainerWidget() = default ;
+    virtual ~SocketContainerWidget();
 
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr ) override ;

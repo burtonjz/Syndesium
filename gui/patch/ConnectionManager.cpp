@@ -42,6 +42,7 @@ void ConnectionManager::startConnection(SocketWidget* fromSocket){
     dragFromSocket_ = fromSocket ;
     dragConnection_ = new ConnectionCable(fromSocket);
     scene_->addItem(dragConnection_);
+    dragConnection_->setZValue(1e6);
 }
 
 void ConnectionManager::updateDragConnection(const QPointF& scenePos){
@@ -67,6 +68,9 @@ void ConnectionManager::finishConnection(const QPointF& scenePos){
         // connect to position changes
         SocketContainerWidget* fromWidget = dragFromSocket_->getParent();
         SocketContainerWidget* toWidget = toSocket->getParent();
+
+        // set connection cable layering
+        dragConnection_->setZValue(std::max(fromWidget->zValue(), toWidget->zValue()) - 0.1);
 
         // Note: other logic prohibits self connections, and we won't get 
         // this far if these are null pointers, so let's not worry about safeguards

@@ -37,6 +37,8 @@ private:
     
 public:
     explicit ComponentWidget(int id, ComponentType type, QGraphicsItem* parent = nullptr);
+    ~ComponentWidget() = default ;
+
     const ComponentDescriptor& getComponentDescriptor() const { return descriptor_ ; }
     const int getID() const { return componentId_ ; }
 };
