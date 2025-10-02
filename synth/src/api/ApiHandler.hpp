@@ -21,6 +21,7 @@
 #include <nlohmann/json.hpp>
 #include "types/SocketType.hpp"
 #include "types/ParameterType.hpp"
+#include "params/ParameterMap.hpp"
 
 using json = nlohmann::json ;
 
@@ -54,6 +55,9 @@ private:
     static bool handleSignalConnection(Engine* engine, ConnectionRequest request);
     static bool handleMidiConnection(Engine* engine, ConnectionRequest request);
     static bool handleModulationConnection(Engine* engine, ConnectionRequest request);
+
+    // utility functions
+    static ParameterValue json2Variant(const json& j);
 };
 
 

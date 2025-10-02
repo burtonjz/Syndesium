@@ -55,21 +55,13 @@ public:
     SocketType getType() const { return spec_.type ; } 
     SocketContainerWidget* getParent() const { return parent_ ; }
     const QString& getName() const { return spec_.name ; }
+    bool isHovered() const ;
+    void setHovered(bool hovered);
+
     bool isOutput() const ;
     bool isInput() const ;
+    
     QPointF getConnectionPoint() const ;
-
-protected:
-    void mousePressEvent(QGraphicsSceneMouseEvent* event) override ;
-    void mouseMoveEvent(QGraphicsSceneMouseEvent* event) override ;
-    void mouseReleaseEvent(QGraphicsSceneMouseEvent* event) override ;
-    void hoverEnterEvent(QGraphicsSceneHoverEvent* event) override ;
-    void hoverLeaveEvent(QGraphicsSceneHoverEvent* event) override ;
-
-signals:
-    void connectionStarted(SocketWidget* socket);
-    void connectionDragging(SocketWidget* socket, QPointF scenePos);
-    void connectionEnded(SocketWidget* socket, QPointF scenePos);
 
 };
 

@@ -48,7 +48,8 @@
 #include <qvarlengtharray.h>
 
 GraphPanel::GraphPanel(QWidget* parent):
-    QGraphicsView(parent)
+    QGraphicsView(parent),
+    isDraggingConnection_(false)
 {
     setupScene();
     addMidiInput();
@@ -56,11 +57,11 @@ GraphPanel::GraphPanel(QWidget* parent):
 
     setFocusPolicy(Qt::StrongFocus);
     setEnabled(true);
+    setMouseTracking(true);
 
     // connections
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &GraphPanel::onApiDataReceived);
 
-    
 }
 
 GraphPanel::~GraphPanel(){
@@ -93,8 +94,6 @@ void GraphPanel::addComponent(int id, ComponentType type){
 
     scene_->addItem(module);
     module->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
-
-    connectWidgetSignals(module);
     
     qDebug() << "Created module:" << module->getName() << "at position:" << module->pos() ;
 }
@@ -104,7 +103,6 @@ void GraphPanel::addAudioOutput(){
     container->createSockets({{SocketType::SignalInput, "Audio In"}});
     scene_->addItem(container);
 
-    connectWidgetSignals(container);
     widgets_.push_back(container);
     qDebug() << "Created Audio Output Device Widget:" << container->getName() << "at position:" << container->pos() ;
 }
@@ -114,23 +112,15 @@ void GraphPanel::addMidiInput(){
     container->createSockets({{SocketType::MidiOutput, "MIDI Out"}});
     scene_->addItem(container);
 
-    connectWidgetSignals(container);
     widgets_.push_back(container);
     qDebug() << "Created Midi Input Device Widget:" << container->getName() << "at position:" << container->pos() ;
-}
-
-void GraphPanel::connectWidgetSignals(SocketContainerWidget* widget){
-    for (SocketWidget* socket : widget->getSockets() ){
-        connect(socket, &SocketWidget::connectionStarted, this, &GraphPanel::onConnectionStarted);
-        connect(socket, &SocketWidget::connectionDragging, this, &GraphPanel::onConnectionDragging);
-        connect(socket, &SocketWidget::connectionEnded, this, &GraphPanel::onConnectionEnded);
-    }
 }
 
 void GraphPanel::deleteSelectedModules(){
     QList<QGraphicsItem*> selectedItems = scene_->selectedItems() ;
 
     for ( QGraphicsItem* item: selectedItems ){
+        // if it's a socket, we need to start a drag
         if ( ComponentWidget* module = qgraphicsitem_cast<ComponentWidget*>(item) ){
             connectionManager_->removeAllConnections(module);
             auto it = std::find(widgets_.begin(), widgets_.end(), module);
@@ -158,12 +148,71 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
     }
 }
 
+void GraphPanel::mouseMoveEvent(QMouseEvent* event){
+    QPointF scenePos = mapToScene(event->pos());
+    SocketWidget* w = connectionManager_->findSocketAt(scenePos);
+
+    // resolve hover events for socket widgets
+    if ( lastHovered_ ){
+        lastHovered_->setHovered(false);
+        lastHovered_ = nullptr ;
+    }
+
+    if ( w ){
+        w->setHovered(true);
+        lastHovered_ = w ;
+    }
+    
+    // handle socket connection dragging
+    if ( isDraggingConnection_ ){
+        connectionManager_->updateDragConnection(scenePos);
+
+        // manually show tool tip if hovering
+        if (w && !w->toolTip().isEmpty()){
+            QToolTip::showText(QCursor::pos(), w->toolTip());
+            return ;
+        }
+
+        // hide tool tip if no longer found
+        QToolTip::hideText();
+
+        event->accept();
+        return ;
+    }
+
+    QGraphicsView::mouseMoveEvent(event);
+}
+
 void GraphPanel::mousePressEvent(QMouseEvent* event){
+    QPointF scenePos = mapToScene(event->pos());
+
+    if ( event->button() == Qt::LeftButton ){
+        if ( SocketWidget* w = connectionManager_->findSocketAt(scenePos) ){
+            isDraggingConnection_ = true ;
+            connectionManager_->startConnection(w);
+            event->accept();
+            return ;
+        }
+    }
+
     if ( event->button() == Qt::RightButton ){
         // TODO: maybe if we right click a module we can do some stuff...
     }
 
     QGraphicsView::mousePressEvent(event); // pass event through
+}
+
+void GraphPanel::mouseReleaseEvent(QMouseEvent* event){
+    QPointF scenePos = mapToScene(event->pos());
+
+    if (event->button() == Qt::LeftButton && isDraggingConnection_ ) {
+        isDraggingConnection_ = false;
+        connectionManager_->finishConnection(scenePos);
+        event->accept();
+        return ;
+    }
+
+    QGraphicsView::mouseReleaseEvent(event);
 }
 
 void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
@@ -174,7 +223,10 @@ void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
     if ( ComponentWidget* w = dynamic_cast<ComponentWidget*>(item)){
         qDebug() << "Component Clicked!";
         onComponentDoubleClicked(w);
+        return ;
     }
+
+    QGraphicsView::mouseDoubleClickEvent(event);
 }
 
 
@@ -255,31 +307,4 @@ void GraphPanel::onComponentDoubleClicked(ComponentWidget* widget){
     }
 
     qDebug() << "No detail component found.";
-}
-
-void GraphPanel::onConnectionStarted(SocketWidget* socket){
-    qDebug() << "Connection started from:" << socket->getParent()->getName() << "-" << socket->getName() ;
-    connectionManager_->startConnection(socket);
-}
-
-void GraphPanel::onConnectionDragging(SocketWidget* socket, QPointF scenePos){
-    Q_UNUSED(socket);
-    connectionManager_->updateDragConnection(scenePos);
-
-    // manually show tool tip if hovering
-    SocketWidget* w = connectionManager_->findSocketAt(scenePos);
-    
-    if (w && !w->toolTip().isEmpty()){
-        QToolTip::showText(QCursor::pos(), w->toolTip());
-        return ;
-    }
-
-    // hide tool tip if no longer found
-    QToolTip::hideText();
-}
-
-void GraphPanel::onConnectionEnded(SocketWidget* socket, QPointF scenePos){
-    Q_UNUSED(socket);
-    qDebug() << "Connection ended at:" << scenePos ;
-    connectionManager_->finishConnection(scenePos);
 }

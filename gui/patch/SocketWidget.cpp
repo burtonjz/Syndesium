@@ -77,6 +77,15 @@ QColor SocketWidget::getSocketColor(bool isHovered) const {
     }
 }
 
+bool SocketWidget::isHovered() const {
+    return isHovered_ ;
+}
+
+void SocketWidget::setHovered(bool hovered){
+    isHovered_ = hovered ;
+    update();
+}
+
 bool SocketWidget::isOutput() const {
     return spec_.type == SocketType::ModulationOutput || 
            spec_.type == SocketType::SignalOutput ||
@@ -90,53 +99,4 @@ bool SocketWidget::isInput() const {
 
 QPointF SocketWidget::getConnectionPoint() const {
     return mapToScene(0,0);
-}
-
-void SocketWidget::mousePressEvent(QGraphicsSceneMouseEvent *event){
-    if ( event->button() == Qt::LeftButton ){
-        isDragging_ = true ;
-        grabMouse() ;
-        emit connectionStarted(this);
-        event->accept();
-        return ;
-    }
-
-    QGraphicsObject::mousePressEvent(event);
-}
-
-void SocketWidget::mouseMoveEvent(QGraphicsSceneMouseEvent *event){
-    if (isDragging_) {
-        emit connectionDragging(this, event->scenePos());
-        event->accept();
-        return ;
-    }
-
-    QGraphicsObject::mouseMoveEvent(event);
-}
-
-void SocketWidget::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
-{
-    if (event->button() == Qt::LeftButton && isDragging_) {
-        isDragging_ = false;
-        ungrabMouse() ; 
-        emit connectionEnded(this, event->scenePos());
-        event->accept();
-        return ;
-    }
-
-    QGraphicsObject::mouseReleaseEvent(event);
-}
-
-void SocketWidget::hoverEnterEvent(QGraphicsSceneHoverEvent *event)
-{
-    isHovered_ = true;
-    update();
-    QGraphicsObject::hoverEnterEvent(event);
-}
-
-void SocketWidget::hoverLeaveEvent(QGraphicsSceneHoverEvent *event)
-{
-    isHovered_ = false;
-    update();
-    QGraphicsObject::hoverLeaveEvent(event);
 }

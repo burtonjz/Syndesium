@@ -40,14 +40,19 @@ protected:
     
 
 public:
-    BaseModule(ModuleType typ, double sampleRate, std::size_t size):
+    BaseModule(ModuleType typ):
         type_(typ),
-        sampleRate_(sampleRate),
-        size_(size), 
-        buffer_(new double[size] ()),
         bufferIndex_(0),
         parameters_()
-    {}
+    {
+        Config::load();
+        double sampleRate = Config::get<double>("audio.sample_rate").value();
+        size_t bufferSize = Config::get<size_t>("audio.buffer_size").value();
+
+        sampleRate_ = sampleRate ;
+        size_ = bufferSize ;
+        buffer_ = std::make_unique<double[]>(size_) ;
+    }
 
     virtual ModuleType getType() const {
         return type_ ;
@@ -117,6 +122,11 @@ public:
             }
         }
         parameters_.setModulation(p,m,d);
+    }
+
+    bool setParameterValue(ParameterType t, const ParameterValue& value){
+        parameters_.setValueDispatch(t,value);
+        return true ; 
     }
 
 protected:

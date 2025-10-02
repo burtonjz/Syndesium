@@ -37,6 +37,10 @@ private:
     QGraphicsScene* scene_ ;
     ConnectionManager* connectionManager_ ;
 
+    // logic for managing socket hovers
+    bool isDraggingConnection_ = false ;
+    SocketWidget* lastHovered_ = nullptr ;
+
     std::vector<SocketContainerWidget*> widgets_ ;
     std::vector<ModuleDetailWidget*> details_ ;
 
@@ -55,21 +59,20 @@ protected:
     void mousePressEvent(QMouseEvent* event) override ;
     void mouseDoubleClickEvent(QMouseEvent* event) override ;
     void wheelEvent(QWheelEvent* event) override ;
+    void mouseMoveEvent(QMouseEvent* event) override ;
+    void mouseReleaseEvent(QMouseEvent* event) override ;
 
 private:
     void setupScene() ;
-    void connectWidgetSignals(SocketContainerWidget* widget);
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
-    
+
     static constexpr qreal GRID_SIZE = 20.0 ;
     static constexpr qreal WHEEL_SCALE_FACTOR = 1.15 ;
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
     void onComponentDoubleClicked(ComponentWidget* widget);
-    void onConnectionStarted(SocketWidget* socket);
-    void onConnectionDragging(SocketWidget* socket, QPointF scenePos);
-    void onConnectionEnded(SocketWidget* socket, QPointF scenePos);
+    
 
 public  slots:
     void onComponentAdded(ComponentType type);

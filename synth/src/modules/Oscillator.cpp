@@ -23,8 +23,8 @@
 #include <cmath>
 #include <cstdint>
 
-Oscillator::Oscillator(double sample_rate, std::size_t buf_size, OscillatorConfig cfg):
-    BaseModule(ModuleType::Oscillator, sample_rate, buf_size),
+Oscillator::Oscillator(OscillatorConfig cfg):
+    BaseModule(ModuleType::Oscillator),
     phase_(0),
     increment_(0)
 {
@@ -32,12 +32,12 @@ Oscillator::Oscillator(double sample_rate, std::size_t buf_size, OscillatorConfi
 
     parameters_.add<ParameterType::WAVEFORM>(cfg.waveform,false);
     parameters_.add<ParameterType::AMPLITUDE>(1.0,true);
-    parameters_.add<ParameterType::FREQUENCY>(cfg.frequency, true, 0.0, sample_rate / 2.0); // limit to nyquist frequency
+    parameters_.add<ParameterType::FREQUENCY>(cfg.frequency, true, 0.0, sampleRate_ / 2.0); // limit to nyquist frequency
     parameters_.add<ParameterType::GAIN>(1.0,false);
 }
 
-Oscillator::Oscillator(double sample_rate, std::size_t buf_size, ParameterMap& parent, double frequency):
-    BaseModule(ModuleType::Oscillator, sample_rate, buf_size),
+Oscillator::Oscillator(ParameterMap& parent, double frequency):
+    BaseModule(ModuleType::Oscillator),
     phase_(0),
     increment_(0)
 {
@@ -45,7 +45,7 @@ Oscillator::Oscillator(double sample_rate, std::size_t buf_size, ParameterMap& p
 
     parameters_.addReferences(parent);
     parameters_.add<ParameterType::AMPLITUDE>(1.0,true);
-    parameters_.add<ParameterType::FREQUENCY>(frequency, true, 0.0, sample_rate / 2.0); // limit to nyquist frequency
+    parameters_.add<ParameterType::FREQUENCY>(frequency, true, 0.0, sampleRate_ / 2.0); // limit to nyquist frequency
 }
 
 bool Oscillator::isGenerative() const {

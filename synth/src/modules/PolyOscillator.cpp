@@ -30,8 +30,8 @@
 #include <iostream>
 
 
-PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size, PolyOscillatorConfig cfg):
-    BaseModule(ModuleType::PolyOscillator, sample_rate, buf_size),
+PolyOscillator::PolyOscillator(PolyOscillatorConfig cfg):
+    BaseModule(ModuleType::PolyOscillator),
     MidiEventListener(),
     children_(),
     modulators_(),
@@ -41,7 +41,7 @@ PolyOscillator::PolyOscillator(double sample_rate, std::size_t buf_size, PolyOsc
     parameters_.add<ParameterType::GAIN>(1.0 , false);
     updateGain();
 
-    childPool_.initializeAll(sampleRate_, size_, parameters_, 0.0);
+    childPool_.initializeAll(parameters_, 0.0);
 }
 
 ParameterMap* PolyOscillator::getParameters(){

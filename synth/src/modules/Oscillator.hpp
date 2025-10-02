@@ -32,13 +32,13 @@ public:
         * @brief Construct a new Oscillator module
         * 
         */
-    Oscillator(double sample_rate, std::size_t buf_size, OscillatorConfig cfg);
+    Oscillator(OscillatorConfig cfg);
 
     /**
         * @brief Construct a child oscillator module
         * 
     */
-    Oscillator(double sample_rate, std::size_t buf_size, ParameterMap& map, double frequency);
+    Oscillator(ParameterMap& map, double frequency);
 
     // overrides
     bool isGenerative() const override ;

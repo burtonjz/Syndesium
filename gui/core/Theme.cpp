@@ -37,7 +37,7 @@ const QColor Theme::SOCKET_MIDI_LIGHT = Theme::SOCKET_MIDI.lighter(150);
 
 // Component colors
 const QColor Theme::COMPONENT_BORDER = QColor(100, 100, 100);
-const QColor Theme::COMPONENT_BORDER_SELECTED = QColor(100, 200, 255);
+const QColor Theme::COMPONENT_BORDER_SELECTED = QColor(220, 220, 220);
 const QColor Theme::COMPONENT_BACKGROUND = QColor(45, 45, 45);
 const QColor Theme::COMPONENT_BACKGROUND_HOVER = QColor(55, 55, 55);
 const QColor Theme::COMPONENT_TEXT = QColor(250,250,250);

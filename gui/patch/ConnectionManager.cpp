@@ -38,6 +38,7 @@ ConnectionManager::ConnectionManager(QGraphicsScene* scene, QObject* parent):
 void ConnectionManager::startConnection(SocketWidget* fromSocket){
     if (!fromSocket) return ;
     
+    fromSocket->grabMouse();
     dragFromSocket_ = fromSocket ;
     dragConnection_ = new ConnectionCable(fromSocket);
     scene_->addItem(dragConnection_);
@@ -54,11 +55,14 @@ void ConnectionManager::finishConnection(const QPointF& scenePos){
         return ;
     }
     
+    dragFromSocket_->ungrabMouse();
+
     SocketWidget* toSocket = findSocketAt(scenePos);
     if (toSocket && canConnect(dragFromSocket_, toSocket)) {
         // Complete the connection
         dragConnection_->setToSocket(toSocket);
         connections_.append(dragConnection_);
+
 
         // connect to position changes
         SocketContainerWidget* fromWidget = dragFromSocket_->getParent();

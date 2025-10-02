@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Engine.hpp"
+#include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "api/ApiHandler.hpp"
 #include "midi/MidiEventHandler.hpp"

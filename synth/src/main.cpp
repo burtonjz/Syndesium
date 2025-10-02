@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "Engine.hpp"
+#include "core/Engine.hpp"
 #include "config/Config.hpp"
 
 // Program Entry Point

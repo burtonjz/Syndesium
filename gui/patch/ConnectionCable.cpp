@@ -31,6 +31,7 @@ ConnectionCable::ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocke
 {
     setZValue(5); // Below sockets but above container widget
     setPen(QPen(getCableColor(), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+    if (!toSocket) endpoint_ = fromSocket_->getConnectionPoint() + QPoint(5,5); // set initial endpoint on creation, offset slightly so visible
     updatePath();
 }
 
@@ -143,8 +144,9 @@ QColor ConnectionCable::getCableColor() const
         case SocketType::MidiInput:
         case SocketType::MidiOutput:
             return Theme::CABLE_MIDI ;
+        default:
+            return Qt::gray ;
     }
-    return Qt::gray;
 }
 
 void ConnectionCable::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget){

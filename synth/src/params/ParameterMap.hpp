@@ -42,6 +42,7 @@ class BaseModulator ;
 
 using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PARAMETERS> ;
 using params = RTMap<ParameterType, ParameterBase*, N_PARAMETER_TYPES> ;
+using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
 using json = nlohmann::json ;
 
 class ParameterMap {
@@ -98,17 +99,16 @@ class ParameterMap {
         }
 
         template <ParameterType typ>
-        void setValue(TYPE_TRAIT(typ) v) const {
+        bool setValue(TYPE_TRAIT(typ) v) const {
             auto it = parameters_.find(typ);
             if ( it != parameters_.end() ){
                 dynamic_cast<Parameter<typ>*>(it->second)->setValue(v);
-                return ;
+                return true ;
             }
 
-            std::stringstream err ;
-            err << "ParameterMap:  requested parameter " << static_cast<int>(typ)
-                << "does not exist in map." ;
-            throw std::runtime_error(err.str());
+            std::cerr << "ParameterMap:  requested parameter " << static_cast<int>(typ)
+                      << "does not exist in map." ;
+            return false ;
         }
 
         template <ParameterType typ>
@@ -186,56 +186,40 @@ class ParameterMap {
         }
 
         // Dispatchers (for API getters/setters)
-        using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
-        void setValueDispatch(ParameterType p, const ParameterValue& value){
+        bool setValueDispatch(ParameterType p, const ParameterValue& value){
             switch (p){
                 case ParameterType::STATUS: 
-                    setValue<ParameterType::STATUS>(std::get<TYPE_TRAIT(ParameterType::STATUS)>(value)); 
-                    break ;
+                    return setValue<ParameterType::STATUS>(std::get<TYPE_TRAIT(ParameterType::STATUS)>(value)); 
                 case ParameterType::WAVEFORM: 
-                    setValue<ParameterType::WAVEFORM>(std::get<TYPE_TRAIT(ParameterType::WAVEFORM)>(value)); 
-                    break ;
+                    return setValue<ParameterType::WAVEFORM>(std::get<TYPE_TRAIT(ParameterType::WAVEFORM)>(value)); 
                 case ParameterType::FREQUENCY: 
-                    setValue<ParameterType::FREQUENCY>(std::get<TYPE_TRAIT(ParameterType::FREQUENCY)>(value)); 
-                    break ;
+                    return setValue<ParameterType::FREQUENCY>(std::get<TYPE_TRAIT(ParameterType::FREQUENCY)>(value)); 
                 case ParameterType::AMPLITUDE: 
-                    setValue<ParameterType::AMPLITUDE>(std::get<TYPE_TRAIT(ParameterType::AMPLITUDE)>(value)); 
-                    break ;
+                    return setValue<ParameterType::AMPLITUDE>(std::get<TYPE_TRAIT(ParameterType::AMPLITUDE)>(value)); 
                 case ParameterType::GAIN: 
-                    setValue<ParameterType::GAIN>(std::get<TYPE_TRAIT(ParameterType::GAIN)>(value)); 
-                    break ;
+                    return setValue<ParameterType::GAIN>(std::get<TYPE_TRAIT(ParameterType::GAIN)>(value)); 
                 case ParameterType::PHASE: 
-                    setValue<ParameterType::PHASE>(std::get<TYPE_TRAIT(ParameterType::PHASE)>(value)); 
-                    break ;
+                    return setValue<ParameterType::PHASE>(std::get<TYPE_TRAIT(ParameterType::PHASE)>(value)); 
                 case ParameterType::PAN: 
-                    setValue<ParameterType::PAN>(std::get<TYPE_TRAIT(ParameterType::PAN)>(value)); 
-                    break ;
+                    return setValue<ParameterType::PAN>(std::get<TYPE_TRAIT(ParameterType::PAN)>(value)); 
                 case ParameterType::DETUNE: 
-                    setValue<ParameterType::DETUNE>(std::get<TYPE_TRAIT(ParameterType::DETUNE)>(value)); 
-                    break ;
+                    return setValue<ParameterType::DETUNE>(std::get<TYPE_TRAIT(ParameterType::DETUNE)>(value)); 
                 case ParameterType::ATTACK: 
-                    setValue<ParameterType::ATTACK>(std::get<TYPE_TRAIT(ParameterType::ATTACK)>(value)); 
-                    break ;
+                    return setValue<ParameterType::ATTACK>(std::get<TYPE_TRAIT(ParameterType::ATTACK)>(value)); 
                 case ParameterType::DECAY: 
-                    setValue<ParameterType::DECAY>(std::get<TYPE_TRAIT(ParameterType::DECAY)>(value)); 
-                    break ;
+                    return setValue<ParameterType::DECAY>(std::get<TYPE_TRAIT(ParameterType::DECAY)>(value)); 
                 case ParameterType::SUSTAIN: 
-                    setValue<ParameterType::SUSTAIN>(std::get<TYPE_TRAIT(ParameterType::SUSTAIN)>(value)); 
-                    break ;
+                    return setValue<ParameterType::SUSTAIN>(std::get<TYPE_TRAIT(ParameterType::SUSTAIN)>(value)); 
                 case ParameterType::RELEASE:  
-                    setValue<ParameterType::RELEASE>(std::get<TYPE_TRAIT(ParameterType::RELEASE)>(value)); 
-                    break ;
+                    return setValue<ParameterType::RELEASE>(std::get<TYPE_TRAIT(ParameterType::RELEASE)>(value)); 
                 case ParameterType::FILTER_TYPE: 
-                    setValue<ParameterType::FILTER_TYPE>(std::get<TYPE_TRAIT(ParameterType::FILTER_TYPE)>(value)); 
-                    break ;
+                    return setValue<ParameterType::FILTER_TYPE>(std::get<TYPE_TRAIT(ParameterType::FILTER_TYPE)>(value)); 
                 case ParameterType::CUTOFF: 
-                    setValue<ParameterType::CUTOFF>(std::get<TYPE_TRAIT(ParameterType::CUTOFF)>(value)); 
-                    break ;
+                    return setValue<ParameterType::CUTOFF>(std::get<TYPE_TRAIT(ParameterType::CUTOFF)>(value)); 
                 case ParameterType::Q_FACTOR: 
-                    setValue<ParameterType::Q_FACTOR>(std::get<TYPE_TRAIT(ParameterType::Q_FACTOR)>(value)); 
-                    break ;
+                    return setValue<ParameterType::Q_FACTOR>(std::get<TYPE_TRAIT(ParameterType::Q_FACTOR)>(value)); 
                 default:
-                    throw std::runtime_error("Invalid Parameter dispatch");
+                    return false ;
             }
         }
 

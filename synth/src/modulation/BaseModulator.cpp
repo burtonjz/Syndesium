@@ -45,3 +45,8 @@ void BaseModulator::setParameterModulation(ParameterType p, BaseModulator* m, Mo
 void BaseModulator::tick(){
     if (parameters_) parameters_->modulate() ;
 }
+
+bool BaseModulator::setParameterValue(ParameterType t, const ParameterValue& value){
+    parameters_->setValueDispatch(t,value);
+    return true ; 
+}

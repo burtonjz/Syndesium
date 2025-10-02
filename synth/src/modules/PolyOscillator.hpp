@@ -41,7 +41,7 @@ private:
     
 public:
     // Constructors
-    PolyOscillator(double sample_rate, std::size_t buf_size, PolyOscillatorConfig cfg);
+    PolyOscillator(PolyOscillatorConfig cfg);
 
     // getters/setters
     ParameterMap* getParameters();

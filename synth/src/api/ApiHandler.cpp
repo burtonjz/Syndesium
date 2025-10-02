@@ -16,7 +16,7 @@
  */
 
 #include "api/ApiHandler.hpp"
-#include "Engine.hpp"
+#include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "configs/ModulatorConfig.hpp"
 #include "configs/ModuleConfig.hpp"
@@ -221,7 +221,7 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             jResponse["name"] = jRequest["name"] ;
             if( jResponse["is_module"] ){
                 ModuleType type = static_cast<ModuleType>(jRequest["type"]);
-                ModuleID id = engine->moduleController.dispatchFromJson(
+                ComponentId id = engine->moduleController.dispatchFromJson(
                     type,
                     jRequest["name"], 
                     Module::getDefaultConfig(type)
@@ -238,6 +238,27 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
                 );
                 jResponse["component_id"] = id ;
                 sendSuccess();
+                return ;
+            }
+        }
+
+        if ( action == "set_component_parameter"){
+            int componentId = jRequest["componentId"];
+            ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
+            ParameterValue val = json2Variant(jRequest["value"]);
+            bool isModule = jRequest["isModule"];
+
+            if ( isModule ){
+                jRequest["status"] = engine->moduleController.setComponentParameter(componentId, p, val);
+            } else {
+                jRequest["status"] = engine->modulationController.setComponentParameter(componentId, p, val);
+            }
+
+            if ( jRequest["status"] ){
+                sendSuccess();
+                return ;
+            } else {
+                sendError("Error setting component parameter.");
                 return ;
             }
         }
@@ -447,4 +468,25 @@ bool ApiHandler::handleModulationConnection(Engine* engine, ConnectionRequest re
     }
 
     return true ;
+}
+
+// utility function to convert a json field to a variant
+ParameterValue ApiHandler::json2Variant(const json& j) {
+    if (j.is_boolean()) return j.get<bool>() ;
+    
+    if (j.is_number()) {
+        if (j.is_number_integer()) {
+            int val = j.get<int>();
+            if (val >= 0 && val <= 255) {
+                return static_cast<uint8_t>(val);
+            }
+            return val;
+        }
+        
+        if (j.is_number_float()) {
+            return j.get<double>();
+        }
+    }
+    
+    throw std::runtime_error("Unsupported JSON type");
 }
