@@ -15,17 +15,19 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "modulation/LinearFader.hpp"
-#include "types/ModulatorType.hpp"
+#include "components/LinearFader.hpp"
+#include "core/BaseComponent.hpp"
+#include "types/ComponentType.hpp"
 #include "params/ModulationParameter.hpp"
 #include "params/ParameterMap.hpp"
 #include "types/ParameterType.hpp"
 #include "config/Config.hpp"
 
-const ModulatorType LinearFader::staticType = ModulatorType::LinearFader ;
+const ComponentType LinearFader::staticType = ComponentType::LinearFader ;
 
-LinearFader::LinearFader(LinearFaderConfig cfg):
-    BaseModulator(staticType)
+LinearFader::LinearFader(ComponentId id, LinearFaderConfig cfg):
+    BaseComponent(id, ComponentType::LinearFader),
+    BaseModulator()
 {
     parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
     parameters_->add<ParameterType::RELEASE>(cfg.release, true);

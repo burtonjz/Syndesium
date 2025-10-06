@@ -15,30 +15,33 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MODULE_TYPE_HPP_
-#define __MODULE_TYPE_HPP_
+#ifndef __COMPONENT_TYPE_HPP_
+#define __COMPONENT_TYPE_HPP_
 
 /**
  * @brief enumeration of modulation source classes
  * 
 */
-enum class ModuleType {
+enum class ComponentType {
     Oscillator,
     PolyOscillator,
-    N_MODULES
+    LinearFader,
+    ADSREnvelope,
+    Unknown,
+    N_COMPONENTS
 };
 
-constexpr int N_MODULE_TYPES = static_cast<int>(ModuleType::N_MODULES) ;
+constexpr int N_COMPONENT_TYPES = static_cast<int>(ComponentType::N_COMPONENTS) - 1 ;
 
 // Define a converter from the enum to the actual type. 
 // must be defined in synth/configs/
-template <ModuleType Type> struct ModuleTypeTraits ;
+template <ComponentType Type> struct ComponentTypeTraits ;
 
 // helper aliases
-template<ModuleType Type>
-using ModuleType_t = typename ModuleTypeTraits<Type>::type ;
+template<ComponentType Type>
+using ComponentType_t = typename ComponentTypeTraits<Type>::type ;
 
-template<ModuleType Type>
-using ModuleConfig_t = typename ModuleTypeTraits<Type>::config ;
+template<ComponentType Type>
+using ComponentConfig_t = typename ComponentTypeTraits<Type>::config ;
 
-#endif // __MODULE_TYPE_HPP_
+#endif // __COMPONENT_TYPE_HPP_

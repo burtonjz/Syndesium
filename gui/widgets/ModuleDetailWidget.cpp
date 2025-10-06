@@ -18,7 +18,7 @@
 #include "widgets/ModuleDetailWidget.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
-#include "types/ModulatorType.hpp"
+#include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
 #include "core/ApiClient.hpp"
@@ -164,7 +164,7 @@ void ModuleDetailWidget::onParameterChanged(int componentId, ComponentDescriptor
     obj["componentId"] = componentId ;
     obj["parameter"] = static_cast<int>(p);
     obj["value"] = QVariant::fromStdVariant(value).toJsonValue();
-    obj["isModule"] = descriptor_.type.isModule() ;
+    obj["isModule"] = descriptor_.isModule() ;
 
     ApiClient::instance()->sendMessage(obj); 
 }

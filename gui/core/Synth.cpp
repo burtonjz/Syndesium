@@ -19,6 +19,7 @@
 #include "core/GraphPanel.hpp"
 #include "core/ApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
+#include "types/ComponentType.hpp"
 
 #include "ui_Synth.h"
 
@@ -73,11 +74,12 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     int typ ;
     for ( auto item : reg ){
         name = QString::fromStdString(item.second.name);
-        if ( item.first.isModule() ){
-            typ = static_cast<int>(item.first.getModuleType());
+        if ( item.second.isModule() ){
+            typ = static_cast<int>(item.first);
             ui_->addModuleBox->addItem(name, typ);
-        } else if ( item.first.isModulator() ){
-            typ = static_cast<int>(item.first.getModulatorType());
+        } 
+        if ( item.second.isModulator() ){
+            typ = static_cast<int>(item.first);
             ui_->addModulatorBox->addItem(name, typ);
         }
     }
@@ -165,11 +167,11 @@ void Synth::onEngineStatusChange(bool status){
 void Synth::onComponentAdded(int index, bool isModule){
     if ( index == 0 ) return ;
     if ( isModule ){
-        ComponentType typ = static_cast<ModuleType>(ui_->addModuleBox->itemData(index).toInt());
+        ComponentType typ = static_cast<ComponentType>(ui_->addModuleBox->itemData(index).toInt());
         ui_->addModuleBox->setCurrentIndex(0); // reset the combo box
         emit componentAdded(typ);
     } else {
-        ComponentType typ = static_cast<ModulatorType>(ui_->addModulatorBox->itemData(index).toInt());
+        ComponentType typ = static_cast<ComponentType>(ui_->addModulatorBox->itemData(index).toInt());
         ui_->addModulatorBox->setCurrentIndex(0); // reset the combo box
         emit componentAdded(typ);
     }

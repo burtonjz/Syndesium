@@ -18,9 +18,7 @@
 #include "api/ApiHandler.hpp"
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
-#include "configs/ModulatorConfig.hpp"
-#include "configs/ModuleConfig.hpp"
-#include "meta/ComponentDescriptor.hpp"
+#include "configs/ComponentConfig.hpp"
 #include "types/SocketType.hpp"
 
 #include <iostream>
@@ -219,27 +217,12 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             jResponse["is_module"] = jRequest["is_module"] ;
             jResponse["type"] = jRequest["type"] ;
             jResponse["name"] = jRequest["name"] ;
-            if( jResponse["is_module"] ){
-                ModuleType type = static_cast<ModuleType>(jRequest["type"]);
-                ComponentId id = engine->moduleController.dispatchFromJson(
-                    type,
-                    jRequest["name"], 
-                    Module::getDefaultConfig(type)
-                );
-                jResponse["component_id"] = id ;
-                sendSuccess();
-                return ;
-            } else {
-                ModulatorType type = static_cast<ModulatorType>(jRequest["type"]);
-                ModulatorID id = engine->modulationController.dispatchFromJson(
-                    type,
-                    jRequest["name"],
-                    Modulator::getDefaultConfig(type)
-                );
-                jResponse["component_id"] = id ;
-                sendSuccess();
-                return ;
-            }
+
+            ComponentType type = static_cast<ComponentType>(jRequest["type"]);
+            ComponentId id = engine->componentFactory.createFromJson(type, jResponse["name"], getDefaultConfig(jResponse["type"]));
+            jResponse["component_id"] = id;
+            sendSuccess();
+            return ;
         }
 
         if ( action == "set_component_parameter"){
@@ -247,11 +230,7 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
             bool isModule = jRequest["isModule"];
 
-            if ( isModule ){
-                jRequest["status"] = engine->moduleController.setComponentParameter(componentId, p, jRequest["value"]);
-            } else {
-                jRequest["status"] = engine->modulationController.setComponentParameter(componentId, p, jRequest["value"]);
-            }
+            jRequest["status"] = engine->componentManager.setComponentParameter(componentId, p, jRequest["value"]);
 
             if ( jRequest["status"] ){
                 sendSuccess();
@@ -260,48 +239,6 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
                 sendError("Error setting component parameter.");
                 return ;
             }
-        }
-
-        if ( action == "get_module_parameter" ){
-            int moduleID = jRequest["id"];
-            ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
-            BaseModule* module = engine->moduleController.getRaw(moduleID);
-            if  (!module){
-                err = "Unable to find modulator of with ID" + std::to_string(moduleID) ;
-                sendError(err);
-                return ;
-            }
-            auto params = module->getParameters()->getBaseMap() ;
-            auto it = params.find(p);
-            if (it == params.end()){
-                err = "ParameterType " + parameter2String(p) + "is not present in map for ModuleID " + std::to_string(moduleID) ; 
-                sendError(err);
-                return ;
-            }
-            jRequest["data"] = ParameterMap::dispatchToJson(module->getParameters()->getValueDispatch(p));
-            sendSuccess();
-            return ;
-        }
-
-        if ( action == "get_modulator_parameter" ){
-            int modulatorID = jRequest["id"];
-            ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
-            BaseModulator* modulator = engine->modulationController.getRaw(modulatorID);
-            if (!modulator){
-                err = "Unable to find modulator of with ID" + std::to_string(modulatorID) ;
-                sendError(err);
-                return ;
-            }
-            auto params = modulator->getParameters()->getBaseMap() ;
-            auto it = params.find(p);
-            if (it == params.end()){
-                err = "ParameterType " + parameter2String(p) + " is not present in map for ModulatorID " + std::to_string(modulatorID) ; 
-                sendError(err);
-                return ;
-            }
-            jRequest["data"] = ParameterMap::dispatchToJson(modulator->getParameters()->getValueDispatch(p));
-            sendSuccess();
-            return ;
         }
 
         if ( action == "create_connection" ){
@@ -360,10 +297,9 @@ bool ApiHandler::handleSignalConnection(Engine* engine, ConnectionRequest reques
     BaseModule* inbound = nullptr ;
     BaseModule* outbound = nullptr ;
 
-    inbound = engine->moduleController.getRaw(request.inboundID.value_or(-1));
-    outbound = engine->moduleController.getRaw(request.outboundID.value_or(-1));
-    
-    
+    inbound = engine->componentManager.getModule(request.inboundID.value_or(-1));
+    outbound = engine->componentManager.getModule(request.outboundID.value_or(-1));
+
     // if the source is an external endpoint
     if ( ! request.outboundID.has_value() ){
         std::cerr << "receiving audio from an input device is not yet supported." << std::endl ;
@@ -372,11 +308,11 @@ bool ApiHandler::handleSignalConnection(Engine* engine, ConnectionRequest reques
 
     // if the destination is an external endpoint
     if ( ! request.inboundID.has_value() ){
-        engine->moduleController.registerSink(outbound);
+        engine->signalController.registerSink(outbound);
         return true ;
     }
     
-    engine->moduleController.connect(outbound, inbound);
+    engine->signalController.connect(outbound, inbound);
     return true ;
 }
 
@@ -388,24 +324,12 @@ bool ApiHandler::handleMidiConnection(Engine* engine, ConnectionRequest request)
 
     if ( request.outboundID.has_value() && request.inboundID.has_value() ){
         // this is a standard connection between a handler and a listener
-        MidiEventHandler* handler ;
-        MidiEventListener* listener ;
-
-        if ( request.inboundIsModule.value() ){
-            listener = dynamic_cast<MidiEventListener*>(engine->moduleController.getRaw(request.inboundID.value()));
-        } else {
-            listener = dynamic_cast<MidiEventListener*>(engine->modulationController.getRaw(request.inboundID.value()));
-        }
+        MidiEventHandler* handler = engine->componentManager.getMidiHandler(request.outboundID.value());
+        MidiEventListener* listener = engine->componentManager.getMidiListener(request.inboundID.value());
 
         if ( !listener ){
             std::cerr << "WARN: No valid MidiEventListener found from connection request configuration" << std::endl ;
             return false ;
-        }
-
-        if ( request.outboundIsModule.value() ){
-            handler = dynamic_cast<MidiEventHandler*>(engine->moduleController.getRaw(request.outboundID.value()));
-        } else {
-            handler = dynamic_cast<MidiEventHandler*>(engine->modulationController.getRaw(request.outboundID.value()));
         }
         
         if ( !handler ){
@@ -420,17 +344,8 @@ bool ApiHandler::handleMidiConnection(Engine* engine, ConnectionRequest request)
         // if we are connecting from a outbound system MIDI
         // this is most common if we are connecting the raw MIDI to a MidiEventHandler
         // but it can also connect straight to a listener if desired
-        MidiEventHandler* inboundHandler ;
-        MidiEventListener* inboundListener ;
-
-        // and it can be cast from either a module or modulator
-        if ( request.inboundIsModule.value() ){
-            inboundHandler = dynamic_cast<MidiEventHandler*>(engine->moduleController.getRaw(request.inboundID.value()));
-            inboundListener = dynamic_cast<MidiEventListener*>(engine->moduleController.getRaw(request.inboundID.value()));
-        } else {
-            inboundHandler = dynamic_cast<MidiEventHandler*>(engine->modulationController.getRaw(request.inboundID.value()));
-            inboundListener = dynamic_cast<MidiEventListener*>(engine->modulationController.getRaw(request.inboundID.value()));
-        }
+        MidiEventHandler* inboundHandler = engine->componentManager.getMidiHandler(request.inboundID.value());
+        MidiEventListener* inboundListener = engine->componentManager.getMidiListener(request.inboundID.value());
 
         if (inboundHandler){
             // we register the handler to our midi state
@@ -458,35 +373,19 @@ bool ApiHandler::handleModulationConnection(Engine* engine, ConnectionRequest re
         return false ;
     }
 
-    BaseModulator* modulator = engine->modulationController.getRaw(request.outboundID.value());
+    BaseModulator* modulator = engine->componentManager.getModulator(request.outboundID.value());
+    BaseComponent* component = engine->componentManager.getRaw(request.inboundID.value());
 
-    if ( request.inboundIsModule.value() ){
-        engine->moduleController.getRaw(request.inboundID.value())->setParameterModulation(request.inboundParameter.value(), modulator);
-    } else {
-        engine->modulationController.getRaw(request.inboundID.value())->setParameterModulation(request.inboundParameter.value(), modulator);
+    if (!modulator ){
+        std::cerr << "valid modulator not found.\n";
+        return false ;
     }
 
+    if (!component){
+        std::cerr << "valid component not found.\n";
+        return false ;
+    }
+
+    component->setParameterModulation(request.inboundParameter.value(), modulator);
     return true ;
 }
-
-// // utility function to convert a json field to a variant
-// ParameterValue ApiHandler::json2Variant(const json& j) {
-//     std::cout << "json2Variant" << j << "\n" ;
-//     if (j.is_boolean()) return j.get<bool>() ;
-    
-//     if (j.is_number()) {
-//         if (j.is_number_integer()) {
-//             int val = j.get<int>();
-//             if (val >= 0 && val <= 255) {
-//                 return static_cast<uint8_t>(val);
-//             }
-//             return val;
-//         }
-        
-//         if (j.is_number_float()) {
-//             return j.get<double>();
-//         }
-//     }
-    
-//     throw std::runtime_error("Unsupported JSON type");
-// }

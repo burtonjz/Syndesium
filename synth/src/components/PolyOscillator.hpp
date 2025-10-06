@@ -19,12 +19,12 @@
 #define __MODULE_POLYOSCILLATOR_HPP_
 
 #include "midi/MidiNote.hpp"
-#include "modules/BaseModule.hpp"
+#include "core/BaseModule.hpp"
 #include "midi/MidiEventListener.hpp"
 #include "containers/RTMap.hpp"
 #include "containers/FixedPool.hpp"
-#include "modules/Oscillator.hpp"
-#include "types/ModuleType.hpp"
+#include "components/Oscillator.hpp"
+#include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
 #include "configs/PolyOscillatorConfig.hpp"
 #include <cstdint>
@@ -41,7 +41,7 @@ private:
     
 public:
     // Constructors
-    PolyOscillator(PolyOscillatorConfig cfg);
+    PolyOscillator(ComponentId id, PolyOscillatorConfig cfg);
 
     // getters/setters
     ParameterMap* getParameters();

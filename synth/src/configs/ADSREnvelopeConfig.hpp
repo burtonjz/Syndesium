@@ -18,7 +18,7 @@
 #ifndef __HPP_CONFIGS_ADSRENVELOPE_
 #define __HPP_CONFIGS_ADSRENVELOPE_
 
-#include "types/ModulatorType.hpp"
+#include "types/ComponentType.hpp"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
@@ -37,7 +37,7 @@ struct ADSREnvelopeConfig {
 // Type Traits Specification
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ADSREnvelopeConfig, attack, release) // macro to serialize/deserialize json <-> structs
 
-template <> struct ModulatorTypeTraits<ModulatorType::ADSREnvelope>{ 
+template <> struct ComponentTypeTraits<ComponentType::ADSREnvelope>{ 
     using type = ADSREnvelope ;
     using config = ADSREnvelopeConfig ;
 };

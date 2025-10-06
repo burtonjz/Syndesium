@@ -17,65 +17,68 @@
 
 #include "meta/ComponentRegistry.hpp"
 #include "meta/ComponentDescriptor.hpp"
-#include "types/ModuleType.hpp"
 #include "types/ParameterType.hpp"
 #include <stdexcept>
 
 const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry::getAllComponentDescriptors(){
     static const std::unordered_map<ComponentType, ComponentDescriptor> registry = {
         {
-            ComponentType(ModuleType::Oscillator),
+            ComponentType::Oscillator,
             {
                 "Oscillator",
-                ComponentType(ModuleType::Oscillator),
+                ComponentType::Oscillator,
                 {ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, // modulatable params
                 {ParameterType::WAVEFORM, ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, //control params
                 0, // audio inputs
                 1, // audio outputs
                 0, // midi inputs
                 0, // midi outputs
+                false, // modulator
                 false  // polyphonic
             }
         },
         {
-            ComponentType(ModuleType::PolyOscillator), 
+            ComponentType::PolyOscillator, 
             {
                 "Polyphonic Oscillator",
-                ComponentType(ModuleType::PolyOscillator),
+                ComponentType::PolyOscillator,
                 {ParameterType::AMPLITUDE, ParameterType::FREQUENCY, ParameterType::PHASE}, // modulatable params
                 {ParameterType::WAVEFORM}, //control params
                 0, // audio inputs
                 1, // audio outputs
                 1, // midi inputs
                 0, // midi outputs
+                false, // modulator
                 true  // polyphonic
             }
         },
         {
-            ComponentType(ModulatorType::LinearFader),
+            ComponentType::LinearFader,
             {
                 "Linear Fader",
-                ComponentType(ModulatorType::LinearFader),
+                ComponentType::LinearFader,
                 {ParameterType::ATTACK, ParameterType::RELEASE},
                 {ParameterType::ATTACK, ParameterType::RELEASE},
                 0,
                 0,
                 1,
                 1,
+                true,
                 false
             }
         },
         {
-            ComponentType(ModulatorType::ADSREnvelope),
+            ComponentType::ADSREnvelope,
             {
                 "ADSR Envelope",
-                ComponentType(ModulatorType::ADSREnvelope),
+                ComponentType::ADSREnvelope,
                 {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
                 {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
                 0,
                 0,
                 1,
                 1,
+                true,
                 false
             }
         }
@@ -92,12 +95,4 @@ const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(ComponentTy
         return  it->second ;
     }
     throw std::runtime_error("Unknown ComponentType");
-}
-
-const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(ModuleType type){
-    return getComponentDescriptor(ComponentType(type));
-}
-
-const ComponentDescriptor& ComponentRegistry::getComponentDescriptor(ModulatorType type){
-    return getComponentDescriptor(ComponentType(type));
 }

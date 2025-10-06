@@ -18,6 +18,7 @@
 #ifndef __MIDI_EVENT_HANDLER_HPP_
 #define __MIDI_EVENT_HANDLER_HPP_
 
+#include "core/BaseComponent.hpp"
 #include "midi/MidiNote.hpp"
 #include "midi/MidiEventListener.hpp"
 #include "midi/MidiEventQueue.hpp"
@@ -26,13 +27,17 @@
 #include <vector>
 #include <algorithm>
 
-class MidiEventHandler {
+class MidiEventHandler : public virtual BaseComponent {
 protected:
     ActiveNoteMap notes_ ;
     std::vector<MidiEventListener*> listeners_ ;
     MidiEventQueue queue_ ;
 
 public:
+    MidiEventHandler():
+        BaseComponent()
+    {}
+
     virtual ~MidiEventHandler() = default ;
 
     void addListener(MidiEventListener* listener){

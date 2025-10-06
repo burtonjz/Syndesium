@@ -15,10 +15,13 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_CONFIGS_ALL_MODULATORS
-#define __HPP_CONFIGS_ALL_MODULATORS
+#ifndef __HPP_ALL_CONFIGS_
+#define __HPP_ALL_CONFIGS_
 
-#include "types/ModulatorType.hpp"
+#include "types/ComponentType.hpp"
+
+#include "configs/OscillatorConfig.hpp"
+#include "configs/PolyOscillatorConfig.hpp"
 #include "configs/LinearFaderConfig.hpp"
 #include "configs/ADSREnvelopeConfig.hpp"
 
@@ -27,19 +30,18 @@ using json = nlohmann::json ;
 
 
 #define HANDLE_DEFAULT_CONFIG(Type) \
-    case ModulatorType::Type: \
-        return  ModulatorTypeTraits<ModulatorType::Type>::config{};
+    case ComponentType::Type: \
+        return  ComponentTypeTraits<ComponentType::Type>::config{};
 
-namespace Modulator {
-    inline json getDefaultConfig(ModulatorType type){
-        switch(type){
-        HANDLE_DEFAULT_CONFIG(LinearFader)
-        HANDLE_DEFAULT_CONFIG(ADSREnvelope)
-        default:
-            return json::object();
-        }
+inline json getDefaultConfig(ComponentType type){
+    switch(type){
+    HANDLE_DEFAULT_CONFIG(Oscillator)
+    HANDLE_DEFAULT_CONFIG(PolyOscillator)
+    HANDLE_DEFAULT_CONFIG(LinearFader)
+    HANDLE_DEFAULT_CONFIG(ADSREnvelope)
+    default:
+        return json::object();
     }
 }
 
-
-#endif // __HPP_CONFIGS_ALL_MODULATORS
+#endif // __HPP_ALL_CONFIGS_

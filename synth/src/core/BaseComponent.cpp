@@ -15,23 +15,22 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "modulation/BaseModulator.hpp"
+#include "BaseComponent.hpp"
 #include "params/ParameterMap.hpp"
 
-BaseModulator::BaseModulator(ModulatorType typ):
-        type_(typ),
-        parameters_(std::make_unique<ParameterMap>())
-    {}
+BaseComponent::BaseComponent(ComponentId id, ComponentType type):
+    id_(id),
+    type_(type),
+    parameters_(std::make_unique<ParameterMap>())
+{}
 
-ModulatorType BaseModulator::getType() const {
-    return type_ ;
+BaseComponent::~BaseComponent() = default ;
+
+bool BaseComponent::setParameterValue(ParameterType t, const json& value){
+    return parameters_->setValueDispatch(t,value); 
 }
 
-ParameterMap* BaseModulator::getParameters(){
-    return parameters_.get() ;
-}
-
-void BaseModulator::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d ){
+void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d ){
     if ( ! parameters_ ) return ;
     if ( d.empty() ){
         auto required = m->getRequiredModulationParameters();
@@ -42,11 +41,6 @@ void BaseModulator::setParameterModulation(ParameterType p, BaseModulator* m, Mo
     parameters_->setModulation(p,m,d);
 }
 
-void BaseModulator::tick(){
+void BaseComponent::updateParameters(){
     if (parameters_) parameters_->modulate() ;
-}
-
-bool BaseModulator::setParameterValue(ParameterType t, const json& value){
-    parameters_->setValueDispatch(t,value);
-    return true ; 
 }

@@ -18,7 +18,7 @@
 #ifndef __HPP_CONFIGS_LINEARFADER_
 #define __HPP_CONFIGS_LINEARFADER_
 
-#include "types/ModulatorType.hpp"
+#include "types/ComponentType.hpp"
 #include <nlohmann/json.hpp>
 
 using json = nlohmann::json ;
@@ -35,7 +35,7 @@ struct LinearFaderConfig {
 // Type Traits Specification
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LinearFaderConfig, attack, release) // macro to serialize/deserialize json <-> structs
 
-template <> struct ModulatorTypeTraits<ModulatorType::LinearFader>{ 
+template <> struct ComponentTypeTraits<ComponentType::LinearFader>{ 
     using type = LinearFader ;
     using config = LinearFaderConfig ;
 };

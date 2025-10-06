@@ -18,7 +18,8 @@
 #ifndef __MODULATOR_ADSR_ENVELOPE_HPP_
 #define __MODULATOR_ADSR_ENVELOPE_HPP_
 
-#include "modulation/BaseModulator.hpp"
+#include "core/BaseComponent.hpp"
+#include "core/BaseModulator.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "params/ParameterMap.hpp"
 #include "configs/ADSREnvelopeConfig.hpp"
@@ -29,9 +30,7 @@ private:
     ParameterMap parameters_ ;
      
 public:
-    const static ModulatorType staticType = ModulatorType::ADSREnvelope ;
-
-    ADSREnvelope(ADSREnvelopeConfig cfg);
+    ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);
     
     // MODULATOR OVERRIDES
     double modulate(double value, ModulationData* mData) const override;

@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "modules/PolyOscillator.hpp"
-#include "types/ModuleType.hpp"
+#include "components/PolyOscillator.hpp"
+#include "types/ComponentType.hpp"
 #include "types/Waveform.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "params/ParameterMap.hpp"
 #include "params/ModulationParameter.hpp"
 #include "types/ParameterType.hpp"
-#include "modulation/BaseModulator.hpp"
+#include "core/BaseModulator.hpp"
 #include "config/Config.hpp"
 
 #include <cmath>
@@ -30,22 +30,19 @@
 #include <iostream>
 
 
-PolyOscillator::PolyOscillator(PolyOscillatorConfig cfg):
-    BaseModule(ModuleType::PolyOscillator),
+PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
+    BaseComponent(id, ComponentType::PolyOscillator),
+    BaseModule(),
     MidiEventListener(),
     children_(),
     modulators_(),
     modulationData_()
 {
-    parameters_.add<ParameterType::WAVEFORM>(cfg.waveform,false);
-    parameters_.add<ParameterType::GAIN>(1.0 , false);
+    parameters_->add<ParameterType::WAVEFORM>(cfg.waveform,false);
+    parameters_->add<ParameterType::GAIN>(1.0 , false);
     updateGain();
 
-    childPool_.initializeAll(parameters_, 0.0);
-}
-
-ParameterMap* PolyOscillator::getParameters(){
-    return &parameters_ ;
+    childPool_.initializeAll(*parameters_, 0.0);
 }
 
 bool PolyOscillator::isGenerative() const {
@@ -85,7 +82,7 @@ void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
 
     if ( Oscillator* osc = childPool_.allocate() ){
         osc->setBufferIndex(bufferIndex_); // sync up buffers
-        osc->addReferenceParameters(parameters_);
+        osc->addReferenceParameters(*parameters_);
         osc->setFrequency(anote->note.getFrequency());
         osc->setAmplitude(anote->note.getMidiVelocity() / 127.0 );
         
@@ -130,11 +127,11 @@ void PolyOscillator::setParameterModulation(ParameterType p, BaseModulator* m, M
 }
 
 void PolyOscillator::updateGain(){
-    auto s = std::string(Waveform::getWaveforms()[parameters_.getValue<ParameterType::WAVEFORM>()]) ;
+    auto s = std::string(Waveform::getWaveforms()[parameters_->getValue<ParameterType::WAVEFORM>()]) ;
     float gain = Config::get<float>("oscillator." + s + ".auto_gain").value() / 
         std::sqrt(Config::get<int>("oscillator.expected_voices").value()) ;
     std::cout << "setting gain to " << gain << std::endl ;
-    parameters_.setValue<ParameterType::GAIN>(gain);
+    parameters_->setValue<ParameterType::GAIN>(gain);
 }
 
 void PolyOscillator::updateModulationInitialValue(Oscillator* osc){

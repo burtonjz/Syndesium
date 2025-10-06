@@ -15,31 +15,26 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_CONFIGS_ALL_MODULES
-#define __HPP_CONFIGS_ALL_MODULES
+#ifndef __COMPONENT_FACTORY_HPP_
+#define __COMPONENT_FACTORY_HPP_
 
-#include "types/ModuleType.hpp"
-#include "configs/OscillatorConfig.hpp"
-#include "configs/PolyOscillatorConfig.hpp"
+#include "core/ComponentManager.hpp"
+#include "types/ComponentType.hpp"
 
+#include <string>
 #include <nlohmann/json.hpp>
+
 using json = nlohmann::json ;
 
+class ComponentFactory {
+private:
+    ComponentManager* store_ ;
 
-#define HANDLE_DEFAULT_CONFIG(Type) \
-    case ModuleType::Type: \
-        return  ModuleTypeTraits<ModuleType::Type>::config{};
+public:
+    ComponentFactory(ComponentManager* store);
 
-namespace Module {
-    inline json getDefaultConfig(ModuleType type){
-        switch(type){
-        HANDLE_DEFAULT_CONFIG(Oscillator)
-        HANDLE_DEFAULT_CONFIG(PolyOscillator)
-        default:
-            return json::object();
-        }
-    }
-}
+    ComponentId createFromJson(ComponentType type, const std::string& name, const json& j );
 
+};
 
-#endif // __HPP_CONFIGS_ALL_MODULES
+#endif // __COMPONENT_FACTORY_HPP_

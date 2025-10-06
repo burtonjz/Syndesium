@@ -15,59 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MODULE_CONTROLLER_HPP_
-#define __MODULE_CONTROLLER_HPP_
+#ifndef __SIGNAL_CONTROLLER_HPP_
+#define __SIGNAL_CONTROLLER_HPP_
 
-#include "core/ComponentController.hpp"
-#include "modules/SignalChain.hpp"
-#include "modules/BaseModule.hpp"
-#include "configs/ModuleConfig.hpp"
-#include "types/ModuleType.hpp"
-#include "types/Waveform.hpp"
-#include "config/Config.hpp"
+#include "core/ComponentManager.hpp"
+#include "signal/SignalChain.hpp"
 
-#include "modules/Oscillator.hpp"
-#include "modules/PolyOscillator.hpp"
-
-#include <cstddef>
-#include <memory>
-#include <stdexcept>
-#include <utility>
-#include <type_traits>
-#include <unordered_map>
-
-using ModuleKey = std::pair<ModuleType, int>;
-
-#define HANDLE_CREATE_MODULE(Type) \
-    case ModuleType::Type: \
-        return create<ModuleType::Type>(name,  j.get<Type##Config>());
-
-struct ModuleKeyHash {
-    ComponentId operator()(const ModuleKey& key) const {
-        return std::hash<int>()(static_cast<int>(key.first)) ^ (std::hash<int>()(key.second) << 1);
-    }
-};
-
-class ModuleController: public ComponentController<
-    BaseModule,
-    ModuleType,
-    ModuleKey,
-    ModuleKeyHash,
-    ModuleTypeTraits
->
-{
+class SignalController {
 private:
+    ComponentManager* components_ ;
     SignalChain signalChain_ ;
 
 public:
-    ComponentId dispatchFromJson(ModuleType type, const std::string& name, const json& j){
-        switch (type){
-            HANDLE_CREATE_MODULE(Oscillator)
-            HANDLE_CREATE_MODULE(PolyOscillator)
-            default:
-                throw std::invalid_argument("Unsupported ModuleType");
-        }
-    }
+    SignalController(ComponentManager* components):
+        components_(components)
+    {}
 
     // signal chain functions
     void connect(BaseModule* from, BaseModule* to){
@@ -103,9 +65,10 @@ public:
     }
 
     void clearBuffer(){
-        for (auto it = components_.begin(); it != components_.end(); ++it){
-            if (it->second->isGenerative()){
-                it->second->clearBuffer();
+        for ( auto id : components_->getModuleIds() ){
+            auto m = components_->getModule(id);
+            if ( m->isGenerative()){
+                m->clearBuffer();
             }
         }
     }
@@ -115,9 +78,8 @@ public:
     }
 
     void reset(){
-        ComponentController::reset();
         signalChain_.reset() ;
     }
 };
 
-#endif // __MODULE_CONTROLLER_HPP_
+#endif // __SIGNAL_CONTROLLER_HPP_

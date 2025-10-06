@@ -28,8 +28,9 @@
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiState.hpp"
 #include "types/Waveform.hpp"
-#include "modules/ModuleController.hpp"
-#include "modulation/ModulationController.hpp"
+#include "signal/SignalController.hpp"
+#include "core/ComponentManager.hpp"
+#include "core/ComponentFactory.hpp"
 
 #include <nlohmann/json.hpp> 
 
@@ -57,9 +58,10 @@ public:
     static std::atomic<bool> stop_flag ;
     static void signalHandler(int signum);
 
-    // publically available controllers
-    ModuleController moduleController ;
-    ModulationController modulationController ;
+    // publically available interfaces
+    ComponentManager componentManager ;
+    ComponentFactory componentFactory ;
+    SignalController signalController ;
     MidiController   midiController ;
 
     // static thread functions

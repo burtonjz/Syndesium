@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "modulation/ADSREnvelope.hpp"
-#include "types/ModulatorType.hpp"
+#include "components/ADSREnvelope.hpp"
 #include "params/ModulationParameter.hpp"
 #include "types/ParameterType.hpp"
 #include <iostream>
 
-ADSREnvelope::ADSREnvelope(ADSREnvelopeConfig cfg):
-    BaseModulator(staticType)
+ADSREnvelope::ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg):
+    BaseComponent(id,ComponentType::ADSREnvelope),
+    BaseModulator()
 {
     parameters_.add<ParameterType::ATTACK>(cfg.attack, true);
     parameters_.add<ParameterType::DECAY>(cfg.decay, true);

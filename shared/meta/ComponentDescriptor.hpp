@@ -25,61 +25,7 @@
 #include <nlohmann/json.hpp>
 
 #include "types/ParameterType.hpp"
-#include "types/ModuleType.hpp"
-#include "types/ModulatorType.hpp"
-
-
-using json = nlohmann::json ;
-
-struct ComponentType {
-    uint32_t moduleType ;
-    uint32_t modulatorType ;
-
-    static constexpr uint32_t NONE = UINT32_MAX ;
-
-    // Constructors
-    ComponentType(ModuleType type):
-        moduleType(static_cast<uint32_t>(type)),
-        modulatorType(NONE){}
-
-    ComponentType(ModulatorType type): 
-        moduleType(NONE),
-        modulatorType(static_cast<uint32_t>(type)){}
-
-    ComponentType(ModuleType type, ModulatorType modType): 
-        moduleType(static_cast<uint32_t>(type)), 
-        modulatorType(static_cast<uint32_t>(modType)){}
-
-    bool isModule() const { return moduleType != NONE ;}
-    bool isModulator() const { return modulatorType != NONE ;}
-    bool isHybrid() const { return isModule() && isModulator() ; }
-
-    ModuleType getModuleType() const {
-        if (!isModule()) throw std::runtime_error("Not a module type");
-        return static_cast<ModuleType>(moduleType);
-    }
-
-    ModulatorType getModulatorType() const {
-        if (!isModulator()) throw std::runtime_error("Not a module type");
-        return static_cast<ModulatorType>(modulatorType);
-    }
-
-    bool operator==(const ComponentType& other) const {
-        return moduleType == other.moduleType && modulatorType == other.modulatorType ;
-    }
-};
-
-// hash specialization
-namespace std {
-    template<>
-    struct hash<ComponentType> {
-        std::size_t operator()(const ComponentType& ct) const {
-            return std::hash<uint64_t>{}(
-                (static_cast<uint64_t>(ct.moduleType) << 32 ) | ct.modulatorType
-            );
-        }
-    };
-}
+#include "types/ComponentType.hpp"
 
 struct ComponentDescriptor {
     std::string name ;
@@ -92,7 +38,13 @@ struct ComponentDescriptor {
     size_t numMidiInputs ;
     size_t numMidiOutputs ;
 
+    bool canModulate ;
     bool isPolyphonic = false ;
+
+    bool isModule() const { return numAudioOutputs > 0 ; }
+    bool isModulator() const { return canModulate ; }
+    bool isMidiHandler() const { return numMidiOutputs > 0 ; }
+    bool isMidiListener() const { return !isMidiHandler() && numMidiInputs > 0 ; }
 
 };
 

@@ -110,13 +110,13 @@ int Engine::audioCallback(
     Engine* engine = static_cast<Engine*>(userData);
     double* buffer = static_cast<double*>(outputBuffer) ;
     
-    engine->moduleController.clearBuffer();
+    engine->signalController.clearBuffer();
 
     double sample ;
     for ( unsigned int i = 0 ; i < nBufferFrames ; ++i ){
         engine->midiController.tick(engine->getDeltaTime());
-        engine->modulationController.tick(engine->getDeltaTime());
-        sample = engine->moduleController.processFrame();
+        engine->componentManager.runParameterModulation();
+        sample = engine->signalController.processFrame();
         buffer[i] = sample ; // buffer[i] = dsp::fastAtan(sample) ;
     }
     
@@ -157,8 +157,9 @@ Engine::Engine():
     selectedMidiPort_(-1), // invalid device ID
     midiState_(),
     midiDefaultHandler_(),
-    moduleController(),
-    modulationController(),
+    componentManager(),
+    componentFactory(&componentManager),
+    signalController(&componentManager),
     midiController(&midiState_)
 {
     signal(SIGINT, Engine::signalHandler);
@@ -257,13 +258,13 @@ void Engine::setup(){
 
     midiController.initialize() ;
 
-    moduleController.setup();
+    signalController.setup();
 
 }
 
 void Engine::destroy(){
-    modulationController.reset();
-    moduleController.reset();
+    componentManager.reset();
+    signalController.reset();
     midiState_.reset();
 }
 

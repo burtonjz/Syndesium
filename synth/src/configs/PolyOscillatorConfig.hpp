@@ -18,7 +18,7 @@
 #ifndef __HPP_CONFIGS_POLYOSCILLATOR_
 #define __HPP_CONFIGS_POLYOSCILLATOR_
 
-#include "types/ModuleType.hpp"
+#include "types/ComponentType.hpp"
 #include "types/Waveform.hpp"
 
 #include <nlohmann/json.hpp>
@@ -35,7 +35,7 @@ struct PolyOscillatorConfig {
 // Type Traits Specification
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PolyOscillatorConfig, waveform) // macro to serialize/deserialize json <-> structs
 
-template <> struct ModuleTypeTraits<ModuleType::PolyOscillator>{ 
+template <> struct ComponentTypeTraits<ComponentType::PolyOscillator>{ 
     using type = PolyOscillator ;
     using config = PolyOscillatorConfig ;
 };

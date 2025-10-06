@@ -18,7 +18,7 @@
 #ifndef __MODULE_OSCILLATOR_HPP_
 #define __MODULE_OSCILLATOR_HPP_
 
-#include "modules/BaseModule.hpp"
+#include "core/BaseModule.hpp"
 #include "configs/OscillatorConfig.hpp"
 #include "types/Waveform.hpp"
 
@@ -32,7 +32,7 @@ public:
         * @brief Construct a new Oscillator module
         * 
         */
-    Oscillator(OscillatorConfig cfg);
+    Oscillator(ComponentId id, OscillatorConfig cfg);
 
     /**
         * @brief Construct a child oscillator module

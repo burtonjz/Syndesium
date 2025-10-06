@@ -22,7 +22,7 @@
 #include "meta/ComponentRegistry.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "widgets/ComponentWidget.hpp"
-#include "types/ModuleType.hpp"
+#include "types/ComponentType.hpp"
 
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -276,14 +276,16 @@ void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
 
 void GraphPanel::onComponentAdded(ComponentType type){
     QJsonObject obj ;
+    auto descriptor = ComponentRegistry::getComponentDescriptor(type);
+
     obj["action"] = "add_component" ;
-    obj["name"] = QString::fromStdString(ComponentRegistry::getComponentDescriptor(type).name) ;
-    if ( type.isModule() ){
+    obj["name"] = QString::fromStdString(descriptor.name) ;
+    if ( descriptor.isModule() ){
         obj["is_module"] = true ;
-        obj["type"] = static_cast<int>(type.getModuleType());
+        obj["type"] = static_cast<int>(type);
     } else {
         obj["is_module"] = false ;
-        obj["type"] = static_cast<int>(type.getModulatorType());
+        obj["type"] = static_cast<int>(type);
     }
     ApiClient::instance()->sendMessage(obj); 
 }
@@ -298,13 +300,8 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
         }
 
         int id = json["component_id"].toInt();
-        if ( json["is_module"].toBool() ){
-            ModuleType type = static_cast<ModuleType>(json["type"].toInt());
-            addComponent(id,type);
-        } else {
-            ModulatorType type = static_cast<ModulatorType>(json["type"].toInt());
-            addComponent(id,type);
-        }
+        ComponentType type = static_cast<ComponentType>(json["type"].toInt());
+        addComponent(id, type);
     }
 }
 
@@ -335,20 +332,17 @@ void GraphPanel::onWidgetZUpdate(){
 
     if ( maxZ != 0 && widget->zValue() == maxZ ) return ;
 
-    qDebug() << "updating widget z value from " << widget->zValue() << " -> " << maxZ + 1 ;
     widget->setZValue( maxZ + 1 );
 
     // cables go ahead of sockets, behind widgets
     auto widgetCables = connectionManager_->getWidgetConnections(widget);
     for ( auto* cable : widgetCables ){
-        qDebug() << "updating cable z value from " << cable->zValue() << " -> " << maxZ + 0.9 ;
         cable->setZValue( maxZ + 0.9 ); 
     }
 
     // lastly, sockets (this doesn't work because sockets are parented :( )
     auto sockets = widget->getSockets();
     for ( auto* socket: sockets){
-        qDebug() << "updating socket z value from " << socket->zValue() << " -> " << maxZ + 0.8 ;
         socket->setZValue(maxZ + 0.8);
     }
  

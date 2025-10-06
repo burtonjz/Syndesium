@@ -18,7 +18,7 @@
 #ifndef __SIGNAL_CHAIN_HPP_
 #define __SIGNAL_CHAIN_HPP_
 
-#include "modules/BaseModule.hpp"
+#include "core/BaseModule.hpp"
 
 #include <unordered_set>
 #include <vector>

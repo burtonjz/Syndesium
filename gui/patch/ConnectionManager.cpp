@@ -212,11 +212,11 @@ void ConnectionManager::sendConnectionApiRequest(
     auto inputModule = dynamic_cast<ComponentWidget*>(inputWidget);
     if ( inputModule ){
         input["id"] = inputModule->getID();
-        input["is_module"] = inputModule->getComponentDescriptor().type.isModule();
+        input["is_module"] = inputModule->getComponentDescriptor().isModule();
     }
     if ( outputModule ){
         output["id"] = outputModule->getID();
-        output["is_module"] = outputModule->getComponentDescriptor().type.isModule();
+        output["is_module"] = outputModule->getComponentDescriptor().isModule();
     } 
 
     // if it's modulation, we need to capture the parameter to be modulated

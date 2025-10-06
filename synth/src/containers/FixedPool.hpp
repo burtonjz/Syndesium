@@ -21,7 +21,7 @@
 #include <bitset>
 #include <type_traits>
 
-#include "modules/BaseModule.hpp"
+#include "core/BaseModule.hpp"
 
 template<typename T, size_t N>
 class FixedPool {

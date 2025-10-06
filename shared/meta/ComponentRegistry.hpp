@@ -24,8 +24,6 @@
 namespace ComponentRegistry {
 
 const ComponentDescriptor& getComponentDescriptor(ComponentType type);
-const ComponentDescriptor& getComponentDescriptor(ModuleType type);
-const ComponentDescriptor& getComponentDescriptor(ModulatorType type);
 
 const std::unordered_map<ComponentType, ComponentDescriptor>& getAllComponentDescriptors();
 

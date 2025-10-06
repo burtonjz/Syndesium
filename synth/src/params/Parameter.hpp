@@ -18,9 +18,8 @@
 #ifndef __PARAMETER_HPP_
 #define __PARAMETER_HPP_
 
-#include "types/ModulatorType.hpp"
 #include "types/ParameterType.hpp"
-#include "modulation/BaseModulator.hpp"
+#include "core/BaseModulator.hpp"
 #include "containers/RTMap.hpp"
 #include <iostream>
 #include <variant>

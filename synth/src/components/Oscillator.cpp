@@ -15,37 +15,39 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "modules/Oscillator.hpp"
-#include "types/ModuleType.hpp"
+#include "components/Oscillator.hpp"
+#include "types/ComponentType.hpp"
 #include "dsp/Wavetable.hpp"
 #include "params/ParameterMap.hpp"
 #include "types/ParameterType.hpp"
 #include <cmath>
 #include <cstdint>
 
-Oscillator::Oscillator(OscillatorConfig cfg):
-    BaseModule(ModuleType::Oscillator),
+Oscillator::Oscillator(ComponentId id, OscillatorConfig cfg):
+    BaseComponent(id, ComponentType::Oscillator),
+    BaseModule(),
     phase_(0),
     increment_(0)
 {
     Wavetable::generate();
 
-    parameters_.add<ParameterType::WAVEFORM>(cfg.waveform,false);
-    parameters_.add<ParameterType::AMPLITUDE>(1.0,true);
-    parameters_.add<ParameterType::FREQUENCY>(cfg.frequency, true, 0.0, sampleRate_ / 2.0); // limit to nyquist frequency
-    parameters_.add<ParameterType::GAIN>(1.0,false);
+    parameters_->add<ParameterType::WAVEFORM>(cfg.waveform,false);
+    parameters_->add<ParameterType::AMPLITUDE>(1.0,true);
+    parameters_->add<ParameterType::FREQUENCY>(cfg.frequency, true, 0.0, sampleRate_ / 2.0); // limit to nyquist frequency
+    parameters_->add<ParameterType::GAIN>(1.0,false);
 }
 
 Oscillator::Oscillator(ParameterMap& parent, double frequency):
-    BaseModule(ModuleType::Oscillator),
+    BaseComponent(-1, ComponentType::Oscillator),
+    BaseModule(),
     phase_(0),
     increment_(0)
 {
     Wavetable::generate();
 
-    parameters_.addReferences(parent);
-    parameters_.add<ParameterType::AMPLITUDE>(1.0,true);
-    parameters_.add<ParameterType::FREQUENCY>(frequency, true, 0.0, sampleRate_ / 2.0); // limit to nyquist frequency
+    parameters_->addReferences(parent);
+    parameters_->add<ParameterType::AMPLITUDE>(1.0,true);
+    parameters_->add<ParameterType::FREQUENCY>(frequency, true, 0.0, sampleRate_ / 2.0); // limit to nyquist frequency
 }
 
 bool Oscillator::isGenerative() const {
@@ -53,7 +55,7 @@ bool Oscillator::isGenerative() const {
 }
 
 void Oscillator::calculateSample(){
-    Waveform wf = Waveform::from_uint8(parameters_.getValue<ParameterType::WAVEFORM>()); 
+    Waveform wf = Waveform::from_uint8(parameters_->getValue<ParameterType::WAVEFORM>()); 
     auto w = Wavetable::getWavetable(wf) ;
     double frac, wavetableIndex, sample ;
     int index_floor ;
@@ -63,30 +65,30 @@ void Oscillator::calculateSample(){
     index_floor = static_cast<int>(std::floor(wavetableIndex));
     frac = wavetableIndex - index_floor ;
     sample = ( 1.0 - frac ) * w.first[index_floor] + frac * w.first[index_floor+1];
-    sample *= parameters_.getInstantaneousValue<ParameterType::AMPLITUDE>() * parameters_.getInstantaneousValue<ParameterType::GAIN>();
+    sample *= parameters_->getInstantaneousValue<ParameterType::AMPLITUDE>() * parameters_->getInstantaneousValue<ParameterType::GAIN>();
     buffer_[bufferIndex_] = sample ;
 }
 
 void Oscillator::tick(){
     BaseModule::tick();
-    increment_ = parameters_.getInstantaneousValue<ParameterType::FREQUENCY>() / sampleRate_ ;
+    increment_ = parameters_->getInstantaneousValue<ParameterType::FREQUENCY>() / sampleRate_ ;
     phase_ = std::fmod(phase_ + increment_, 1.0);
-    parameters_.modulate();
+    parameters_->modulate();
 }
 
 void Oscillator::addReferenceParameters(ParameterMap& map){
-    parameters_.addReferences(map);
+    parameters_->addReferences(map);
 }
 
 void Oscillator::setWaveform(Waveform wave){
-    parameters_.setValue<ParameterType::WAVEFORM>(wave) ;
+    parameters_->setValue<ParameterType::WAVEFORM>(wave) ;
 }
 
 void Oscillator::setFrequency(double freq){
-    parameters_.setValue<ParameterType::FREQUENCY>(freq) ;
+    parameters_->setValue<ParameterType::FREQUENCY>(freq) ;
 }
 
 void Oscillator::setAmplitude(double amp){
-    parameters_.setValue<ParameterType::AMPLITUDE>(amp);
+    parameters_->setValue<ParameterType::AMPLITUDE>(amp);
 }
 

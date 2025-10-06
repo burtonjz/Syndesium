@@ -25,25 +25,22 @@
 #include <vector>
 #include <algorithm>
 
-#include "types/ModuleType.hpp"
+#include "core/BaseComponent.hpp"
+#include "types/ComponentType.hpp"
 #include "params/ParameterMap.hpp"
 
-class BaseModule {
+class BaseModule : public virtual BaseComponent {
 protected:
-    ModuleType  type_ ;
     double  sampleRate_ ;
     std::size_t size_ ;
     std::vector<BaseModule*> inputs_ ;
     std::unique_ptr<double[]> buffer_ ;
     size_t bufferIndex_ ;
-    ParameterMap parameters_ ;
     
 
 public:
-    BaseModule(ModuleType typ):
-        type_(typ),
-        bufferIndex_(0),
-        parameters_()
+    BaseModule():
+        bufferIndex_(0)
     {
         Config::load();
         double sampleRate = Config::get<double>("audio.sample_rate").value();
@@ -52,10 +49,6 @@ public:
         sampleRate_ = sampleRate ;
         size_ = bufferSize ;
         buffer_ = std::make_unique<double[]>(size_) ;
-    }
-
-    virtual ModuleType getType() const {
-        return type_ ;
     }
     
     virtual ~BaseModule() = default ;
@@ -80,10 +73,6 @@ public:
 
     std::size_t size() const {
         return size_ ;
-    }
-
-    ParameterMap* getParameters(){
-        return &parameters_ ;
     }
 
     void connectInput(BaseModule* source){
@@ -114,24 +103,10 @@ public:
     virtual bool isGenerative() const { return false; }
     virtual bool isPolyphonic() const { return false; }
 
-    virtual void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ){
-        if ( d.empty() ){
-            auto required = m->getRequiredModulationParameters();
-            for ( auto mp : required ){
-                d[mp];
-            }
-        }
-        parameters_.setModulation(p,m,d);
-    }
-
-    bool setParameterValue(ParameterType t, const json& value){
-        parameters_.setValueDispatch(t,value);
-        return true ; 
-    }
-
 protected:
     virtual void processBuffer(double* buf, size_t len){} 
     virtual void processBuffer(){}
+    
 };
 
 #endif // __MODULE_HPP_

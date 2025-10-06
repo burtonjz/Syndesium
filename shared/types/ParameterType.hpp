@@ -18,7 +18,6 @@
 #ifndef __PARAMETER_TYPE_HPP_
 #define __PARAMETER_TYPE_HPP_
 
-#include "types/ModulatorType.hpp"
 #include "types/Waveform.hpp"
 
 #include <variant>
@@ -120,6 +119,20 @@ constexpr std::array<float, N_PARAMETER_TYPES> parameterDefaults({
     0.0f,                              // CUTOFF
     0.5f                               // Q_FACTOR
 });
+
+/* 
+every ParameterType will store a default modulation strategy
+based on the type of variable it is. This is overridable at the
+Parameter level. 
+*/ 
+enum class ModulationStrategy {
+    ADDITIVE,
+    MULTIPLICATIVE, 
+    EXPONENTIAL,
+    LOGARITHMIC,
+    REPLACE,
+    NONE
+};
 
 /**
  * @brief define value variable type for each ParameterType

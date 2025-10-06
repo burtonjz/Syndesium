@@ -50,7 +50,7 @@ ComponentWidget::ComponentWidget(int id, ComponentType type, QGraphicsItem* pare
         specs.push_back({SocketType::MidiOutput, QString("MIDI Output %1").arg(i+1)});
     }
 
-    if ( descriptor_.type.isModulator()){
+    if ( descriptor_.isModulator()){
         specs.push_back({SocketType::ModulationOutput, QString("Modulation Output")});
     }
 
