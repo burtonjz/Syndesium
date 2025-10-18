@@ -37,6 +37,7 @@ struct ConnectionRequest {
     std::optional<bool> inboundIsModule ;
     std::optional<bool> outboundIsModule ;
     std::optional<ParameterType> inboundParameter ;
+    bool remove = false ;
 };
 
 class ApiHandler {

@@ -35,6 +35,18 @@ ConnectionCable::ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocke
     updatePath();
 }
 
+SocketWidget* ConnectionCable::getInboundSocket() const {
+    if ( fromSocket_ && fromSocket_->isInput() ) return fromSocket_ ;
+    if ( toSocket_ && toSocket_->isInput() ) return toSocket_ ;
+    return nullptr ;
+}
+
+SocketWidget* ConnectionCable::getOutboundSocket() const {
+    if ( fromSocket_ && fromSocket_->isOutput() ) return fromSocket_ ;
+    if ( toSocket_ && toSocket_->isOutput() ) return toSocket_ ;
+    return nullptr ;
+}
+
 void ConnectionCable::setFromSocket(SocketWidget* socket){
     fromSocket_ = socket;
     updatePath();

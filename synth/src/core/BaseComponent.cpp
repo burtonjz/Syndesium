@@ -41,6 +41,11 @@ void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, Mo
     parameters_->setModulation(p,m,d);
 }
 
+void BaseComponent::removeParameterModulation(ParameterType p){
+    if ( ! parameters_ ) return ;
+    parameters_->removeModulation(p);
+}
+
 void BaseComponent::updateParameters(){
     if (parameters_) parameters_->modulate() ;
 }

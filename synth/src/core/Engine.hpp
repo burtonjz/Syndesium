@@ -106,7 +106,9 @@ public:
 
     // connection logic
     bool setMidiConnection(MidiEventHandler* handler, MidiEventListener* listener);
+    bool removeMidiConnection(MidiEventHandler* handler, MidiEventListener* listener);
     bool registerMidiHandler(MidiEventHandler* handler);
+    bool unregisterMidiHandler(MidiEventHandler* handler);
 
 
 

@@ -280,13 +280,7 @@ void GraphPanel::onComponentAdded(ComponentType type){
 
     obj["action"] = "add_component" ;
     obj["name"] = QString::fromStdString(descriptor.name) ;
-    if ( descriptor.isModule() ){
-        obj["is_module"] = true ;
-        obj["type"] = static_cast<int>(type);
-    } else {
-        obj["is_module"] = false ;
-        obj["type"] = static_cast<int>(type);
-    }
+    obj["type"] = static_cast<int>(type);
     ApiClient::instance()->sendMessage(obj); 
 }
 

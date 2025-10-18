@@ -214,7 +214,6 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         }
         // COMPONENTS
         if ( action == "add_component"){
-            jResponse["is_module"] = jRequest["is_module"] ;
             jResponse["type"] = jRequest["type"] ;
             jResponse["name"] = jRequest["name"] ;
 
@@ -228,7 +227,6 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         if ( action == "set_component_parameter"){
             int componentId = jRequest["componentId"];
             ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
-            bool isModule = jRequest["isModule"];
 
             jRequest["status"] = engine->componentManager.setComponentParameter(componentId, p, jRequest["value"]);
 
@@ -243,8 +241,9 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
 
         if ( action == "create_connection" ){
             // save variables into response
-            jResponse["input"] = jRequest["input"] ;
-            jResponse["output"] = jRequest["output"] ;
+            jResponse["connectionID"] = jRequest["connectionID"];
+            jResponse["inbound"] = jRequest["inbound"] ;
+            jResponse["outbound"] = jRequest["outbound"] ;
 
             ConnectionRequest request = parseConnectionRequest(jRequest);
             if ( routeConnectionRequest(engine, request)){
@@ -252,6 +251,23 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
                 return ;
             } else {
                 sendError("failed to make requested connection");
+                return ;
+            }
+        }
+
+        if ( action == "remove_connection" ){
+            jResponse["connectionID"] = jRequest["connectionID"];
+            jResponse["inbound"] = jRequest["inbound"] ;
+            jResponse["outbound"] = jRequest["outbound"] ; 
+
+            ConnectionRequest request = parseConnectionRequest(jRequest);
+            request.remove = true ;
+
+            if ( routeConnectionRequest(engine, request)){
+                sendSuccess();
+                return ;
+            } else {
+                sendError("failed to remove specified connection");
                 return ;
             }
         }
@@ -268,13 +284,11 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
 ConnectionRequest ApiHandler::parseConnectionRequest(json request){
     ConnectionRequest req ;
     // define API variables
-    req.inboundSocket = static_cast<SocketType>(request["input"]["socket"]);
-    req.outboundSocket = static_cast<SocketType>(request["output"]["socket"]);
-    if ( request["input"].contains("id")) req.inboundID = request["input"]["id"];
-    if ( request["output"].contains("id")) req.outboundID = request["output"]["id"];
-    if ( request["input"].contains("is_module")) req.inboundIsModule = request["input"]["is_module"];
-    if ( request["output"].contains("is_module")) req.outboundIsModule = request["output"]["is_module"];
-    if ( request["input"].contains("parameter")) req.inboundParameter = static_cast<ParameterType>(request["input"]["parameter"]);
+    req.inboundSocket = static_cast<SocketType>(request["inbound"]["socket"]);
+    req.outboundSocket = static_cast<SocketType>(request["outbound"]["socket"]);
+    if ( request["inbound"].contains("id")) req.inboundID = request["inbound"]["id"];
+    if ( request["outbound"].contains("id")) req.outboundID = request["outbound"]["id"];
+    if ( request["inbound"].contains("parameter")) req.inboundParameter = static_cast<ParameterType>(request["inbound"]["parameter"]);
 
     return req ;
 }
@@ -312,6 +326,11 @@ bool ApiHandler::handleSignalConnection(Engine* engine, ConnectionRequest reques
         return true ;
     }
     
+    if ( request.remove ){
+        engine->signalController.disconnect(outbound, inbound);
+        return true ;
+    }
+
     engine->signalController.connect(outbound, inbound);
     return true ;
 }
@@ -337,24 +356,33 @@ bool ApiHandler::handleMidiConnection(Engine* engine, ConnectionRequest request)
             return false ;
         }
 
+        if ( request.remove ){
+            return engine->removeMidiConnection(handler, listener);
+        }
+
         return engine->setMidiConnection(handler, listener);    
     }
 
     if ( ! request.outboundID.has_value() && request.inboundID.has_value() ){
-        // if we are connecting from a outbound system MIDI
-        // this is most common if we are connecting the raw MIDI to a MidiEventHandler
-        // but it can also connect straight to a listener if desired
         MidiEventHandler* inboundHandler = engine->componentManager.getMidiHandler(request.inboundID.value());
         MidiEventListener* inboundListener = engine->componentManager.getMidiListener(request.inboundID.value());
 
-        if (inboundHandler){
-            // we register the handler to our midi state
+        // case 1: inbound is a handler (means we must deal with midi handler registration)
+        if ( inboundHandler ){
+            if ( request.remove ){
+                engine->unregisterMidiHandler(inboundHandler);
+                return true ;
+            }
             engine->registerMidiHandler(inboundHandler);
             return true ;
         }
 
-        if (inboundListener){
-            // we register the listener to the default handler
+        // case 2: inbound is a listener (so we register to default handler)
+        if ( inboundListener ){
+            if ( request.remove ){
+                engine->removeMidiConnection(nullptr, inboundListener);
+                return true ;
+            }
             engine->setMidiConnection(nullptr, inboundListener);
             return true ;
         }
@@ -386,6 +414,11 @@ bool ApiHandler::handleModulationConnection(Engine* engine, ConnectionRequest re
         return false ;
     }
 
+    if ( request.remove ){
+        component->removeParameterModulation(request.inboundParameter.value());
+        return true ;
+    }
+    
     component->setParameterModulation(request.inboundParameter.value(), modulator);
     return true ;
 }

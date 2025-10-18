@@ -18,6 +18,7 @@
 #ifndef __SIGNAL_CONTROLLER_HPP_
 #define __SIGNAL_CONTROLLER_HPP_
 
+#include "core/BaseModule.hpp"
 #include "core/ComponentManager.hpp"
 #include "signal/SignalChain.hpp"
 
@@ -36,6 +37,13 @@ public:
         if (!from) return ;
         if (!to) return ;
         to->connectInput(from);
+    }
+
+    void disconnect(BaseModule* from, BaseModule* to){
+        if (!from) return ;
+        if (!to) return ;
+        to->disconnectInput(from);
+        signalChain_.calculateTopologicalOrder();
     }
 
     void registerSink(BaseModule* output){

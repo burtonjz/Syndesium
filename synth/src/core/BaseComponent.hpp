@@ -52,6 +52,7 @@ public:
 
     bool setParameterValue(ParameterType t, const json& value);
     virtual void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} );
+    virtual void removeParameterModulation(ParameterType p);
 
     // this function runs modulation on all internal parameters
     void updateParameters();

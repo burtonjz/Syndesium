@@ -70,7 +70,11 @@ public:
         } else {
             std::cerr << "WARN: attempted to set modulator, but the pointer is null." << std::endl;
         }
-        
+    }
+
+    void removeModulation(){
+        modulator_ = nullptr ;
+        modData_ = {} ;
     }
 
     ModulationData* getModulationData(){

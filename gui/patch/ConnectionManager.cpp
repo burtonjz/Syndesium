@@ -27,13 +27,17 @@
 #include <QDebug>
 #include <qdebug.h>
 #include <qgraphicsitem.h>
+#include <algorithm>
 
 ConnectionManager::ConnectionManager(QGraphicsScene* scene, QObject* parent): 
     QObject(parent), 
     scene_(scene), 
+    currentConnectionID_(0),
     dragConnection_(nullptr), 
     dragFromSocket_(nullptr)
-{}
+{
+    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &ConnectionManager::onApiDataReceived);
+}
 
 void ConnectionManager::startConnection(SocketWidget* fromSocket){
     if (!fromSocket) return ;
@@ -62,9 +66,7 @@ void ConnectionManager::finishConnection(const QPointF& scenePos){
     if (toSocket && canConnect(dragFromSocket_, toSocket)) {
         // Complete the connection
         dragConnection_->setToSocket(toSocket);
-        connections_.push_back(dragConnection_);
-
-
+    
         // connect to position changes
         SocketContainerWidget* fromWidget = dragFromSocket_->getParent();
         SocketContainerWidget* toWidget = toSocket->getParent();
@@ -72,21 +74,18 @@ void ConnectionManager::finishConnection(const QPointF& scenePos){
         // set connection cable layering
         dragConnection_->setZValue(std::max(fromWidget->zValue(), toWidget->zValue()) - 0.1);
 
-        // Note: other logic prohibits self connections, and we won't get 
-        // this far if these are null pointers, so let's not worry about safeguards
         connect(fromWidget, &SocketContainerWidget::positionChanged, 
             this, &ConnectionManager::onWidgetPositionChanged);
         connect(toWidget, &SocketContainerWidget::positionChanged, 
             this, &ConnectionManager::onWidgetPositionChanged);
 
-        qDebug() << "Connection created:" << dragFromSocket_->getName() 
-                 << "to" << toSocket->getName() ;
+        // add connection to map
+        ConnectionID id = currentConnectionID_++ ;
+        connections_[id] = dragConnection_ ;
 
-        sendConnectionApiRequest(dragFromSocket_, toSocket, fromWidget, toWidget);
+        sendConnectionApiRequest(id);
     } else {
-        // Invalid connection
-        scene_->removeItem(dragConnection_);
-        delete dragConnection_ ;
+        cancelConnection();
     }
     
     dragConnection_ = nullptr;
@@ -101,6 +100,15 @@ void ConnectionManager::cancelConnection()
         dragConnection_ = nullptr;
     }
     dragFromSocket_ = nullptr;
+}
+
+void ConnectionManager::cancelConnection(ConnectionID connection){
+    auto cable = connections_[connection];
+    if (cable){
+        scene_->removeItem(cable);
+        delete cable ;
+        connections_.erase(connection);
+    }
 }
 
 SocketWidget* ConnectionManager::findSocketAt(const QPointF& scenePos) const {
@@ -122,17 +130,26 @@ bool ConnectionManager::canConnect(SocketWidget* from, SocketWidget* to) const {
 }
 
 bool ConnectionManager::hasConnection(SocketWidget* socket) const {
-    for ( const ConnectionCable* cable : connections_ ) {
-        if (cable->getFromSocket() == socket || cable->getToSocket() == socket) {
+    for (auto it = connections_.begin(); it != connections_.end();) {
+        if ( it->second->getFromSocket() == socket || it->second->getToSocket() == socket ) {
             return true;
         }
     }
     return false;
 }
 
-void ConnectionManager::removeConnection(SocketWidget* socket){
-    for (auto it = connections_.begin(); it != connections_.end();) {
-        ConnectionCable* cable = *it;
+void ConnectionManager::removeConnection(ConnectionID connection){
+    ConnectionCable* cable = connections_[connection];
+    if ( !cable ) return ;
+    if ( cable->scene() ){
+        cable->scene()->removeItem(cable);
+    }
+
+    sendConnectionApiRequest(connection, true);
+}
+
+void ConnectionManager::removeSocketConnections(SocketWidget* socket){
+    for (const auto& [id, cable] : connections_) {
         if (cable->getFromSocket() == socket || cable->getToSocket() == socket) {
             QString fromText = cable->getFromSocket()
                 ? QString("%1%2")
@@ -145,100 +162,111 @@ void ConnectionManager::removeConnection(SocketWidget* socket){
                     .arg(cable->getToSocket()->getParent()->getName())
                     .arg(cable->getToSocket()->getName())
                 : "null" ;
-            qDebug() << "removing cable connection:" << fromText << "->" << toText ;
 
-            scene_->removeItem(cable);
-            delete cable ;
-            it = connections_.erase(it);
-        } else {
-            ++it;
+            sendConnectionApiRequest(id, true);
         }
     }
 }
 
-void ConnectionManager::removeConnection(ConnectionCable* cable){
-    if ( !cable ) return ;
-    if ( cable->scene() ){
-        cable->scene()->removeItem(cable);
-    }
-    connections_.erase(std::remove(connections_.begin(), connections_.end(), cable), connections_.end());
-    delete cable ;
-}
-
 void ConnectionManager::removeAllConnections(SocketContainerWidget* module){
     for (SocketWidget* socket : module->getSockets()) {
-        removeConnection(socket);
+        removeSocketConnections(socket);
     }
 }
 
 const std::vector<ConnectionCable*> ConnectionManager::getWidgetConnections(SocketContainerWidget* widget){
     std::vector<ConnectionCable*> widgetCables ;
-    for ( auto cable : connections_ ){
+    for (const auto& [id, cable] : connections_) {
         if (cable->involvesWidget(widget)) widgetCables.push_back(cable);
     }
     return widgetCables ;
 }
 
-void ConnectionManager::sendConnectionApiRequest(
-    SocketWidget* fromSock, SocketWidget* toSock, 
-    SocketContainerWidget* fromWidget, SocketContainerWidget* toWidget
-){
-    SocketWidget* outputSock ;
-    SocketWidget* inputSock ;
-    SocketContainerWidget* outputWidget ;
-    SocketContainerWidget* inputWidget ;
-
-    if ( fromSock->isInput() ){
-        inputSock = fromSock ;
-        inputWidget = fromWidget ;
-        outputSock = toSock ;
-        outputWidget = toWidget ;
-    } else {
-        inputSock = toSock ;
-        inputWidget = toWidget ;
-        outputSock = fromSock ;
-        outputWidget = fromWidget ;
-    }
-
+void ConnectionManager::sendConnectionApiRequest(ConnectionID connection, bool remove){
     QJsonObject obj ;
     QJsonObject input ;
     QJsonObject output ;
 
-    output["socket"] = static_cast<int>(outputSock->getType());
-    input["socket"] = static_cast<int>(inputSock->getType());
+    if ( remove ){
+        obj["action"] = "remove_connection" ;
+    } else {
+        obj["action"] = "create_connection" ;
+    }
+    
+    ConnectionCable* cable = connections_[connection];
+
+    if (!cable){
+        qDebug() << "invalid connection id provided" ;
+        return ;
+    }
+
+    auto outboundSocket = cable->getOutboundSocket();
+    auto inboundSocket = cable->getInboundSocket();
+
+    auto outboundComponent = dynamic_cast<ComponentWidget*>(outboundSocket->getParent());
+    auto inboundComponent = dynamic_cast<ComponentWidget*>(inboundSocket->getParent());
+
+    output["socket"] = static_cast<int>(outboundSocket->getType());
+    input["socket"] = static_cast<int>(inboundSocket->getType());
     
     // if the widgets are component widgets, then we collect the additional information
-    auto outputModule = dynamic_cast<ComponentWidget*>(outputWidget);
-    auto inputModule = dynamic_cast<ComponentWidget*>(inputWidget);
-    if ( inputModule ){
-        input["id"] = inputModule->getID();
-        input["is_module"] = inputModule->getComponentDescriptor().isModule();
-    }
-    if ( outputModule ){
-        output["id"] = outputModule->getID();
-        output["is_module"] = outputModule->getComponentDescriptor().isModule();
-    } 
+    if ( inboundComponent ) input["id"] = inboundComponent->getID();
+    if ( outboundComponent ) output["id"] = outboundComponent->getID();
 
     // if it's modulation, we need to capture the parameter to be modulated
-    if ( inputSock->getType() == SocketType::ModulationInput ){
-        input["parameter"] = static_cast<int>(parameterFromString(inputSock->getName().toStdString()));
+    if ( inboundSocket->getType() == SocketType::ModulationInput ){
+        input["parameter"] = static_cast<int>(parameterFromString(inboundSocket->getName().toStdString()));
     }
-
-    obj["action"] = "create_connection" ;
-    obj["output"] = output ;
-    obj["input"] = input ;
+    
+    obj["connectionID"] = connection ;
+    obj["outbound"] = output ;
+    obj["inbound"] = input ;
     
     ApiClient::instance()->sendMessage(obj);
+
 }
 
+void ConnectionManager::onApiDataReceived(const QJsonObject &json){
+    QString action = json["action"].toString();
+    bool success = json["status"].toString() == "success" ;
+
+    if ( action == "create_connection" && !success ){
+        ConnectionID id = json["connectionID"].toInt(-1);
+        removeConnection(id);
+        return ;
+    } 
+
+    if ( action == "remove_connection" && success ){
+        ConnectionID id = json["connectionID"].toInt(-1);
+        ConnectionCable* cable = connections_[id];
+        if ( !cable ){
+            qDebug() << "connectionID value " << id << "is not present in map. Cannot remove connection." ;
+            return ;
+        }
+
+        QString fromText = cable->getFromSocket()
+            ? QString("%1%2")
+                .arg(cable->getFromSocket()->getParent()->getName())
+                .arg(cable->getFromSocket()->getName())
+            : "null" ;
+
+        QString toText = cable->getToSocket()
+            ? QString("%1%2")
+                .arg(cable->getToSocket()->getParent()->getName())
+                .arg(cable->getToSocket()->getName())
+            : "null" ;
+        qDebug() << "removing cable connection:" << fromText << "->" << toText ;
+        cancelConnection(id);
+    }
+}
 
 void ConnectionManager::onWidgetPositionChanged(){
     SocketContainerWidget* widget = dynamic_cast<SocketContainerWidget*>(sender());
     if (!widget) return ;
     
-    for (ConnectionCable* connection: connections_ ){
-        if (connection->involvesWidget(widget)){
-            connection->updatePath();
+    for (const auto& [id, cable] : connections_) {
+        if (cable->involvesWidget(widget)){
+            cable->updatePath();
         }
     }
 }

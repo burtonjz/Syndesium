@@ -33,6 +33,9 @@ public:
 
     SocketWidget* getFromSocket() const { return fromSocket_ ; }
     SocketWidget* getToSocket() const { return toSocket_ ; }
+    
+    SocketWidget* getOutboundSocket() const ;
+    SocketWidget* getInboundSocket() const ;
 
     void setFromSocket(SocketWidget* socket);
     void setToSocket(SocketWidget* socket);

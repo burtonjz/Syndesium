@@ -286,11 +286,38 @@ bool Engine::setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* 
     return true ;
 }
 
+bool Engine::removeMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener){
+    // if inputMidi is not a valid handler, use the default handler
+    if ( !outputMidi ){
+        std::cerr << "WARN: outputMidi is a null pointer. Setting outputMidi to the default handler" << std::endl ;
+        outputMidi = &midiDefaultHandler_ ;
+    }
+
+    if ( !listener ){
+        std::cerr << "WARN: listener is a null pointer. Unable to successfully set a midi connection" << std::endl ;
+        return false ;
+    } 
+
+    midiController.removeHandler(outputMidi);
+    outputMidi->removeListener(listener);
+    
+    return true ;
+}
+
 bool Engine::registerMidiHandler(MidiEventHandler* handler){
     if ( !handler ){
         std::cerr << "WARN: handler is a null pointer. Unable to register." << std::endl ;
         return false ;
     }
     midiState_.addHandler(handler);
+    return true ;
+}
+
+bool Engine::unregisterMidiHandler(MidiEventHandler* handler){
+    if ( !handler ){
+        std::cerr << "WARN: handler is a null pointer. Unable to register." << std::endl ;
+        return false ;
+    }
+    midiState_.removeHandler(handler);
     return true ;
 }

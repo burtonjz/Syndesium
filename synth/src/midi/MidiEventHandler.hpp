@@ -45,6 +45,13 @@ public:
         listeners_.push_back(listener);
     }
 
+    void removeListener(MidiEventListener* listener){
+        auto it = std::find(listeners_.begin(), listeners_.end(), listener);
+        if ( it != listeners_.end() ){
+            listeners_.erase(it);
+        }
+    }
+
     /**
      * @brief for use in audio thread for thread-safe handling of midi events
      * 
