@@ -18,8 +18,13 @@
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
 
+#include <rtaudio/RtAudio.h>
+#include <rtmidi/RtMidi.h>
+
 // Program Entry Point
 int main() {
+    std::cout << "RtAudio version: " << RtAudio::getVersion() << std::endl ;
+    std::cout << "RtMidi version: " << RtMidi::getVersion() << std::endl ;
     Config::load();
     Engine engine ;
     engine.initialize();
