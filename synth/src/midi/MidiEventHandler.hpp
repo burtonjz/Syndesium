@@ -27,17 +27,31 @@
 #include <vector>
 #include <algorithm>
 
-class MidiEventHandler : public virtual BaseComponent {
+class MidiEventHandler : public MidiEventListener, public virtual BaseComponent {
 protected:
     ActiveNoteMap notes_ ;
     std::vector<MidiEventListener*> listeners_ ;
     MidiEventQueue queue_ ;
 
-public:
-    MidiEventHandler():
-        BaseComponent()
-    {}
+    // broadcast functions to notify listeners
+    void notifyKeyPressed(ActiveNote* note, bool rePressed = false) {
+        for (auto* li : listeners_) li->onKeyPressed(note, rePressed);
+    }
+    
+    void notifyKeyReleased(const ActiveNote& note) {
+        for (auto* li : listeners_) li->onKeyReleased(note);
+    }
+    
+    void notifyKeyOff(const ActiveNote& note) {
+        for (auto* li : listeners_) li->onKeyOff(note);
+    }
+    
+    void notifyPitchbend(uint16_t pitchbend) {
+        for (auto* li : listeners_) li->onPitchbend(pitchbend);
+    }
 
+public:
+    MidiEventHandler(): BaseComponent() {}
     virtual ~MidiEventHandler() = default ;
 
     void addListener(MidiEventListener* listener){
@@ -52,10 +66,56 @@ public:
         }
     }
 
-    /**
-     * @brief for use in audio thread for thread-safe handling of midi events
-     * 
-     */
+    // all handlers are listeners so that they can chain operations if desired. By default, we simply pass through
+    void onKeyPressed(const ActiveNote* note, bool rePressed = false) override {
+        MidiEvent e = { MidiEvent::Type::NotePressed, *note, rePressed };
+        queue_.push(e);
+    }
+
+    void onKeyReleased(ActiveNote anote) override {
+        MidiEvent e = { MidiEvent::Type::NoteReleased, anote };
+        queue_.push(e);
+    }
+
+    void onKeyOff(ActiveNote anote) override {
+        MidiEvent e = { MidiEvent::Type::NoteOff, anote };
+        queue_.push(e);
+    }
+
+    void onPitchbend(uint16_t pitchbend) override {
+        notifyPitchbend(pitchbend);
+    }
+
+    // handler functions for root-level midi input from midi state
+    void handleKeyPressed(const MidiNote note){
+        MidiEvent e = { MidiEvent::Type::NotePressed, {note} };
+        if ( notes_.find(e.anote.note.getMidiNote()) != notes_.end()){
+            e.rePressed = true ;
+            queue_.push(e);
+            return ;
+        } 
+
+        ActiveNote n {note, 0.0f};
+        notes_[e.anote.note.getMidiNote()] = n ;
+        queue_.push(e);
+    };
+
+    void handleKeyReleased(const MidiNote note){
+        MidiEvent e = { MidiEvent::Type::NoteReleased, {note} };
+        queue_.push(e);
+    };
+
+    void handlePitchbend(uint16_t pitchbend){
+        notifyPitchbend(pitchbend);
+    };
+
+    
+    // determines if a note should be killed on tick. Default behavior is to kill a note as soon as note off is received via Midi
+    virtual bool shouldKillNote(const ActiveNote& anote) const {
+        return !anote.note.getStatus() ;
+    }
+
+    
     void processEvents(){
         MidiEvent e ;
         while (queue_.pop(e)){
@@ -65,75 +125,27 @@ public:
             
             switch (e.type){
             case MidiEvent::Type::NotePressed:
-                // handle repress
-                if (e.rePressed){
-                    anote.resetTime();
-                    anote.note.setStatus(true);
-                    for (auto* li: listeners_ ) li->onKeyPressed(&notes_[e.anote.note.getMidiNote()], true);
-                } else {
-                    anote.resetTime();
-                    anote.note.setStatus(true);
-                    for (auto* li: listeners_ ) li->onKeyPressed(&anote);
-                }
+                anote.resetTime();
+                anote.note.setStatus(true);
+                notifyKeyPressed(&notes_[e.anote.note.getMidiNote()], e.rePressed);
                 break ;
             case MidiEvent::Type::NoteReleased:
                 anote.resetTime();
                 anote.note.setStatus(false);
-                for (auto* li: listeners_ ) li->onKeyReleased(anote);
+                notifyKeyReleased(anote);
                 break ;
             case MidiEvent::Type::NoteOff:
-                for (auto* li: listeners_ ) li->onKeyOff(anote);
+                notifyKeyOff(anote);
                 notes_.erase(it);
                 break ;
             }
         }
     }
 
-    /**
-     * @brief On a key press from the Midi system
-     * 
-     * @param note 
-     */
-    void handleKeyPressed(const MidiNote note){
-        MidiEvent e = { MidiEvent::Type::NotePressed, {note} };
-        if ( notes_.find(e.anote.note.getMidiNote()) != notes_.end()){
-            e.rePressed = true ;
-            queue_.push(e);
-            return ;
-        } 
-        ActiveNote n {note, 0.0f};
-        notes_[e.anote.note.getMidiNote()] = n ;
-        queue_.push(e);
-        return ;
-    };
-
-    /**
-     * @brief On a key released from a midi system
-     * 
-     * @param note 
-     */
-    virtual void handleKeyReleased(const MidiNote note){
-        MidiEvent e = { MidiEvent::Type::NoteReleased, {note} };
-        queue_.push(e);
-    };
-
-    virtual void handlePitchbend(uint16_t pitchbend){
-        for (auto* li : listeners_) li->onPitchbend(pitchbend);
-    };
-
-    /**
-     * @brief determines if a note should be killed on tick. Default behavior is to kill a note as soon as note off is received via Midi
-     * 
-     * @param note ActiveNote
-     */
-    virtual bool shouldKillNote(const ActiveNote& anote) const {
-        return !anote.note.getStatus() ;
-    }
-
     void tick(float dt){
         processEvents();
 
-        // also, the handler will check if a note should be killed (e.g., if enough time has passed that a release stage is concluded)
+        // check for any notes that need to be released
         for (auto it = notes_.begin(); it != notes_.end(); ++it ){
             if ( shouldKillNote(it->second) ){
                 MidiEvent e = {MidiEvent::Type::NoteOff, it->second};
