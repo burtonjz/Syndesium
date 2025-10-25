@@ -98,6 +98,11 @@ bool ConnectionCable::involvesWidget(SocketContainerWidget* widget) const {
            ( toSocket_   &&   toSocket_->getParent() == widget ) ;
 }
 
+bool ConnectionCable::involvesSocket(SocketWidget* socket) const {
+    return ( fromSocket_ && fromSocket_ == socket ) ||
+           ( toSocket_ && toSocket_ == socket ) ;
+}
+
 void ConnectionCable::updatePath(){
     if (!fromSocket_) return ;
     

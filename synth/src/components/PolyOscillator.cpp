@@ -124,6 +124,15 @@ void PolyOscillator::setParameterModulation(ParameterType p, BaseModulator* m, M
     }
     modulators_[p] = m ;
     modulationData_[p] = d ;
+
+    childPool_.forEachActive(&Oscillator::setParameterModulation, p, m, d);
+}
+
+void PolyOscillator::removeParameterModulation(ParameterType p){
+    modulators_[p] = nullptr ;
+    modulationData_[p] = {} ;
+
+    childPool_.forEachActive(&Oscillator::removeParameterModulation, p);
 }
 
 void PolyOscillator::updateGain(){

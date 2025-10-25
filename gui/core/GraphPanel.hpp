@@ -44,6 +44,10 @@ private:
     std::vector<SocketContainerWidget*> widgets_ ;
     std::vector<ModuleDetailWidget*> details_ ;
 
+    // context menu actions
+    SocketWidget* clickedSocket_ ;
+    QAction* disconnectAllAct_ ;
+
 public:
     explicit GraphPanel(QWidget* parent = nullptr);
     ~GraphPanel();
@@ -61,12 +65,16 @@ protected:
     void wheelEvent(QWheelEvent* event) override ;
     void mouseMoveEvent(QMouseEvent* event) override ;
     void mouseReleaseEvent(QMouseEvent* event) override ;
+    void contextMenuEvent(QContextMenuEvent *event) override;
 
 private:
     void setupScene() ;
+    void createContextMenuActions() ;
+
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
     void componentDoubleClicked(ComponentWidget* widget);
 
+    // size & scale
     static constexpr int DOUBLE_CLICK_MS = 300 ;
     static constexpr qreal GRID_SIZE = 20.0 ;
     static constexpr qreal WHEEL_SCALE_FACTOR = 1.15 ;

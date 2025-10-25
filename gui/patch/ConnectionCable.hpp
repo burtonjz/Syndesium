@@ -46,6 +46,7 @@ public:
     bool isCompatible(SocketWidget* socket) const ;
 
     bool involvesWidget(SocketContainerWidget* widget) const ;
+    bool involvesSocket(SocketWidget* socket) const ;
 
     void updatePath();
 

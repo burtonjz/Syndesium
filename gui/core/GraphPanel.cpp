@@ -37,6 +37,7 @@
 #include <QDoubleSpinBox>
 #include <QPushButton>
 #include <QToolTip>
+#include <QMenu>
 
 #include <QJsonObject>
 #include <qdebug.h>
@@ -52,6 +53,8 @@ GraphPanel::GraphPanel(QWidget* parent):
     isDraggingConnection_(false)
 {
     setupScene();
+    createContextMenuActions();
+
     addMidiInput();
     addAudioOutput();
 
@@ -83,6 +86,13 @@ void GraphPanel::setupScene(){
     // zooming / panning
     setTransformationAnchor(QGraphicsView::AnchorUnderMouse);
     setResizeAnchor(QGraphicsView::AnchorUnderMouse);
+}
+
+void GraphPanel::createContextMenuActions(){
+    disconnectAllAct_ = new QAction("Disconnect All",this) ;
+    connect(disconnectAllAct_, &QAction::triggered, connectionManager_, 
+        [this](){ connectionManager_->removeSocketConnections(clickedSocket_);}
+    );
 }
 
 void GraphPanel::addComponent(int id, ComponentType type){
@@ -243,6 +253,21 @@ void GraphPanel::mouseReleaseEvent(QMouseEvent* event){
     }
 
     QGraphicsView::mouseReleaseEvent(event);
+}
+
+void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
+    QPointF scenePos = mapToScene(event->pos());
+
+    // right clicking on a socket
+    if ( SocketWidget* w = connectionManager_->findSocketAt(scenePos) ){
+        clickedSocket_ = w ;
+        QMenu menu(this);\
+        menu.addAction(disconnectAllAct_);
+        menu.exec(event->globalPos());
+        return ;
+    }
+    clickedSocket_ = nullptr ;
+
 }
 
 void GraphPanel::wheelEvent(QWheelEvent* event){

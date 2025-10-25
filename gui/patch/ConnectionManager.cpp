@@ -245,17 +245,17 @@ void ConnectionManager::onApiDataReceived(const QJsonObject &json){
         }
 
         QString fromText = cable->getFromSocket()
-            ? QString("%1%2")
+            ? QString("%1 %2")
                 .arg(cable->getFromSocket()->getParent()->getName())
                 .arg(cable->getFromSocket()->getName())
             : "null" ;
 
         QString toText = cable->getToSocket()
-            ? QString("%1%2")
+            ? QString("%1 %2")
                 .arg(cable->getToSocket()->getParent()->getName())
                 .arg(cable->getToSocket()->getName())
             : "null" ;
-        qDebug() << "removing cable connection:" << fromText << "->" << toText ;
+        qDebug() << "removing cable connection: " << fromText << " -> " << toText ;
         cancelConnection(id);
     }
 }

@@ -58,6 +58,7 @@ public:
     void onKeyOff(ActiveNote anote) override ;
 
     void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
+    void removeParameterModulation(ParameterType p) override ;
 
     void updateGain();
 private:

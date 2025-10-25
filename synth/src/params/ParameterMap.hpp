@@ -162,7 +162,7 @@ class ParameterMap {
         void removeModulation(ParameterType typ){
             auto it = parameters_.find(typ);
             if (it == parameters_.end() ){
-                std::cout << "ParameterMap: WARN failed to set modulation for parameter " << static_cast<int>(typ)
+                std::cout << "ParameterMap: WARN failed to remove modulation for parameter " << static_cast<int>(typ)
                           << " as parameter does not exist in map." << std::endl ;    
                 return ;
             }
