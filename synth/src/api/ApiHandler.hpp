@@ -57,8 +57,6 @@ private:
     static bool handleMidiConnection(Engine* engine, ConnectionRequest request);
     static bool handleModulationConnection(Engine* engine, ConnectionRequest request);
 
-    // utility functions
-    // static ParameterValue json2Variant(const json& j);
 };
 
 

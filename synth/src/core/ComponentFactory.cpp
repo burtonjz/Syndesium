@@ -5,6 +5,7 @@
 #include "components/PolyOscillator.hpp"
 #include "components/ADSREnvelope.hpp"
 #include "components/LinearFader.hpp"
+#include "components/MidiFilter.hpp"
 
 #define HANDLE_CREATE_COMPONENT(Type) \
     case ComponentType::Type: \
@@ -20,5 +21,6 @@ ComponentId ComponentFactory::createFromJson(ComponentType type, const std::stri
         HANDLE_CREATE_COMPONENT(PolyOscillator)
         HANDLE_CREATE_COMPONENT(LinearFader)
         HANDLE_CREATE_COMPONENT(ADSREnvelope)
+        HANDLE_CREATE_COMPONENT(MidiFilter)
     }
 }

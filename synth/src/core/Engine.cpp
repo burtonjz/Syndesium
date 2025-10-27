@@ -120,6 +120,7 @@ int Engine::audioCallback(
         buffer[i] = sample ; // buffer[i] = dsp::fastAtan(sample) ;
     }
     
+    engine->analysisAudioOut_.push(buffer, nBufferFrames);
     return 0 ;
 }
 
@@ -149,19 +150,22 @@ void Engine::stopMidi(){
 
 // Constructors
 Engine::Engine():
+    componentManager(&midiController),
+    componentFactory(&componentManager),
+    signalController(&componentManager), 
+    midiController(&midiState_),
     dac_(),
     availableAudioDevices_(),
-    selectedAudioOutput_(0), // invalid device ID
+    selectedAudioOutput_(0),
     midiIn_(),
     availableMidiPorts_(),
-    selectedMidiPort_(-1), // invalid device ID
+    selectedMidiPort_(-1),
     midiState_(),
-    midiDefaultHandler_(),
-    componentManager(),
-    componentFactory(&componentManager),
-    signalController(&componentManager),
-    midiController(&midiState_)
+    midiDefaultHandler_()
 {
+    registerBaseMidiHandler(&midiDefaultHandler_);
+    midiController.addHandler(&midiDefaultHandler_);
+
     signal(SIGINT, Engine::signalHandler);
 }
 
@@ -198,6 +202,8 @@ void Engine::run(){
     std::thread t1(std::bind(Engine::startMidi, this));
     std::thread t2(std::bind(Engine::startAudio, this));
 
+    startAnalysis();
+
     // wait for threads to finish
     t1.detach() ;
     t2.detach() ;
@@ -219,6 +225,10 @@ RtMidiIn* Engine::getMidiIn(){
 
 MidiController* Engine::getMidiController(){
     return &midiController ;
+}
+
+MidiEventHandler* Engine::getDefaultMidiHandler(){
+    return &midiDefaultHandler_ ;
 }
 
 double Engine::getDeltaTime() const {
@@ -271,8 +281,8 @@ void Engine::destroy(){
 bool Engine::setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener){
     // if inputMidi is not a valid handler, use the default handler
     if ( !outputMidi ){
-        std::cerr << "WARN: outputMidi is a null pointer. Setting outputMidi to the default handler" << std::endl ;
-        outputMidi = &midiDefaultHandler_ ;
+        std::cerr << "WARN: specified midi handler is not a valid object. Unable to successfully set a midi connection" << std::endl ;
+        return false ;
     }
 
     if ( !listener ){
@@ -280,31 +290,26 @@ bool Engine::setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* 
         return false ;
     } 
 
-    midiController.addHandler(outputMidi);
     outputMidi->addListener(listener);
-    
     return true ;
 }
 
 bool Engine::removeMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener){
-    // if inputMidi is not a valid handler, use the default handler
     if ( !outputMidi ){
-        std::cerr << "WARN: outputMidi is a null pointer. Setting outputMidi to the default handler" << std::endl ;
-        outputMidi = &midiDefaultHandler_ ;
+        std::cerr << "WARN: specified midi handler is not a valid object. Unable to successfully remove a midi connection" << std::endl ;
+        return false ;
     }
 
     if ( !listener ){
-        std::cerr << "WARN: listener is a null pointer. Unable to successfully set a midi connection" << std::endl ;
+        std::cerr << "WARN: listener is a null pointer. Unable to successfully remove a midi connection" << std::endl ;
         return false ;
     } 
 
-    midiController.removeHandler(outputMidi);
-    outputMidi->removeListener(listener);
-    
+    outputMidi->removeListener(listener);    
     return true ;
 }
 
-bool Engine::registerMidiHandler(MidiEventHandler* handler){
+bool Engine::registerBaseMidiHandler(MidiEventHandler* handler){
     if ( !handler ){
         std::cerr << "WARN: handler is a null pointer. Unable to register." << std::endl ;
         return false ;
@@ -313,11 +318,53 @@ bool Engine::registerMidiHandler(MidiEventHandler* handler){
     return true ;
 }
 
-bool Engine::unregisterMidiHandler(MidiEventHandler* handler){
+bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
     if ( !handler ){
         std::cerr << "WARN: handler is a null pointer. Unable to register." << std::endl ;
         return false ;
     }
     midiState_.removeHandler(handler);
     return true ;
+}
+
+void Engine::startAnalysis(){
+    std::thread([this](){
+        std::vector<double> buffer(4096);
+
+        while (!stop_flag){
+            size_t count = analysisAudioOut_.pop(buffer.data(), buffer.size());
+
+            if ( count > 0 ){
+                analyzeBuffer(buffer.data(), count);
+            }
+
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        }
+    }).detach();
+}
+
+void Engine::analyzeBuffer(double* data, size_t count){
+    float lastSample = 0.0f ;
+    std::atomic<uint64_t> numClicks{0};
+    std::atomic<float> clickDiffSum{0};
+    float diffThreshold = 0.3f ;
+
+    // std::cout << "samples: " ;
+    // for ( size_t i = 0; i < count; ++i ){
+        // float diff = std::abs(data[i] - lastSample);
+        // std::cout << data[i] << " " ;
+
+        // if ( diff > diffThreshold ){
+        //     numClicks++;
+        //     clickDiffSum+=diff ;
+        //     lastSample = data[i];
+        // }
+    // }
+    // std::cout << std::endl ;
+
+
+    // if (numClicks > 0)
+    //     std::cout << numClicks << " clicks detected in " 
+    //         << count << " samples. Average click sample value difference: " 
+    //         << clickDiffSum/numClicks << std::endl ;
 }

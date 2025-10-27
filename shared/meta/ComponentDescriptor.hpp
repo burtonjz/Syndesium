@@ -44,7 +44,7 @@ struct ComponentDescriptor {
     bool isModule() const { return numAudioOutputs > 0 ; }
     bool isModulator() const { return canModulate ; }
     bool isMidiHandler() const { return numMidiOutputs > 0 ; }
-    bool isMidiListener() const { return !isMidiHandler() && numMidiInputs > 0 ; }
+    bool isMidiListener() const { return numMidiInputs > 0 ; }
 
 };
 

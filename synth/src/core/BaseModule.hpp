@@ -21,13 +21,13 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
+#include <iostream>
 #include <memory>
 #include <vector>
 #include <algorithm>
 
 #include "core/BaseComponent.hpp"
-#include "types/ComponentType.hpp"
-#include "params/ParameterMap.hpp"
+#include "config/Config.hpp"
 
 class BaseModule : public virtual BaseComponent {
 protected:

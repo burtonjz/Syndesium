@@ -59,7 +59,7 @@ private slots:
     void onSetupButtonClicked();
     void onStartStopButtonClicked();
     void onEngineStatusChange(bool status);
-    void onComponentAdded(int index, bool isModule = true);
+    void onComponentAdded(int index);
 
 
 };

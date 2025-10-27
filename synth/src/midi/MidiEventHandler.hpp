@@ -33,21 +33,56 @@ protected:
     std::vector<MidiEventListener*> listeners_ ;
     MidiEventQueue queue_ ;
 
-    // broadcast functions to notify listeners
+    /**
+     * The below functions broadcast handler events to downstream objects
+     * Note: MidiEventHandlers will broadcast to chained handlers such that 
+     * each handler is able to act as if it is receiving raw midi. This allows
+     * a chained midi event handler to act in isolation in determining when a
+     * note should be killed.
+
+     * This means midiEventHandlers receive OFF as RELEASE, where as the end node
+     * midiEventListeners are the only ones that actually receive OFF events
+
+     * Importantly, this means that midi handlers that modify the release time should
+     * be at the end of the chain, so that other handlers in the chain don't mask the 
+     * release time from downstream modules (see Polyphonic Oscillator implementation for 
+     * an example into problems that can arise)
+    */
+
+    // notify downstream listeners of a key press event
     void notifyKeyPressed(ActiveNote* note, bool rePressed = false) {
-        for (auto* li : listeners_) li->onKeyPressed(note, rePressed);
+        for ( auto* li : listeners_ ){
+            if (auto h = dynamic_cast<MidiEventHandler*>(li)){
+                h->handleKeyPressed(note->note);
+            } else {
+                li->onKeyPressed(note, rePressed);
+            }
+        }
     }
     
+    // notify downstream listeners of a key release event (only if not handler)
     void notifyKeyReleased(const ActiveNote& note) {
-        for (auto* li : listeners_) li->onKeyReleased(note);
+        for ( auto* li : listeners_ ){
+            // only notify end node listeners of release events
+            if ( !dynamic_cast<MidiEventHandler*>(li) ){
+                li->onKeyReleased(note);
+            }
+        } 
     }
     
+    // notify downstream listeners of a key off event (release if handler)
     void notifyKeyOff(const ActiveNote& note) {
-        for (auto* li : listeners_) li->onKeyOff(note);
+        for ( auto* li : listeners_ ){
+            if ( auto h = dynamic_cast<MidiEventHandler*>(li) ){
+                h->handleKeyReleased(note.note);
+            } else {
+                li->onKeyOff(note);
+            }
+        } 
     }
     
     void notifyPitchbend(uint16_t pitchbend) {
-        for (auto* li : listeners_) li->onPitchbend(pitchbend);
+        for ( auto* li : listeners_ ) li->onPitchbend(pitchbend);
     }
 
 public:
@@ -66,13 +101,16 @@ public:
         }
     }
 
-    // all handlers are listeners so that they can chain operations if desired. By default, we simply pass through
+    // all handlers are listeners so that they can chain operations if desired. 
+    // The below functions can be overridded to provide specialized operations when cascading events downwards
     void onKeyPressed(const ActiveNote* note, bool rePressed = false) override {
+        if ( !rePressed ) notes_[note->note.getMidiNote()] = *note ;
+        
         MidiEvent e = { MidiEvent::Type::NotePressed, *note, rePressed };
         queue_.push(e);
     }
 
-    void onKeyReleased(ActiveNote anote) override {
+    void onKeyReleased([[maybe_unused]] ActiveNote anote) override {
         MidiEvent e = { MidiEvent::Type::NoteReleased, anote };
         queue_.push(e);
     }
@@ -88,25 +126,22 @@ public:
 
     // handler functions for root-level midi input from midi state
     void handleKeyPressed(const MidiNote note){
-        MidiEvent e = { MidiEvent::Type::NotePressed, {note} };
-        if ( notes_.find(e.anote.note.getMidiNote()) != notes_.end()){
-            e.rePressed = true ;
-            queue_.push(e);
-            return ;
-        } 
-
-        ActiveNote n {note, 0.0f};
-        notes_[e.anote.note.getMidiNote()] = n ;
-        queue_.push(e);
+        ActiveNote n{note};
+    
+        bool rePress = false ;
+        if ( notes_.find(note.getMidiNote()) != notes_.end()){
+            rePress = true ;
+        }
+        onKeyPressed(&n, rePress);
     };
 
     void handleKeyReleased(const MidiNote note){
-        MidiEvent e = { MidiEvent::Type::NoteReleased, {note} };
-        queue_.push(e);
+        if ( notes_.find(note.getMidiNote()) == notes_.end() ) return ;
+        onKeyReleased(notes_[note.getMidiNote()]);
     };
 
     void handlePitchbend(uint16_t pitchbend){
-        notifyPitchbend(pitchbend);
+        onPitchbend(pitchbend);
     };
 
     

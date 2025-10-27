@@ -21,6 +21,7 @@
 #include "core/BaseComponent.hpp"
 #include "core/BaseModule.hpp"
 #include "core/BaseModulator.hpp"
+#include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
 
 #include "params/ParameterMap.hpp"
@@ -34,7 +35,8 @@
 #include <unordered_set>
 
 class ComponentManager {
-protected:
+private:
+    MidiController* midiController_ ;
     int nextID_ = 0 ;
     std::unordered_map<ComponentId, std::unique_ptr<BaseComponent>> components_ ;
     
@@ -45,6 +47,10 @@ protected:
     std::unordered_set<ComponentId> modules_ ;
 
 public:
+    ComponentManager(MidiController* midiCtrl):
+        midiController_(midiCtrl)
+    {}
+
     template<ComponentType T>
     ComponentId create(const std::string& name, ComponentConfig_t<T> cfg) {        
         ComponentId id = nextID_++;
@@ -54,8 +60,11 @@ public:
         auto descriptor = ComponentRegistry::getComponentDescriptor(T);
         if ( descriptor.isModule() ) modules_.insert(id);
         if ( descriptor.isModulator() ) modulators_.insert(id);
-        if ( descriptor.isMidiHandler() ) midiHandlers_.insert(id);
         if ( descriptor.isMidiListener() ) midiListeners_.insert(id);
+        if ( descriptor.isMidiHandler() ){
+            midiHandlers_.insert(id);
+            midiController_->addHandler(getMidiHandler(id));
+        } 
 
         return id;
     }

@@ -47,6 +47,8 @@ enum class ParameterType {
     DECAY,
     SUSTAIN,
     RELEASE,
+    MIN_VALUE,
+    MAX_VALUE,
     FILTER_TYPE,
     CUTOFF,
     Q_FACTOR,
@@ -69,6 +71,8 @@ constexpr std::array<std::string_view, N_PARAMETER_TYPES> parameterStrings({
     "decay",
     "sustain",
     "release",
+    "min_value",
+    "max_value",
     "filter type",
     "cutoff",
     "q factor"
@@ -90,9 +94,11 @@ constexpr std::array<std::pair<float, float>, N_PARAMETER_TYPES> parameterLimits
     std::make_pair(-1.0f, 1.0f),                             // PAN
     std::make_pair(-1250.0f, 1250.0f),                       // DETUNE
     std::make_pair(0.001f, 4.0f ),                           // ATTACK
-    std::make_pair(0.001f, 4.0f ),                           // DECAY
+    std::make_pair(0.001f, 4.0f ),                          // DECAY
     std::make_pair(0.0f, 1.0f ),                            // SUSTAIN
     std::make_pair(0.001f, 4.0f ),                          // RELEASE
+    std::make_pair(0.0f,127.0f),                            // MIN_VALUE
+    std::make_pair(0.0f,127.0f),                            // MAX_VALUE
     std::make_pair(0.0f, 3.0f),                             // FILTER_TYPE  
     std::make_pair(0.0f, 20000.0f ),                        // CUTOFF
     std::make_pair(0.5f, 10.0f),                            // Q_FACTOR
@@ -115,6 +121,8 @@ constexpr std::array<float, N_PARAMETER_TYPES> parameterDefaults({
     0.05f,                             // DECAY
     0.8f,                              // SUSTAIN
     0.2f,                              // RELEASE
+    0.0f,                              // MIN_VALUE
+    127.0f,                            // MAX_VALUE
     0.0f,                              // FILTER_TYPE
     0.0f,                              // CUTOFF
     0.5f                               // Q_FACTOR
@@ -201,6 +209,16 @@ template <> struct ParameterTypeTraits<ParameterType::SUSTAIN>{
 template <> struct ParameterTypeTraits<ParameterType::RELEASE>{
     using ValueType = float;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+};
+
+template <> struct ParameterTypeTraits<ParameterType::MIN_VALUE>{
+    using ValueType = uint8_t;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+};
+
+template <> struct ParameterTypeTraits<ParameterType::MAX_VALUE>{
+    using ValueType = uint8_t;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
 };
 
 template <> struct ParameterTypeTraits<ParameterType::FILTER_TYPE>{

@@ -17,6 +17,7 @@
 
 #include "meta/ComponentRegistry.hpp"
 #include "meta/ComponentDescriptor.hpp"
+#include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
 #include <stdexcept>
 
@@ -81,8 +82,22 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 true,
                 false
             }
+        },
+        {
+            ComponentType::MidiFilter,
+            {
+                "Midi Filter",
+                ComponentType::MidiFilter,
+                {},
+                {ParameterType::MIN_VALUE, ParameterType::MAX_VALUE},
+                0,
+                0,
+                1,
+                1,
+                false,
+                false
+            }
         }
-
     };
 
     return registry ;

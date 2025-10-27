@@ -24,6 +24,7 @@
 #include <rtmidi/RtMidi.h>
 #include <rtaudio/RtAudio.h>
 
+#include "containers/LockFreeRingBuffer.hpp"
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiState.hpp"
@@ -37,22 +38,6 @@
 using json = nlohmann::json ;
 
 class Engine {
-private:
-    // audio
-    RtAudio dac_ ;
-    std::map<int,std::string> availableAudioDevices_ ; // list available devices
-    int selectedAudioOutput_ ; // selected device id
-    double dt_ ; // 1 / sampleRate
-
-    // midi
-    RtMidiIn midiIn_ ;
-    std::map<int,std::string> availableMidiPorts_ ;
-    int selectedMidiPort_ ;  
-
-    // midi manipulation
-    MidiState        midiState_ ;
-    MidiEventHandler midiDefaultHandler_ ;
-
 public:
     // set a flag for all threads to stop on
     static std::atomic<bool> stop_flag ;
@@ -75,7 +60,27 @@ public:
     static void startMidi(Engine* engine);
     void stopMidi();
 
-    // Constructor
+private:
+    // audio
+    RtAudio dac_ ;
+    std::map<int,std::string> availableAudioDevices_ ; // list available devices
+    int selectedAudioOutput_ ; // selected device id
+    double dt_ ; // 1 / sampleRate
+
+    // midi
+    RtMidiIn midiIn_ ;
+    std::map<int,std::string> availableMidiPorts_ ;
+    int selectedMidiPort_ ;  
+
+    // midi manipulation
+    MidiState        midiState_ ;
+    MidiEventHandler midiDefaultHandler_ ;
+
+    // debug / analysis
+    std::thread analysisThread_ ;
+    LockFreeRingBuffer<double> analysisAudioOut_{48000 * 10} ;
+    
+public:
     Engine();
 
     // Engine Block Functions
@@ -87,6 +92,7 @@ public:
     RtAudio* getDac() ;
     RtMidiIn* getMidiIn() ;
     MidiController* getMidiController() ;
+    MidiEventHandler* getDefaultMidiHandler() ;
 
     double getDeltaTime() const;
 
@@ -107,9 +113,14 @@ public:
     // connection logic
     bool setMidiConnection(MidiEventHandler* handler, MidiEventListener* listener);
     bool removeMidiConnection(MidiEventHandler* handler, MidiEventListener* listener);
-    bool registerMidiHandler(MidiEventHandler* handler);
-    bool unregisterMidiHandler(MidiEventHandler* handler);
 
+    // for use in sending raw midi from the midi state to a handler (only for first handlers in chain)
+    bool registerBaseMidiHandler(MidiEventHandler* handler);
+    bool unregisterBaseMidiHandler(MidiEventHandler* handler);
+
+    // analysis / debug
+    void startAnalysis();
+    void analyzeBuffer(double* data, size_t count);
 
 
     

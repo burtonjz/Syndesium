@@ -19,6 +19,7 @@
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "configs/ComponentConfig.hpp"
+#include "meta/ComponentRegistry.hpp"
 #include "types/SocketType.hpp"
 
 #include <iostream>
@@ -219,6 +220,7 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
 
             ComponentType type = static_cast<ComponentType>(jRequest["type"]);
             ComponentId id = engine->componentFactory.createFromJson(type, jResponse["name"], getDefaultConfig(jResponse["type"]));
+
             jResponse["component_id"] = id;
             sendSuccess();
             return ;
@@ -367,23 +369,23 @@ bool ApiHandler::handleMidiConnection(Engine* engine, ConnectionRequest request)
         MidiEventHandler* inboundHandler = engine->componentManager.getMidiHandler(request.inboundID.value());
         MidiEventListener* inboundListener = engine->componentManager.getMidiListener(request.inboundID.value());
 
-        // case 1: inbound is a handler (means we must deal with midi handler registration)
+        // case 1: inbound is a handler, so we need to register this handler against the MidiState (receive raw midi events)
         if ( inboundHandler ){
             if ( request.remove ){
-                engine->unregisterMidiHandler(inboundHandler);
+                engine->unregisterBaseMidiHandler(inboundHandler);
                 return true ;
             }
-            engine->registerMidiHandler(inboundHandler);
+            engine->registerBaseMidiHandler(inboundHandler);
             return true ;
         }
 
-        // case 2: inbound is a listener (so we register to default handler)
+        // case 2: inbound is only a listener (so we register to the default handler)
         if ( inboundListener ){
             if ( request.remove ){
-                engine->removeMidiConnection(nullptr, inboundListener);
+                engine->removeMidiConnection(engine->getDefaultMidiHandler(), inboundListener);
                 return true ;
             }
-            engine->setMidiConnection(nullptr, inboundListener);
+            engine->setMidiConnection(engine->getDefaultMidiHandler(), inboundListener);
             return true ;
         }
 

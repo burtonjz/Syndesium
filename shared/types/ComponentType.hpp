@@ -27,6 +27,7 @@ enum class ComponentType {
     PolyOscillator,
     LinearFader,
     ADSREnvelope,
+    MidiFilter,
     Unknown,
     N_COMPONENTS
 };

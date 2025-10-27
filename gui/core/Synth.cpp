@@ -29,6 +29,7 @@
 #include <QJsonDocument>
 #include <QStandardItemModel>
 #include <QStandardItem>
+#include <qcombobox.h>
 #include <qobject.h>
 
 Synth::Synth(ModuleContext ctx, QWidget* parent):
@@ -55,6 +56,10 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     ui_->addModulatorBox->setCurrentIndex(0);
     ui_->addModulatorBox->insertSeparator(1);
 
+    ui_->addMidiComponentBox->addItem("Add a Midi Component...");
+    ui_->addMidiComponentBox->setCurrentIndex(0);
+    ui_->addMidiComponentBox->insertSeparator(1);
+
     // force that first index to be a label and not enabled to select
     QStandardItemModel* m = qobject_cast<QStandardItemModel*>(ui_->addModuleBox->model());
     if(m){
@@ -63,6 +68,12 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     }
 
     m = qobject_cast<QStandardItemModel*>(ui_->addModulatorBox->model());
+    if(m){
+        QStandardItem* item = m->item(0);
+        if (item) item->setEnabled(false);
+    }
+
+    m = qobject_cast<QStandardItemModel*>(ui_->addMidiComponentBox->model());
     if(m){
         QStandardItem* item = m->item(0);
         if (item) item->setEnabled(false);
@@ -82,6 +93,10 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
             typ = static_cast<int>(item.first);
             ui_->addModulatorBox->addItem(name, typ);
         }
+        if ( item.second.isMidiHandler() ){
+            typ = static_cast<int>(item.first);
+            ui_->addMidiComponentBox->addItem(name, typ);
+        }
     }
 
     // connections
@@ -90,9 +105,11 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     connect(ui_->startStopButton, &QPushButton::clicked, this, &Synth::onStartStopButtonClicked);
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
     connect(ui_->addModuleBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
-        this, [this](int index){ onComponentAdded(index, true); });
+        this, [this](int index){ onComponentAdded(index); });
     connect(ui_->addModulatorBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
-        this, [this](int index){ onComponentAdded(index, false); });
+        this, [this](int index){ onComponentAdded(index); });
+    connect(ui_->addMidiComponentBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
+        this, [this](int index){ onComponentAdded(index); });
     connect(this, &Synth::componentAdded, graph_, &GraphPanel::onComponentAdded);
 }
 
@@ -164,15 +181,12 @@ void Synth::onEngineStatusChange(bool status){
     }
 }
 
-void Synth::onComponentAdded(int index, bool isModule){
+void Synth::onComponentAdded(int index){
     if ( index == 0 ) return ;
-    if ( isModule ){
-        ComponentType typ = static_cast<ComponentType>(ui_->addModuleBox->itemData(index).toInt());
-        ui_->addModuleBox->setCurrentIndex(0); // reset the combo box
-        emit componentAdded(typ);
-    } else {
-        ComponentType typ = static_cast<ComponentType>(ui_->addModulatorBox->itemData(index).toInt());
-        ui_->addModulatorBox->setCurrentIndex(0); // reset the combo box
-        emit componentAdded(typ);
-    }
+
+    auto cbox = dynamic_cast<QComboBox*>(sender());
+
+    ComponentType typ = static_cast<ComponentType>(cbox->itemData(index).toInt());
+    cbox->setCurrentIndex(0); 
+    emit componentAdded(typ);
 }

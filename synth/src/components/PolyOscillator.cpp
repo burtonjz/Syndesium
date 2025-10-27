@@ -18,7 +18,6 @@
 #include "components/PolyOscillator.hpp"
 #include "types/ComponentType.hpp"
 #include "types/Waveform.hpp"
-#include "midi/MidiEventHandler.hpp"
 #include "params/ParameterMap.hpp"
 #include "params/ModulationParameter.hpp"
 #include "types/ParameterType.hpp"

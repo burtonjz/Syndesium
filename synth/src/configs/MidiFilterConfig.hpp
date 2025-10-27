@@ -15,36 +15,29 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_CONFIGS_
-#define __HPP_ALL_CONFIGS_
+#ifndef __HPP_CONFIGS_MIDIFILTER_
+#define __HPP_CONFIGS_MIDIFILTER_
 
 #include "types/ComponentType.hpp"
-
-#include "configs/OscillatorConfig.hpp"
-#include "configs/PolyOscillatorConfig.hpp"
-#include "configs/LinearFaderConfig.hpp"
-#include "configs/ADSREnvelopeConfig.hpp"
-#include "configs/MidiFilterConfig.hpp"
-
 #include <nlohmann/json.hpp>
+
 using json = nlohmann::json ;
 
+// forward declare class
+class MidiFilter ;
 
-#define HANDLE_DEFAULT_CONFIG(Type) \
-    case ComponentType::Type: \
-        return  ComponentTypeTraits<ComponentType::Type>::config{};
+// define default configuration
+struct MidiFilterConfig {
+    uint8_t max_value = 127 ;
+    uint8_t min_value = 0 ;
+};
 
-inline json getDefaultConfig(ComponentType type){
-    switch(type){
-    HANDLE_DEFAULT_CONFIG(Oscillator)
-    HANDLE_DEFAULT_CONFIG(PolyOscillator)
-    HANDLE_DEFAULT_CONFIG(LinearFader) 
-    HANDLE_DEFAULT_CONFIG(ADSREnvelope)
-    HANDLE_DEFAULT_CONFIG(MidiFilter)
+// Type Traits Specification
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MidiFilterConfig, max_value, min_value) // macro to serialize/deserialize json <-> structs
 
-    default:
-        return json::object();
-    }
-}
+template <> struct ComponentTypeTraits<ComponentType::MidiFilter>{ 
+    using type = MidiFilter ;
+    using config = MidiFilterConfig ;
+};
 
-#endif // __HPP_ALL_CONFIGS_
+#endif // __HPP_CONFIGS_MIDIFILTER_

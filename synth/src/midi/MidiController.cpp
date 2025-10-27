@@ -45,12 +45,10 @@ void MidiController::initialize(){
 void MidiController::addHandler(MidiEventHandler* handler){ 
     if (std::find(handlers_.begin(), handlers_.end(), handler) != handlers_.end()) return ;
     handlers_.insert(handler) ; 
-    state_->addHandler(handler) ;
 }
  
 void MidiController::removeHandler(MidiEventHandler* handler){ 
-    handlers_.erase(handler) ; 
-    state_->removeHandler(handler); 
+    handlers_.erase(handler) ;  
 }
 
 void MidiController::tick(float dt){
