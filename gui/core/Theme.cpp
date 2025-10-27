@@ -65,8 +65,8 @@ void Theme::applyDarkTheme() {
     darkPalette.setColor(QPalette::Highlight, ACCENT_COLOR);
     darkPalette.setColor(QPalette::HighlightedText, Qt::black);
     
-    qApp->setPalette(darkPalette);
     qApp->setStyle("Fusion");
+    qApp->setPalette(darkPalette);
     
     // Global stylesheet
     QString styleSheet = QString(R"(
@@ -90,6 +90,17 @@ void Theme::applyDarkTheme() {
         border-radius: 3px;
     }
     
+    QMenu::item {
+        padding: 4px 20px;
+        border-radius: 3px;
+        background-color: transparent;
+    }
+
+    QMenu::item:selected {
+        background-color: %3;
+        color: %5;                
+    }
+
     QGroupBox {
         font-weight: bold;
         border: 1px solid %1;
@@ -127,15 +138,25 @@ void Theme::applyDarkTheme() {
     
     QComboBox QAbstractItemView {
         background-color: %4;
-        selection-background-color: %6;
-        selection-color: %5;
-        border: 2px solid %7;
+        border: 1px solid %1;
         outline: none;
+        selection-background-color: %3;
+        selection-color: %5;
     }
     
     QComboBox QAbstractItemView::item {
         border-bottom: 1px solid %7;
         padding: 4px;
+    }
+
+    QComboBox QAbstractItemView::item:hover {
+        background-color: %3;
+        color: %5;
+    }
+
+    QComboBox QAbstractItemView::item:selected {
+        background-color: %6;        
+        color: #000;                   
     }
     
     QLabel {
