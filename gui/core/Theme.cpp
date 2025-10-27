@@ -81,6 +81,14 @@ void Theme::applyDarkTheme() {
         padding: 5px;
         border-radius: 3px;
     }
+
+    QMenu {
+        background-color: %2;
+        color: %5;
+        border: 1px solid %1;
+        padding: 5px;
+        border-radius: 3px;
+    }
     
     QGroupBox {
         font-weight: bold;
@@ -117,7 +125,6 @@ void Theme::applyDarkTheme() {
         color: %5;
     }
     
-    /* Fix combobox dropdown */
     QComboBox QAbstractItemView {
         background-color: %4;
         selection-background-color: %6;
