@@ -221,6 +221,10 @@ class ParameterMap {
                     return setValue<ParameterType::SUSTAIN>(value); 
                 case ParameterType::RELEASE:  
                     return setValue<ParameterType::RELEASE>(value); 
+                case ParameterType::MIN_VALUE:
+                    return setValue<ParameterType::MIN_VALUE>(value); 
+                case ParameterType::MAX_VALUE:
+                    return setValue<ParameterType::MAX_VALUE>(value); 
                 case ParameterType::FILTER_TYPE: 
                     return setValue<ParameterType::FILTER_TYPE>(value); 
                 case ParameterType::CUTOFF: 
@@ -258,6 +262,10 @@ class ParameterMap {
                     return getValue<ParameterType::SUSTAIN>();
                 case ParameterType::RELEASE:  
                     return getValue<ParameterType::RELEASE>();
+                case ParameterType::MIN_VALUE:
+                    return getValue<ParameterType::MIN_VALUE>(); 
+                case ParameterType::MAX_VALUE:
+                    return getValue<ParameterType::MAX_VALUE>(); 
                 case ParameterType::FILTER_TYPE: 
                     return getValue<ParameterType::FILTER_TYPE>();
                 case ParameterType::CUTOFF: 
