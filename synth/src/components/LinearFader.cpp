@@ -21,7 +21,6 @@
 #include "params/ModulationParameter.hpp"
 #include "params/ParameterMap.hpp"
 #include "types/ParameterType.hpp"
-#include "config/Config.hpp"
 
 const ComponentType LinearFader::staticType = ComponentType::LinearFader ;
 
@@ -38,7 +37,7 @@ LinearFader::LinearFader(ComponentId id, LinearFaderConfig cfg):
     };
 }
 
-double LinearFader::modulate(double value, ModulationData* mData) const {
+double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mData) const {
     double output = 0.0 ;
 
     // check required data / set to defaults

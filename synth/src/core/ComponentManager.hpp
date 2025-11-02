@@ -52,7 +52,7 @@ public:
     {}
 
     template<ComponentType T>
-    ComponentId create(const std::string& name, ComponentConfig_t<T> cfg) {        
+    ComponentId create([[maybe_unused]] const std::string& name, ComponentConfig_t<T> cfg) {        
         ComponentId id = nextID_++;
         
         components_.emplace(id, std::make_unique<ComponentType_t<T>>(id, cfg));

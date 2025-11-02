@@ -32,7 +32,7 @@
 #include <sstream>
 #include <iostream>
 
-#define TYPE_TRAIT(type) typename ParameterTypeTraits<type>::ValueType
+#define TYPE_TRAIT(type) typename ParameterTraits<type>::ValueType
 
 // forward declarations
 template<ParameterType typ>
@@ -61,8 +61,8 @@ class ParameterMap {
         void add(
             TYPE_TRAIT(typ) defaultValue,
             bool modulatable,
-            TYPE_TRAIT(typ) minValue = parameterLimits[static_cast<int>(typ)].first, 
-            TYPE_TRAIT(typ) maxValue = parameterLimits[static_cast<int>(typ)].second, 
+            TYPE_TRAIT(typ) minValue = ParameterTraits<typ>::minimum, 
+            TYPE_TRAIT(typ) maxValue = ParameterTraits<typ>::maximum, 
             BaseModulator* modulator = nullptr, ModulationData modData = {}
         ){
             auto it = parameters_.find(typ);

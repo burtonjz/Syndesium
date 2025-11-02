@@ -2,10 +2,10 @@
 #include "configs/ComponentConfig.hpp"
 
 #include "components/Oscillator.hpp"
-#include "components/PolyOscillator.hpp"
-#include "components/ADSREnvelope.hpp"
+#include "components/PolyOscillator.hpp" 
+#include "components/ADSREnvelope.hpp" 
 #include "components/LinearFader.hpp"
-#include "components/MidiFilter.hpp"
+#include "components/MidiFilter.hpp" 
 
 #define HANDLE_CREATE_COMPONENT(Type) \
     case ComponentType::Type: \
@@ -22,5 +22,7 @@ ComponentId ComponentFactory::createFromJson(ComponentType type, const std::stri
         HANDLE_CREATE_COMPONENT(LinearFader)
         HANDLE_CREATE_COMPONENT(ADSREnvelope)
         HANDLE_CREATE_COMPONENT(MidiFilter)
+    default:
+        throw std::runtime_error("invalid component requested.");
     }
 }

@@ -62,7 +62,7 @@ void MidiController::onMidiEvent(double deltaTime, std::vector<unsigned char> *m
     self->processMessage(deltaTime, message);    
 }
 
-void MidiController::processMessage(double deltaTime, std::vector<unsigned char> *message){    
+void MidiController::processMessage([[maybe_unused]] double deltaTime, std::vector<unsigned char> *message){    
     std::cout << "MIDI Message: " << std::endl ;
     MidiCommand command = static_cast<MidiCommand>((*message)[0] & 0xF0) ;
     int channel         = static_cast<int>((*message)[0] & 0x0F) ;

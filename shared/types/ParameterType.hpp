@@ -21,11 +21,7 @@
 #include "types/Waveform.hpp"
 
 #include <variant>
-#include <array>
-#include <utility>
-#include <limits>
 #include <cstdint>
-#include <string_view>
 
 using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
 
@@ -57,76 +53,7 @@ enum class ParameterType {
 
 constexpr int N_PARAMETER_TYPES = static_cast<int>(ParameterType::N_PARAMETERS) ;
 
-constexpr std::array<std::string_view, N_PARAMETER_TYPES> parameterStrings({
-    "depth",
-    "status",
-    "waveform",
-    "frequency",
-    "amplitude",
-    "gain",
-    "phase",
-    "pan",
-    "detune",
-    "attack",
-    "decay",
-    "sustain",
-    "release",
-    "min_value",
-    "max_value",
-    "filter type",
-    "cutoff",
-    "q factor"
-});
-const std::string parameter2String(ParameterType p);
 ParameterType parameterFromString(std::string str);
-
-/**
- * @brief a std::pair containing the min and max for each parameter type
-*/
-constexpr std::array<std::pair<float, float>, N_PARAMETER_TYPES> parameterLimits({
-    std::make_pair(-5.0f, 5.0f),                             // DEPTH
-    std::make_pair(0.0f, 1.0f),                              // STATUS
-    std::make_pair(0.0f,static_cast<float>(Waveform::N)),    // WAVEFORM
-    std::make_pair(0.0f, std::numeric_limits<float>::max()), // FREQUENCY
-    std::make_pair(0.0f, 1.0f),                              // AMPLITUDE
-    std::make_pair(0.0f, 1.0f),                              // GAIN
-    std::make_pair(0.0f, 1.0f),                              // PHASE
-    std::make_pair(-1.0f, 1.0f),                             // PAN
-    std::make_pair(-1250.0f, 1250.0f),                       // DETUNE
-    std::make_pair(0.001f, 4.0f ),                           // ATTACK
-    std::make_pair(0.001f, 4.0f ),                          // DECAY
-    std::make_pair(0.0f, 1.0f ),                            // SUSTAIN
-    std::make_pair(0.001f, 4.0f ),                          // RELEASE
-    std::make_pair(0.0f,127.0f),                            // MIN_VALUE
-    std::make_pair(0.0f,127.0f),                            // MAX_VALUE
-    std::make_pair(0.0f, 3.0f),                             // FILTER_TYPE  
-    std::make_pair(0.0f, 20000.0f ),                        // CUTOFF
-    std::make_pair(0.5f, 10.0f),                            // Q_FACTOR
-});
-
-/**
- * @brief a std::array containing the defaults for each parameter type
-*/
-constexpr std::array<float, N_PARAMETER_TYPES> parameterDefaults({
-    1.0f,                               // DEPTH 
-    0.0f,                               // STATUS
-    static_cast<float>(Waveform::SINE), // WAVEFORM
-    440.0f,                             // FREQUENCY
-    1.0f,                               // AMPLITUDE
-    1.0f,                               // GAIN
-    0.0f,                               // PHASE
-    0.0f,                               // PAN
-    0.0f,                               // DETUNE
-    0.01f,                              // ATTACK
-    0.05f,                             // DECAY
-    0.8f,                              // SUSTAIN
-    0.2f,                              // RELEASE
-    0.0f,                              // MIN_VALUE
-    127.0f,                            // MAX_VALUE
-    0.0f,                              // FILTER_TYPE
-    0.0f,                              // CUTOFF
-    0.5f                               // Q_FACTOR
-});
 
 /* 
 every ParameterType will store a default modulation strategy
@@ -142,99 +69,217 @@ enum class ModulationStrategy {
     NONE
 };
 
-/**
- * @brief define value variable type for each ParameterType
-*/
-template <ParameterType Type> struct ParameterTypeTraits ;
-template <> struct ParameterTypeTraits<ParameterType::DEPTH>{
+// Parameter Traits access
+template <ParameterType Type> struct ParameterTraits ;
+
+template <> struct ParameterTraits<ParameterType::DEPTH>{
     using ValueType = float;
+    static constexpr std::string name = "depth";
+    static constexpr float minimum = -5.0 ;
+    static constexpr float maximum = 5.0 ;
+    static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = .01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::STATUS>{
+template <> struct ParameterTraits<ParameterType::STATUS>{
     using ValueType = bool;
+    static constexpr std::string name = "status";
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 1 ;
+    static constexpr float defaultValue = 1 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 1.0 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::WAVEFORM>{
+template <> struct ParameterTraits<ParameterType::WAVEFORM>{
     using ValueType = uint8_t;
+    static constexpr std::string name = "waveform";
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = Waveform::N ;
+    static constexpr float defaultValue = Waveform::SINE ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 1.0 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::FREQUENCY>{
+template <> struct ParameterTraits<ParameterType::FREQUENCY>{
     using ValueType = double;
+    static constexpr std::string name = "frequency";
+    static constexpr float minimum = 0.0 ;
+    static constexpr float maximum = 30000.0 ;
+    static constexpr float defaultValue = 440.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 0.1 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::AMPLITUDE>{
+template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
     using ValueType = double;
+    static constexpr std::string name = "amplitude";
+    static constexpr float minimum = 0.0 ;
+    static constexpr float maximum = 1.0 ;
+    static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC ;
+    static constexpr double uiStepPrecision = .01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::GAIN>{
+template <> struct ParameterTraits<ParameterType::GAIN>{
     using ValueType = double;
+    static constexpr std::string name = "gain";
+    static constexpr float minimum = 0.0 ;
+    static constexpr float maximum = 1.0 ;
+    static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC;
+    static constexpr double uiStepPrecision = .01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::PHASE>{
+template <> struct ParameterTraits<ParameterType::PHASE>{
     using ValueType = double;
+    static constexpr std::string name = "phase";
+    static constexpr float minimum = 0.0 ;
+    static constexpr float maximum = 1.0 ;
+    static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
+    static constexpr double uiStepPrecision = .01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::PAN>{
+template <> struct ParameterTraits<ParameterType::PAN>{
     using ValueType = float;
+    static constexpr std::string name = "pan";
+    static constexpr float minimum = -1.0 ;
+    static constexpr float maximum = 1.0 ;
+    static constexpr float defaultValue = 0.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
+    static constexpr double uiStepPrecision = .01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::DETUNE>{
+template <> struct ParameterTraits<ParameterType::DETUNE>{
     using ValueType = float;
+    static constexpr std::string name = "detune";
+    static constexpr float minimum = -1250.0f ;
+    static constexpr float maximum = 1250.0f ;
+    static constexpr float defaultValue = 0.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 0.1 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::ATTACK>{
+template <> struct ParameterTraits<ParameterType::ATTACK>{
     using ValueType = float;
+    static constexpr std::string name = "attack";
+    static constexpr float minimum = 0.001 ;
+    static constexpr float maximum = 4.00 ;
+    static constexpr float defaultValue = 0.01 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 0.01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::DECAY>{
+template <> struct ParameterTraits<ParameterType::DECAY>{
     using ValueType = float;
+    static constexpr std::string name = "decay";
+    static constexpr float minimum = 0.001 ;
+    static constexpr float maximum = 4.0 ;
+    static constexpr float defaultValue = 0.01 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 0.01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::SUSTAIN>{
+template <> struct ParameterTraits<ParameterType::SUSTAIN>{
     using ValueType = float;
+    static constexpr std::string name = "sustain";
+    static constexpr float minimum = 0.0 ;
+    static constexpr float maximum = 1.0 ;
+    static constexpr float defaultValue = 0.8 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
+    static constexpr double uiStepPrecision = 0.01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::RELEASE>{
+template <> struct ParameterTraits<ParameterType::RELEASE>{
     using ValueType = float;
+    static constexpr std::string name = "release";
+    static constexpr float minimum = 0.0 ;
+    static constexpr float maximum = 4.0 ;
+    static constexpr float defaultValue = 0.01 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 0.01 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::MIN_VALUE>{
+template <> struct ParameterTraits<ParameterType::MIN_VALUE>{
     using ValueType = uint8_t;
+    static constexpr std::string name = "minimum";
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 127 ;
+    static constexpr float defaultValue = 0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 1.0 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::MAX_VALUE>{
+template <> struct ParameterTraits<ParameterType::MAX_VALUE>{
     using ValueType = uint8_t;
+    static constexpr std::string name = "maximum";
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 127 ;
+    static constexpr float defaultValue = 127 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 1.0 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::FILTER_TYPE>{
-    using ValueType = int;
+template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
+    using ValueType = uint8_t;
+    static constexpr std::string name = "filter type";
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 1 ;
+    static constexpr float defaultValue = 0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 1.0 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::CUTOFF>{
+template <> struct ParameterTraits<ParameterType::CUTOFF>{
     using ValueType = float;
+    static constexpr std::string name = "cutoff";
+    static constexpr float minimum = 0.0f ;
+    static constexpr float maximum = 30000.0f ;
+    static constexpr float defaultValue = 20000.0f ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 1.0 ;
 };
 
-template <> struct ParameterTypeTraits<ParameterType::Q_FACTOR>{
+template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
     using ValueType = float;
+    static constexpr std::string name = "q factor";
+    static constexpr float minimum = 0.5f ;
+    static constexpr float maximum = 10.0f ;
+    static constexpr float defaultValue = 0.5f ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 0.1 ;
 };
+
+
+template <typename Func>
+auto dispatchParameterTrait(ParameterType p, Func&& func){
+     switch(p) { 
+        case ParameterType::DEPTH: return func(ParameterTraits<ParameterType::DEPTH>{});
+        case ParameterType::STATUS: return func(ParameterTraits<ParameterType::STATUS>{});
+        case ParameterType::WAVEFORM: return func(ParameterTraits<ParameterType::WAVEFORM>{});
+        case ParameterType::FREQUENCY: return func(ParameterTraits<ParameterType::FREQUENCY>{});
+        case ParameterType::AMPLITUDE: return func(ParameterTraits<ParameterType::AMPLITUDE>{});
+        case ParameterType::GAIN: return func(ParameterTraits<ParameterType::GAIN>{});
+        case ParameterType::PHASE: return func(ParameterTraits<ParameterType::PHASE>{});
+        case ParameterType::PAN: return func(ParameterTraits<ParameterType::PAN>{});
+        case ParameterType::DETUNE: return func(ParameterTraits<ParameterType::DETUNE>{});
+        case ParameterType::ATTACK: return func(ParameterTraits<ParameterType::ATTACK>{});
+        case ParameterType::DECAY: return func(ParameterTraits<ParameterType::DECAY>{});
+        case ParameterType::SUSTAIN: return func(ParameterTraits<ParameterType::SUSTAIN>{});
+        case ParameterType::RELEASE: return func(ParameterTraits<ParameterType::RELEASE>{});
+        case ParameterType::MIN_VALUE: return func(ParameterTraits<ParameterType::MIN_VALUE>{});
+        case ParameterType::MAX_VALUE: return func(ParameterTraits<ParameterType::MAX_VALUE>{});
+        case ParameterType::FILTER_TYPE: return func(ParameterTraits<ParameterType::FILTER_TYPE>{});
+        case ParameterType::CUTOFF: return func(ParameterTraits<ParameterType::CUTOFF>{});
+        case ParameterType::Q_FACTOR: return func(ParameterTraits<ParameterType::Q_FACTOR>{});
+        default: throw std::runtime_error("Unknown ParameterType");
+    }
+} 
+
+#define GET_PARAMETER_TRAIT_MEMBER(type, member) \
+    dispatchParameterTrait(type, [](auto traits) { return decltype(traits)::member ; })
 
 
 #endif // __PARAMETER_TYPE_HPP_

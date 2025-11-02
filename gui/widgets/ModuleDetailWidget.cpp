@@ -73,7 +73,7 @@ void ModuleDetailWidget::createWaveformWidget(){
     }
 
     // set the current waveform to default
-    int index = w->findData(parameterDefaults[static_cast<uint8_t>(ParameterType::WAVEFORM)]);
+    int index = w->findData(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, defaultValue));
     if ( index != -1 ){
         w->setCurrentIndex(index);
     } 
@@ -84,11 +84,11 @@ void ModuleDetailWidget::createWaveformWidget(){
 
 void ModuleDetailWidget::createSpinWidget(ParameterType p){
     auto w = new QDoubleSpinBox(this);
-    float defaultValue = parameterDefaults[static_cast<uint8_t>(p)];
-    auto limit = parameterLimits[static_cast<uint8_t>(p)];
-    w->setRange(limit.first, limit.second);
-    w->setSingleStep(0.01);
-    w->setValue(defaultValue);
+    
+    auto step = GET_PARAMETER_TRAIT_MEMBER(p, uiStepPrecision);
+    w->setRange(GET_PARAMETER_TRAIT_MEMBER(p, minimum), GET_PARAMETER_TRAIT_MEMBER(p, maximum));
+    w->setSingleStep(step);
+    w->setValue(GET_PARAMETER_TRAIT_MEMBER(p, defaultValue));
 
     parameterWidgets_[p] = w ;
     connect(w, &QDoubleSpinBox::valueChanged, this, &ModuleDetailWidget::onValueChange);
@@ -106,7 +106,8 @@ void ModuleDetailWidget::setupLayout(){
         ParameterType p = it.key(); 
         QWidget* w = it.value();
         QVBoxLayout* column = new QVBoxLayout();
-        QString labelText = QString::fromStdString(parameter2String(p));
+        std::string name = GET_PARAMETER_TRAIT_MEMBER(p, name);
+        QString labelText = QString::fromStdString(name);
         QLabel* label = new QLabel(labelText, this);
 
         column->addWidget(label);

@@ -21,7 +21,7 @@
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiEventListener.hpp"
 #include "types/Waveform.hpp"
-#include "dsp/math.hpp"
+// #include "dsp/math.hpp"
 #include "midi/MidiController.hpp"
 
 #include <chrono>
@@ -104,8 +104,8 @@ void Engine::stopAudio(){
 }
 
 int Engine::audioCallback(
-    void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames, double streamTime, 
-    RtAudioStreamStatus status, void *userData 
+    void *outputBuffer, [[maybe_unused]] void *inputBuffer, unsigned int nBufferFrames, [[maybe_unused]] double streamTime, 
+    [[maybe_unused]] RtAudioStreamStatus status, void *userData 
 ){
     Engine* engine = static_cast<Engine*>(userData);
     double* buffer = static_cast<double*>(outputBuffer) ;
@@ -262,8 +262,8 @@ const std::map<int, std::string> Engine::getAvailableAudioDevices() const {
 
 // Set up Modules
 void Engine::setup(){
-    unsigned int buffer = Config::get<unsigned int>("audio.buffer_size").value() ;
     unsigned int sampleRate = Config::get<unsigned int>("audio.sample_rate").value() ;
+
     dt_ = 1.0 / sampleRate ;
 
     midiController.initialize() ;
@@ -343,11 +343,11 @@ void Engine::startAnalysis(){
     }).detach();
 }
 
-void Engine::analyzeBuffer(double* data, size_t count){
-    float lastSample = 0.0f ;
-    std::atomic<uint64_t> numClicks{0};
-    std::atomic<float> clickDiffSum{0};
-    float diffThreshold = 0.3f ;
+void Engine::analyzeBuffer([[maybe_unused]] double* data, [[maybe_unused]] size_t count){
+    // float lastSample = 0.0f ;
+    // std::atomic<uint64_t> numClicks{0};
+    // std::atomic<float> clickDiffSum{0};
+    // float diffThreshold = 0.3f ;
 
     // std::cout << "samples: " ;
     // for ( size_t i = 0; i < count; ++i ){

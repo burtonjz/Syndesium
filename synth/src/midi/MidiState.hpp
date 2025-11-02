@@ -84,19 +84,19 @@ public:
         }
     }
 
-    void processMsgNotePressure(int midiNote, int pressure){
+    void processMsgNotePressure([[maybe_unused]] int midiNote, [[maybe_unused]] int pressure){
 
     }
 
-    void processMsgControl(int ctrlID, int ctrlValue){
+    void processMsgControl([[maybe_unused]] int ctrlID, [[maybe_unused]] int ctrlValue){
 
     }
 
-    void processMsgProgram(int program){
+    void processMsgProgram([[maybe_unused]] int program){
 
     }
 
-    void processMsgChannelPressure(int pressure){
+    void processMsgChannelPressure([[maybe_unused]] int pressure){
 
     }
 

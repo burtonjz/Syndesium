@@ -18,6 +18,7 @@
 #include "widgets/ComponentWidget.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "patch/SocketWidget.hpp"
+#include "types/ParameterType.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
@@ -31,7 +32,8 @@ ComponentWidget::ComponentWidget(int id, ComponentType type, QGraphicsItem* pare
 
     // create sockets from descriptor
     for ( const ParameterType& p : descriptor_.modulatableParameters){
-        specs.push_back({SocketType::ModulationInput, QString::fromStdString(parameter2String(p))});
+        std::string name = GET_PARAMETER_TRAIT_MEMBER(p,name);
+        specs.push_back({SocketType::ModulationInput, QString::fromStdString(name)});
     }
 
     for (int i = 0; i < descriptor_.numAudioInputs; ++i){

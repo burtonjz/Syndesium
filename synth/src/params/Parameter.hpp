@@ -95,7 +95,7 @@ struct DepthStorage {
 template <ParameterType typ>
 class Parameter : public ParameterBase {
     public:
-        using ValueType = typename ParameterTypeTraits<typ>::ValueType ;
+        using ValueType = typename ParameterTraits<typ>::ValueType ;
 
     private:
         ValueType minValue_ ;
@@ -123,8 +123,8 @@ class Parameter : public ParameterBase {
     public:
         Parameter(
             ValueType defaultValue, bool modulatable, 
-            ValueType minValue = parameterLimits[static_cast<int>(typ)].first, 
-            ValueType maxValue = parameterLimits[static_cast<int>(typ)].second, 
+            ValueType minValue = ParameterTraits<typ>::minimum, 
+            ValueType maxValue = ParameterTraits<typ>::maximum,
             BaseModulator* modulator = nullptr, ModulationData modData = {}
         ):
             ParameterBase(typ,modulatable,modulator,modData),
@@ -134,7 +134,7 @@ class Parameter : public ParameterBase {
             instantaneousValue_(value_),
             defaultValue_(value_)
         {
-            modStrategy_ = ParameterTypeTraits<typ>::defaultStrategy ;
+            modStrategy_ = ParameterTraits<typ>::defaultStrategy ;
 
             if constexpr (typ != ParameterType::DEPTH){
                 depth_ = new (depthStorage_.buf) Parameter<ParameterType::DEPTH>(
