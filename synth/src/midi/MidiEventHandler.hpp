@@ -104,13 +104,12 @@ public:
     // all handlers are listeners so that they can chain operations if desired. 
     // The below functions can be overridded to provide specialized operations when cascading events downwards
     void onKeyPressed(const ActiveNote* note, bool rePressed = false) override {
-        if ( !rePressed ) notes_[note->note.getMidiNote()] = *note ;
-        
         MidiEvent e = { MidiEvent::Type::NotePressed, *note, rePressed };
         queue_.push(e);
     }
 
-    void onKeyReleased([[maybe_unused]] ActiveNote anote) override {
+    void onKeyReleased(ActiveNote anote) override {
+        anote.resetTime();
         MidiEvent e = { MidiEvent::Type::NoteReleased, anote };
         queue_.push(e);
     }
@@ -137,7 +136,9 @@ public:
 
     void handleKeyReleased(const MidiNote note){
         if ( notes_.find(note.getMidiNote()) == notes_.end() ) return ;
-        onKeyReleased(notes_[note.getMidiNote()]);
+        auto anote = notes_[note.getMidiNote()] ;
+        anote.note = note ;
+        onKeyReleased(anote);
     };
 
     void handlePitchbend(uint16_t pitchbend){
@@ -153,25 +154,20 @@ public:
     
     void processEvents(){
         MidiEvent e ;
-        while (queue_.pop(e)){
-            auto it = notes_.find(e.anote.note.getMidiNote());
-            if ( it == notes_.end() ) continue ;
-            ActiveNote& anote = it->second ;
-            
+        while (queue_.pop(e)){    
+            ActiveNote note = e.anote ;
             switch (e.type){
             case MidiEvent::Type::NotePressed:
-                anote.resetTime();
-                anote.note.setStatus(true);
+                notes_[e.anote.note.getMidiNote()] = note ;
                 notifyKeyPressed(&notes_[e.anote.note.getMidiNote()], e.rePressed);
                 break ;
             case MidiEvent::Type::NoteReleased:
-                anote.resetTime();
-                anote.note.setStatus(false);
-                notifyKeyReleased(anote);
+                notes_[e.anote.note.getMidiNote()] = note ;
+                notifyKeyReleased(note);
                 break ;
             case MidiEvent::Type::NoteOff:
-                notifyKeyOff(anote);
-                notes_.erase(it);
+                notifyKeyOff(note);
+                notes_.erase(note.note.getMidiNote());
                 break ;
             }
         }

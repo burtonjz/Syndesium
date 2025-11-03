@@ -21,7 +21,6 @@
 #include <set>
 #include <array>
 
-#include "midi/MidiEventListener.hpp"
 #include "midi/MidiState.hpp"
 #include "midi/MidiEventHandler.hpp"
 
