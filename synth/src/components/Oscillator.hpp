@@ -27,6 +27,7 @@ class Oscillator : public BaseModule, public BaseModulator {
 private:
     double phase_ ;
     double increment_ ;
+    size_t noiseIndex_ = 0 ;    
     
 public:
     /**

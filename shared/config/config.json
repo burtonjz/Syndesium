@@ -8,7 +8,7 @@
         "buffer_size": 256
     }, 
     "oscillator": {
-        "wavetable_size": 1024,
+        "wavetable_size": 8196,
         "expected_voices": 12,
         "SINE":{
             "auto_gain": 1.0

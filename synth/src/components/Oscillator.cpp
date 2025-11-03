@@ -61,12 +61,18 @@ void Oscillator::calculateSample(){
     int index_floor ;
 
     // calculate sample
-    wavetableIndex = phase_ * (w.second - 1) ;
-    index_floor = static_cast<int>(std::floor(wavetableIndex));
-    frac = wavetableIndex - index_floor ;
-    sample = ( 1.0 - frac ) * w.first[index_floor] + frac * w.first[index_floor+1];
+    if (wf == Waveform::NOISE){
+        index_floor = noiseIndex_ & (w.second - 2);
+        sample = w.first[index_floor];
+        noiseIndex_++ ;
+    } else {
+        wavetableIndex = phase_ * (w.second - 1);
+        index_floor = static_cast<int>(wavetableIndex);
+        frac = wavetableIndex - index_floor;
+        sample = (1.0 - frac) * w.first[index_floor] + frac * w.first[index_floor + 1];
+    }
     sample *= parameters_->getInstantaneousValue<ParameterType::AMPLITUDE>() * parameters_->getInstantaneousValue<ParameterType::GAIN>();
-    buffer_[bufferIndex_] = sample ;
+    buffer_[bufferIndex_] = sample;
 }
 
 double Oscillator::modulate([[maybe_unused]] double value, [[maybe_unused]] ModulationData* mdat ) const {

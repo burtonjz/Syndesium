@@ -107,11 +107,12 @@ void Wavetable::generateSawWavetable(){
 
 void Wavetable::generateNoiseWavetable(){
     std::vector<double>& w = waves_[static_cast<int>(Waveform::NOISE)];
-    std::minstd_rand rnd ;
-    std::uniform_real_distribution<float> distr ;
-
+    std::random_device rd;
+    std::mt19937 rng(rd());
+    std::uniform_real_distribution<double> distr(-1.0, 1.0);
+    
     for(size_t i = 0; i < w.size(); ++i){
-        w[i] = distr(rnd);
+        w[i] = distr(rng);
     }
 }
 
