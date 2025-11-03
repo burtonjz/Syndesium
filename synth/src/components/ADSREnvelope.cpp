@@ -17,49 +17,58 @@
 
 #include "components/ADSREnvelope.hpp"
 #include "params/ModulationParameter.hpp"
+#include "params/ParameterMap.hpp"
 #include "types/ParameterType.hpp"
-#include <iostream>
-
 ADSREnvelope::ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg):
     BaseComponent(id,ComponentType::ADSREnvelope),
     BaseModulator()
 {
-    parameters_.add<ParameterType::ATTACK>(cfg.attack, true);
-    parameters_.add<ParameterType::DECAY>(cfg.decay, true);
-    parameters_.add<ParameterType::SUSTAIN>(cfg.sustain, true);
-    parameters_.add<ParameterType::RELEASE>(cfg.release, true);
+    parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
+    parameters_->add<ParameterType::DECAY>(cfg.decay, true);
+    parameters_->add<ParameterType::SUSTAIN>(cfg.sustain, true);
+    parameters_->add<ParameterType::RELEASE>(cfg.release, true);
 
     requiredParams_ = {
         ModulationParameter::MIDI_NOTE, 
-        ModulationParameter::INITIAL_VALUE,
-        ModulationParameter::LAST_VALUE
+        ModulationParameter::INITIAL_VALUE
     };
 }
 
-double ADSREnvelope::modulate(double value, ModulationData* mData) const {
-    double output = value ;
+double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mData) const {
+    double output = 0.0 ;
 
     // check required data
-    if ( !mData ) return value ; 
-    if ( mData->find(ModulationParameter::MIDI_NOTE)     == mData->end() ){ return value ; }
-    if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){ return value ; }
-    if ( mData->find(ModulationParameter::LAST_VALUE)    == mData->end() ){ return value ; }
-    
-    uint8_t midiNote = static_cast<uint8_t>((*mData)[ModulationParameter::MIDI_NOTE].get()) ;
+    if ( !mData ) return output ; 
+    if ( mData->find(ModulationParameter::MIDI_NOTE)     == mData->end() ) return output ;
 
+    if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){
+        (*mData)[ModulationParameter::INITIAL_VALUE] = 0.0f ;
+    }
+    if ( mData->find(ModulationParameter::LAST_VALUE)    == mData->end() ){ 
+        (*mData)[ModulationParameter::LAST_VALUE] = 0.0f ;    
+    }
+
+    uint8_t midiNote = static_cast<uint8_t>((*mData)[ModulationParameter::MIDI_NOTE].get()) ;
     auto it = notes_.find(midiNote) ;
-    if ( it == notes_.end() ){ return value ; }
+    if ( it == notes_.end() ){ return output ; }
 
     float start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get();
     
     if ( it->second.note.getStatus() ){
         // then note is pressed
-        float attack = parameters_.getInstantaneousValue<ParameterType::ATTACK>() ;
+        float attack = parameters_->getInstantaneousValue<ParameterType::ATTACK>() ;
+        float decay = parameters_->getInstantaneousValue<ParameterType::DECAY>() ;
+        float sustain = parameters_->getInstantaneousValue<ParameterType::SUSTAIN>() ;
+        
         if ( it->second.time <= attack ) {
-            output = start_level + ( value - start_level ) * (it->second.time / attack) ;
+            output = start_level + ( 1.0f - start_level ) * (it->second.time / attack) ;
+        } else if ( it->second.time <= (attack + decay) ) {
+            output = 1.0f - (1.0f - sustain) * ((it->second.time - attack) / decay );
+        } else {
+            output = sustain ;
         }
     } else {
-        float release = parameters_.getInstantaneousValue<ParameterType::RELEASE>() ;
+        float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
         if ( it->second.time >= release ){
             output = 0.0 ;
         } else {
@@ -72,6 +81,6 @@ double ADSREnvelope::modulate(double value, ModulationData* mData) const {
 }
 
 bool ADSREnvelope::shouldKillNote(const ActiveNote& note) const {
-    float release = parameters_.getInstantaneousValue<ParameterType::RELEASE>() ;
+    float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
     return ( !note.note.getStatus() && note.time > release ) ;
 }

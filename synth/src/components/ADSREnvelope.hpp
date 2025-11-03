@@ -27,7 +27,6 @@
 class ADSREnvelope : public BaseModulator, public MidiEventHandler { 
 private:
     KeyMap pending_ ; // MidiModulator holds on to release notes until their release is complete, or the note is pressed again
-    ParameterMap parameters_ ;
      
 public:
     ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);

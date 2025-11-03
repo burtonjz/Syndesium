@@ -42,7 +42,8 @@ double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mDat
 
     // check required data / set to defaults
     if ( !mData ) return output ; 
-    if ( mData->find(ModulationParameter::MIDI_NOTE)     == mData->end() ){ return output ; }
+    if ( mData->find(ModulationParameter::MIDI_NOTE)     == mData->end() ) return output ;
+    
     if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){ 
         (*mData)[ModulationParameter::INITIAL_VALUE] = 0.0f ;     
     }
