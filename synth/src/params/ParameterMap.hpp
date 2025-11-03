@@ -162,11 +162,18 @@ class ParameterMap {
         void removeModulation(ParameterType typ){
             auto it = parameters_.find(typ);
             if (it == parameters_.end() ){
-                std::cout << "ParameterMap: WARN failed to remove modulation for parameter " << static_cast<int>(typ)
-                          << " as parameter does not exist in map." << std::endl ;    
-                return ;
+                throw std::runtime_error("ParameterMap: ERROR - Parameter does not exist in map.");
             }
             it->second->removeModulation();
+        }
+
+        BaseModulator* getModulator(ParameterType typ){
+            auto it = parameters_.find(typ);
+            if ( it != parameters_.end() ){
+                return it->second->getModulator() ;
+            } else {
+                throw std::runtime_error("ParameterMap: ERROR - Parameter does not exist in map.");
+            }
         }
 
         ModulationData* getModulationData(ParameterType typ){
@@ -174,7 +181,7 @@ class ParameterMap {
             if ( it != parameters_.end() ){
                 return it->second->getModulationData() ;
             } else {
-                throw std::runtime_error("ParameterMap: WARN modulation data does not exist for specified parameter");
+                throw std::runtime_error("ParameterMap: ERROR - Parameter does not exist in map.");
             }
         }
 

@@ -77,6 +77,10 @@ public:
         modData_ = {} ;
     }
 
+    BaseModulator* getModulator(){
+        return modulator_ ;
+    }
+    
     ModulationData* getModulationData(){
         return &modData_ ;
     }

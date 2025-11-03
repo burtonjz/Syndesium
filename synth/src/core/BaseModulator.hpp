@@ -20,14 +20,9 @@
 
 #include "core/BaseComponent.hpp"
 #include "midi/MidiNote.hpp"
-#include "types/ParameterType.hpp"
 #include "params/ModulationParameter.hpp"
-#include "containers/RTMap.hpp"
-#include "containers/AtomicFloat.hpp"
 
-#include <memory>
 #include <set>
-#include <variant>
 
 struct ModulationContext {
     const MidiNote* note = nullptr ;

@@ -405,6 +405,7 @@ bool ApiHandler::handleModulationConnection(Engine* engine, ConnectionRequest re
 
     BaseModulator* modulator = engine->componentManager.getModulator(request.outboundID.value());
     BaseComponent* component = engine->componentManager.getRaw(request.inboundID.value());
+    std::cout << "modulator with id = " << request.outboundID.value() << " is at address " << modulator << std::endl ;
 
     if (!modulator ){
         std::cerr << "valid modulator not found.\n";

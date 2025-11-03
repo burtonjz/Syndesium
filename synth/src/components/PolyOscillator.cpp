@@ -114,7 +114,7 @@ void PolyOscillator::onKeyOff(ActiveNote anote){
     }
 }
 
-void PolyOscillator::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
+void PolyOscillator::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
     if ( d.empty() ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){
@@ -127,7 +127,7 @@ void PolyOscillator::setParameterModulation(ParameterType p, BaseModulator* m, M
     childPool_.forEachActive(&Oscillator::setParameterModulation, p, m, d);
 }
 
-void PolyOscillator::removeParameterModulation(ParameterType p){
+void PolyOscillator::onRemoveParameterModulation(ParameterType p){
     modulators_[p] = nullptr ;
     modulationData_[p] = {} ;
 

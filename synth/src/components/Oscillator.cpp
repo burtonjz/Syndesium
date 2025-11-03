@@ -69,6 +69,10 @@ void Oscillator::calculateSample(){
     buffer_[bufferIndex_] = sample ;
 }
 
+double Oscillator::modulate([[maybe_unused]] double value, [[maybe_unused]] ModulationData* mdat ) const {
+    return getCurrentSample() ;
+}
+
 void Oscillator::tick(){
     BaseModule::tick();
     increment_ = parameters_->getInstantaneousValue<ParameterType::FREQUENCY>() / sampleRate_ ;

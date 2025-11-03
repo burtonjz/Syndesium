@@ -31,8 +31,9 @@ class SignalChain {
 private:
     std::unordered_set<BaseModule*> outputNodes_ ;
     std::vector<BaseModule*> topologicalOrder_ ;
-
     std::unordered_set<BaseModule*> visited_  ;
+
+    std::unordered_set<BaseModule*> modulatorOnly_ ;
 
 public:
     SignalChain():
@@ -92,8 +93,14 @@ private:
         std::vector<BaseModule*>& result    
     ){
         if (visited.count(module)) return ;
-
         visited.insert(module);
+
+        // Process stateful modulators in signal chain (e.g., Oscillator)
+        for (BaseModule* m : module->getModulationInputs() ){
+            topologicalSort(m, visited, result);
+        }
+
+        // Now process normal signal chain
         for (BaseModule* m : module->getInputs()){
             topologicalSort(m, visited, result);
         }

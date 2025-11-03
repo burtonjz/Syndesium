@@ -19,10 +19,11 @@
 #define __MODULE_OSCILLATOR_HPP_
 
 #include "core/BaseModule.hpp"
+#include "core/BaseModulator.hpp"
 #include "configs/OscillatorConfig.hpp"
 #include "types/Waveform.hpp"
 
-class Oscillator : public BaseModule {
+class Oscillator : public BaseModule, public BaseModulator {
 private:
     double phase_ ;
     double increment_ ;
@@ -43,6 +44,7 @@ public:
     // overrides
     bool isGenerative() const override ;
     void calculateSample() override ; 
+    double modulate([[maybe_unused]] double value, [[maybe_unused]] ModulationData* mdat ) const override ;
 
     void tick() override ;
     void reset();

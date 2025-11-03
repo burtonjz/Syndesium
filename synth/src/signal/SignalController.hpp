@@ -58,6 +58,17 @@ public:
         auto chain = signalChain_.getModuleChain();
         auto sinks = signalChain_.getSinks();
 
+        // debug
+        static bool printed = false ;
+        if (!printed){
+            std::cout << "Processing Chain Order: ";
+            for (BaseModule* mod: chain ){
+                std::cout << mod << " -> ";
+            }
+            std::cout << std::endl ;
+            printed = true ;
+        }
+
         double output = 0 ; 
         for (BaseModule*  mod : chain){
             mod->tick();

@@ -57,8 +57,8 @@ public:
     void onKeyReleased(ActiveNote anote) override ;
     void onKeyOff(ActiveNote anote) override ;
 
-    void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
-    void removeParameterModulation(ParameterType p) override ;
+    void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
+    void onRemoveParameterModulation(ParameterType p) override ;
 
     void updateGain();
 private:

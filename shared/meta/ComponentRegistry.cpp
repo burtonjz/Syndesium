@@ -34,7 +34,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 1, // audio outputs
                 0, // midi inputs
                 0, // midi outputs
-                false, // modulator
+                true, // modulator
                 false  // polyphonic
             }
         },

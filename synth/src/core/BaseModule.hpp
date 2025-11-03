@@ -33,7 +33,7 @@ class BaseModule : public virtual BaseComponent {
 protected:
     double  sampleRate_ ;
     std::size_t size_ ;
-    std::vector<BaseModule*> inputs_ ;
+    std::unordered_set<BaseModule*> signalInputs_ ;
     std::unique_ptr<double[]> buffer_ ;
     size_t bufferIndex_ ;
     
@@ -76,24 +76,15 @@ public:
     }
 
     void connectInput(BaseModule* source){
-        if ( std::find(inputs_.begin(), inputs_.end(), source) == inputs_.end() ){
-            std::cerr << "WARN: module already in input list. Not adding again." << std::endl ;
-            return ;
-        }
-        inputs_.push_back(source);
+        signalInputs_.insert(source);
     }
 
     void disconnectInput(BaseModule* source){
-        auto it = std::find(inputs_.begin(), inputs_.end(), source);
-        if (  it == inputs_.end() ){
-            std::cerr << "WARN: module not in input list. Not able to remove." << std::endl ;
-            return ;
-        }
-        inputs_.erase(it);
+        signalInputs_.erase(source);
     }
 
-    const std::vector<BaseModule*>& getInputs() const {
-        return inputs_ ;
+    const std::unordered_set<BaseModule*>& getInputs() const {    
+        return signalInputs_ ;
     }
 
     virtual void tick(){

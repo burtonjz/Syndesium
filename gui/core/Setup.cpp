@@ -29,11 +29,8 @@ Setup::Setup(ModuleContext ctx, QWidget* parent):
     ui_(new Ui::AudioMidiSetupWidget),
     ctx_(ctx)
 {
-    qDebug() << "1" ;
     // create API connections
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Setup::onApiDataReceived);
-
-    qDebug() << "2" ;
 
     // ask backend for relevant data
     QJsonObject obj ;
@@ -42,17 +39,11 @@ Setup::Setup(ModuleContext ctx, QWidget* parent):
     obj["action"] = "get_midi_devices" ;
     ApiClient::instance()->sendMessage(obj); 
 
-    qDebug() << "3" ;
-
     ui_->setupUi(this);
-
-    qDebug() << "4" ;
 
     // connections
     connect(ui_->pushButtonSubmit, &QPushButton::clicked, this, &Setup::onSetupSubmit);
     connect(ctx_.state, &StateManager::setupCompleted, this, &Setup::onSetupCompleted);
-
-    qDebug() << "5"  ;
 }
 
 Setup::~Setup()

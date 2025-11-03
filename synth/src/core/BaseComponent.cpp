@@ -15,8 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "BaseComponent.hpp"
+#include "core/BaseComponent.hpp"
+#include "core/BaseModule.hpp"
 #include "params/ParameterMap.hpp"
+#include <unordered_set>
 
 BaseComponent::BaseComponent(ComponentId id, ComponentType type):
     id_(id),
@@ -26,13 +28,44 @@ BaseComponent::BaseComponent(ComponentId id, ComponentType type):
 
 BaseComponent::~BaseComponent() = default ;
 
+std::unordered_set<BaseModule*>& BaseComponent::getModulationInputs(){
+    return modulationModules_ ;
+}
+
 bool BaseComponent::setParameterValue(ParameterType t, const json& value){
     return parameters_->setValueDispatch(t,value); 
 }
 
 void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d ){
     if ( ! parameters_ ) return ;
-    if ( d.empty() ){
+
+    // if the modulator is stateful (also a module), track it for signal chain
+    BaseModule* module = dynamic_cast<BaseModule*>(m);
+    if ( module ){
+        modulationModules_.insert(module);
+    }
+    
+    onSetParameterModulation(p,m,d);
+}
+
+void BaseComponent::removeParameterModulation(ParameterType p){
+    if ( ! parameters_ ) return ;
+
+    // if the modulator is stateful (also a module), remove tracking
+    BaseModulator* modulator = parameters_->getModulator(p);
+    if ( BaseModule* module = dynamic_cast<BaseModule*>(modulator) ){
+        modulationModules_.erase(module);
+    }
+
+    onRemoveParameterModulation(p);
+}
+
+void BaseComponent::updateParameters(){
+    if (parameters_) parameters_->modulate() ;
+}
+
+void BaseComponent::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d ){
+    if ( d.empty() && m ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){
             d[mp];
@@ -41,11 +74,6 @@ void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, Mo
     parameters_->setModulation(p,m,d);
 }
 
-void BaseComponent::removeParameterModulation(ParameterType p){
-    if ( ! parameters_ ) return ;
+void BaseComponent::onRemoveParameterModulation(ParameterType p){
     parameters_->removeModulation(p);
-}
-
-void BaseComponent::updateParameters(){
-    if (parameters_) parameters_->modulate() ;
 }
