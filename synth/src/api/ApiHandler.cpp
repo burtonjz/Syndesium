@@ -230,9 +230,11 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             int componentId = jRequest["componentId"];
             ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
 
-            jRequest["status"] = engine->componentManager.setComponentParameter(componentId, p, jRequest["value"]);
+            jResponse["status"] = engine->componentManager.setComponentParameter(componentId, p, jRequest["value"]);
+            jResponse["componentId"] = jRequest["componentId"];
+            jResponse["parameter"] = jRequest["parameter"];
 
-            if ( jRequest["status"] ){
+            if ( jResponse["status"] ){
                 sendSuccess();
                 return ;
             } else {

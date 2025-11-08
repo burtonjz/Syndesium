@@ -148,9 +148,9 @@ void PolyOscillator::updateModulationInitialValue(Oscillator* osc){
             auto d = osc->getParameters()->getModulationData(p);
             if ( 
                 d->find(ModulationParameter::INITIAL_VALUE) != modulationData_[p].end() &&
-                d->find(ModulationParameter::LAST_VALUE)    != modulationData_[p].end()
+                d->find(ModulationParameter::OUTPUT_1)    != modulationData_[p].end()
             ){
-                (*d)[ModulationParameter::INITIAL_VALUE].set((*d)[ModulationParameter::LAST_VALUE].get()) ;
+                (*d)[ModulationParameter::INITIAL_VALUE].set((*d)[ModulationParameter::OUTPUT_1].get()) ;
             }
         }
     } 

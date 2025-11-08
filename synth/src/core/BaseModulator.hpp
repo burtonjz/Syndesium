@@ -40,7 +40,7 @@ public:
 
     virtual ~BaseModulator() = default ;
 
-    virtual double modulate(double value, ModulationData* mdat ) const = 0 ;
+    virtual double modulate(double value, ModulationData* mData ) const = 0 ;
 
     virtual const std::set<ModulationParameter>& getRequiredModulationParameters() const {
         return requiredParams_ ;

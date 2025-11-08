@@ -25,6 +25,7 @@
 #include "configs/LinearFaderConfig.hpp"
 #include "configs/ADSREnvelopeConfig.hpp"
 #include "configs/MidiFilterConfig.hpp"
+#include "configs/BiquadFilterConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;
@@ -41,6 +42,7 @@ inline json getDefaultConfig(ComponentType type){
     HANDLE_DEFAULT_CONFIG(LinearFader) 
     HANDLE_DEFAULT_CONFIG(ADSREnvelope)
     HANDLE_DEFAULT_CONFIG(MidiFilter)
+    HANDLE_DEFAULT_CONFIG(BiquadFilter)
 
     default:
         return json::object();

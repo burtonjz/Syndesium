@@ -214,6 +214,8 @@ class ParameterMap {
                     return setValue<ParameterType::AMPLITUDE>(value); 
                 case ParameterType::GAIN: 
                     return setValue<ParameterType::GAIN>(value); 
+                case ParameterType::DBGAIN:
+                    return setValue<ParameterType::DBGAIN>(value);
                 case ParameterType::PHASE: 
                     return setValue<ParameterType::PHASE>(value); 
                 case ParameterType::PAN: 
@@ -236,6 +238,10 @@ class ParameterMap {
                     return setValue<ParameterType::FILTER_TYPE>(value); 
                 case ParameterType::CUTOFF: 
                     return setValue<ParameterType::CUTOFF>(value); 
+                case ParameterType::BANDWIDTH:
+                    return setValue<ParameterType::BANDWIDTH>(value);
+                case ParameterType::SHELF:
+                    return setValue<ParameterType::SHELF>(value);
                 case ParameterType::Q_FACTOR: 
                     return setValue<ParameterType::Q_FACTOR>(value); 
                 default:
@@ -255,6 +261,8 @@ class ParameterMap {
                     return getValue<ParameterType::AMPLITUDE>();
                 case ParameterType::GAIN: 
                     return getValue<ParameterType::GAIN>();
+                case ParameterType::DBGAIN:
+                    return getValue<ParameterType::DBGAIN>();
                 case ParameterType::PHASE: 
                     return getValue<ParameterType::PHASE>();
                 case ParameterType::PAN: 
@@ -277,6 +285,10 @@ class ParameterMap {
                     return getValue<ParameterType::FILTER_TYPE>();
                 case ParameterType::CUTOFF: 
                     return getValue<ParameterType::CUTOFF>();
+                case ParameterType::BANDWIDTH: 
+                    return getValue<ParameterType::BANDWIDTH>();
+                case ParameterType::SHELF:
+                    return getValue<ParameterType::SHELF>();
                 case ParameterType::Q_FACTOR: 
                     return getValue<ParameterType::Q_FACTOR>();
                 default:

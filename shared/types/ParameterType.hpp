@@ -36,6 +36,7 @@ enum class ParameterType {
     FREQUENCY,
     AMPLITUDE,
     GAIN,
+    DBGAIN,
     PHASE,
     PAN,
     DETUNE,
@@ -47,6 +48,8 @@ enum class ParameterType {
     MAX_VALUE,
     FILTER_TYPE,
     CUTOFF,
+    BANDWIDTH,
+    SHELF,
     Q_FACTOR,
     N_PARAMETERS
 };
@@ -130,6 +133,16 @@ template <> struct ParameterTraits<ParameterType::GAIN>{
     static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC;
     static constexpr double uiStepPrecision = .01 ;
+};
+
+template <> struct ParameterTraits<ParameterType::DBGAIN>{
+    using ValueType = double;
+    static constexpr std::string name = "gain (db)";
+    static constexpr float minimum = -24.0 ;
+    static constexpr float maximum = 24.0 ;
+    static constexpr float defaultValue = 0.0 ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE;
+    static constexpr double uiStepPrecision = 0.1 ;
 };
 
 template <> struct ParameterTraits<ParameterType::PHASE>{
@@ -242,6 +255,26 @@ template <> struct ParameterTraits<ParameterType::CUTOFF>{
     static constexpr double uiStepPrecision = 1.0 ;
 };
 
+template <> struct ParameterTraits<ParameterType::BANDWIDTH>{
+    using ValueType = float;
+    static constexpr std::string name = "bandwidth";
+    static constexpr float minimum = 0.1f ;
+    static constexpr float maximum = 4.0f ;
+    static constexpr float defaultValue = 2.0f ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 0.1 ;
+};
+
+template <> struct ParameterTraits<ParameterType::SHELF>{
+    using ValueType = float;
+    static constexpr std::string name = "shelf slope";
+    static constexpr float minimum = 0.1f ;
+    static constexpr float maximum = 2.0f ;
+    static constexpr float defaultValue = 1.0f ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
+    static constexpr double uiStepPrecision = 0.1 ;
+};
+
 template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
     using ValueType = float;
     static constexpr std::string name = "q factor";
@@ -262,6 +295,7 @@ auto dispatchParameterTrait(ParameterType p, Func&& func){
         case ParameterType::FREQUENCY: return func(ParameterTraits<ParameterType::FREQUENCY>{});
         case ParameterType::AMPLITUDE: return func(ParameterTraits<ParameterType::AMPLITUDE>{});
         case ParameterType::GAIN: return func(ParameterTraits<ParameterType::GAIN>{});
+        case ParameterType::DBGAIN: return func(ParameterTraits<ParameterType::DBGAIN>{});
         case ParameterType::PHASE: return func(ParameterTraits<ParameterType::PHASE>{});
         case ParameterType::PAN: return func(ParameterTraits<ParameterType::PAN>{});
         case ParameterType::DETUNE: return func(ParameterTraits<ParameterType::DETUNE>{});
@@ -273,6 +307,8 @@ auto dispatchParameterTrait(ParameterType p, Func&& func){
         case ParameterType::MAX_VALUE: return func(ParameterTraits<ParameterType::MAX_VALUE>{});
         case ParameterType::FILTER_TYPE: return func(ParameterTraits<ParameterType::FILTER_TYPE>{});
         case ParameterType::CUTOFF: return func(ParameterTraits<ParameterType::CUTOFF>{});
+        case ParameterType::BANDWIDTH: return func(ParameterTraits<ParameterType::BANDWIDTH>{});
+        case ParameterType::SHELF: return func(ParameterTraits<ParameterType::SHELF>{});
         case ParameterType::Q_FACTOR: return func(ParameterTraits<ParameterType::Q_FACTOR>{});
         default: throw std::runtime_error("Unknown ParameterType");
     }

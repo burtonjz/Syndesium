@@ -58,6 +58,7 @@ protected:
 
 private:
     void createWaveformWidget();
+    void createFilterTypeWidget();
     void createSpinWidget(ParameterType p);
     void setupLayout();
     void closeEvent(QCloseEvent* event) override ;

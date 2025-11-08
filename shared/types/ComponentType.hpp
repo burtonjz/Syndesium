@@ -25,6 +25,7 @@
 enum class ComponentType {
     Oscillator,
     PolyOscillator,
+    BiquadFilter,
     LinearFader,
     ADSREnvelope,
     MidiFilter,

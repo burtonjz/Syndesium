@@ -97,6 +97,21 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 false,
                 false
             }
+        },
+        {
+            ComponentType::BiquadFilter,
+            {
+                "Biquad Filter",
+                ComponentType::BiquadFilter,
+                {ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
+                {ParameterType::FILTER_TYPE, ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
+                1,
+                1,
+                0,
+                0,
+                true,
+                false
+            }
         }
     };
 

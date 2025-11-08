@@ -21,6 +21,7 @@
 #include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
+#include "types/FilterType.hpp"
 #include "core/ApiClient.hpp"
 
 #include <QJsonObject>
@@ -56,7 +57,7 @@ void ModuleDetailWidget::createParameter(ParameterType p){
         createWaveformWidget();
         break ;
     case ParameterType::FILTER_TYPE:
-        // parameterWidgets_[p] = new QComboBox(this);
+        createFilterTypeWidget();
         break ;
     default:
         // most things will just be dials
@@ -79,6 +80,23 @@ void ModuleDetailWidget::createWaveformWidget(){
     } 
 
     parameterWidgets_[ParameterType::WAVEFORM] = w ;
+    connect(w, &QComboBox::currentTextChanged, this, &ModuleDetailWidget::onValueChange);
+}
+
+void ModuleDetailWidget::createFilterTypeWidget(){
+    auto w = new QComboBox(this);
+    for ( auto ft : FilterType::getFilterTypes()){
+        FilterType f = FilterType(ft);
+        w->addItem(QString::fromStdString(f.toString()),f.to_uint8());
+    }
+
+    // set the current waveform to default
+    int index = w->findData(GET_PARAMETER_TRAIT_MEMBER(ParameterType::FILTER_TYPE, defaultValue));
+    if ( index != -1 ){
+        w->setCurrentIndex(index);
+    } 
+
+    parameterWidgets_[ParameterType::FILTER_TYPE] = w ;
     connect(w, &QComboBox::currentTextChanged, this, &ModuleDetailWidget::onValueChange);
 }
 
@@ -165,7 +183,6 @@ void ModuleDetailWidget::onParameterChanged(int componentId, ComponentDescriptor
     obj["componentId"] = componentId ;
     obj["parameter"] = static_cast<int>(p);
     obj["value"] = QVariant::fromStdVariant(value).toJsonValue();
-    obj["isModule"] = descriptor_.isModule() ;
-
+    
     ApiClient::instance()->sendMessage(obj); 
 }

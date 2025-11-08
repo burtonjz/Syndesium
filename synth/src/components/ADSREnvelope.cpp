@@ -44,8 +44,8 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
     if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){
         (*mData)[ModulationParameter::INITIAL_VALUE] = 0.0f ;
     }
-    if ( mData->find(ModulationParameter::LAST_VALUE)    == mData->end() ){ 
-        (*mData)[ModulationParameter::LAST_VALUE] = 0.0f ;    
+    if ( mData->find(ModulationParameter::OUTPUT_1)    == mData->end() ){ 
+        (*mData)[ModulationParameter::OUTPUT_1] = 0.0f ;    
     }
 
     uint8_t midiNote = static_cast<uint8_t>((*mData)[ModulationParameter::MIDI_NOTE].get()) ;
@@ -76,7 +76,7 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
         }
     }
 
-    (*mData)[ModulationParameter::LAST_VALUE].set(output) ;
+    (*mData)[ModulationParameter::OUTPUT_1].set(output) ;
     return output ;
 }
 

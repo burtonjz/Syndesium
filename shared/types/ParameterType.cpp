@@ -25,6 +25,7 @@ ParameterType parameterFromString(std::string str) {
         {ParameterTraits<ParameterType::FREQUENCY>::name, ParameterType::FREQUENCY},
         {ParameterTraits<ParameterType::AMPLITUDE>::name, ParameterType::AMPLITUDE},
         {ParameterTraits<ParameterType::GAIN>::name, ParameterType::GAIN},
+        {ParameterTraits<ParameterType::DBGAIN>::name, ParameterType::DBGAIN},
         {ParameterTraits<ParameterType::PHASE>::name, ParameterType::PHASE},
         {ParameterTraits<ParameterType::PAN>::name, ParameterType::PAN},
         {ParameterTraits<ParameterType::DETUNE>::name, ParameterType::DETUNE},
@@ -36,6 +37,8 @@ ParameterType parameterFromString(std::string str) {
         {ParameterTraits<ParameterType::MAX_VALUE>::name, ParameterType::MAX_VALUE},
         {ParameterTraits<ParameterType::FILTER_TYPE>::name, ParameterType::FILTER_TYPE},
         {ParameterTraits<ParameterType::CUTOFF>::name, ParameterType::CUTOFF},
+        {ParameterTraits<ParameterType::BANDWIDTH>::name, ParameterType::BANDWIDTH},
+        {ParameterTraits<ParameterType::SHELF>::name, ParameterType::SHELF},
         {ParameterTraits<ParameterType::Q_FACTOR>::name, ParameterType::Q_FACTOR},
     };
     

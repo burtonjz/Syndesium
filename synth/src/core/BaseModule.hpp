@@ -95,8 +95,6 @@ public:
     virtual bool isPolyphonic() const { return false; }
 
 protected:
-    virtual void processBuffer([[maybe_unused]] double* buf, [[maybe_unused]] size_t len){}
-    virtual void processBuffer(){}
     
 };
 

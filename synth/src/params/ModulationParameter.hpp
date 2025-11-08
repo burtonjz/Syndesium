@@ -27,7 +27,10 @@
 enum class ModulationParameter {
     MIDI_NOTE,
     INITIAL_VALUE, 
-    LAST_VALUE,
+    INPUT_1,
+    INPUT_2,
+    OUTPUT_1,
+    OUTPUT_2,
     N_PARAMETERS
 };
 
