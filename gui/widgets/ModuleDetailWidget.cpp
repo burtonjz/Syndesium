@@ -120,9 +120,8 @@ void ModuleDetailWidget::setupLayout(){
     // parameters
     parameterLayout->setSpacing(PARAMETER_WIDGET_SPACING);
 
-    for ( auto it = parameterWidgets_.begin(); it != parameterWidgets_.end(); ++it){
-        ParameterType p = it.key(); 
-        QWidget* w = it.value();
+    for ( auto p : descriptor_.controllableParameters ){
+        QWidget* w = parameterWidgets_[p];
         QVBoxLayout* column = new QVBoxLayout();
         std::string name = GET_PARAMETER_TRAIT_MEMBER(p, name);
         QString labelText = QString::fromStdString(name);
@@ -132,7 +131,7 @@ void ModuleDetailWidget::setupLayout(){
         column->addWidget(w);
         parameterLayout->addLayout(column);
     }
-
+    
     // buttons
     closeButton_ = new QPushButton("Close",this);
     resetButton_ = new QPushButton("Reset", this);

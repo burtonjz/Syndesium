@@ -30,8 +30,8 @@
 struct ComponentDescriptor {
     std::string name ;
     ComponentType type ;
-    std::set<ParameterType> modulatableParameters ;
-    std::set<ParameterType> controllableParameters ;
+    std::vector<ParameterType> modulatableParameters ;
+    std::vector<ParameterType> controllableParameters ;
 
     size_t numAudioInputs  ;
     size_t numAudioOutputs ;
