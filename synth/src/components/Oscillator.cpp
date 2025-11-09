@@ -83,7 +83,6 @@ void Oscillator::tick(){
     BaseModule::tick();
     increment_ = parameters_->getInstantaneousValue<ParameterType::FREQUENCY>() / sampleRate_ ;
     phase_ = std::fmod(phase_ + increment_, 1.0);
-    parameters_->modulate();
 }
 
 void Oscillator::addReferenceParameters(ParameterMap& map){

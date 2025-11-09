@@ -59,7 +59,7 @@ public:
     void removeParameterModulation(ParameterType p);
 
     // this function runs modulation on all internal parameters
-    void updateParameters();
+    virtual void updateParameters();
 
 protected:
     virtual void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d );

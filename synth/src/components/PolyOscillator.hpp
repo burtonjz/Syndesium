@@ -42,9 +42,6 @@ private:
 public:
     // Constructors
     PolyOscillator(ComponentId id, PolyOscillatorConfig cfg);
-
-    // getters/setters
-    ParameterMap* getParameters();
     
     // Module Overrides
     bool isGenerative() const override ;
@@ -57,6 +54,8 @@ public:
     void onKeyReleased(ActiveNote anote) override ;
     void onKeyOff(ActiveNote anote) override ;
 
+    // BaseComponent Overrides
+    void updateParameters() override ;
     void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
     void onRemoveParameterModulation(ParameterType p) override ;
 

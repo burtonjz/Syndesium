@@ -24,7 +24,7 @@ ComponentId ComponentFactory::createFromJson(ComponentType type, const std::stri
         HANDLE_CREATE_COMPONENT(ADSREnvelope)
         HANDLE_CREATE_COMPONENT(MidiFilter)
         HANDLE_CREATE_COMPONENT(BiquadFilter)
-    default:
+    default: 
         throw std::runtime_error("invalid component requested.");
     }
 }

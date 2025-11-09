@@ -16,6 +16,7 @@
  */
 
 #include "components/PolyOscillator.hpp"
+#include "core/BaseComponent.hpp"
 #include "types/ComponentType.hpp"
 #include "types/Waveform.hpp"
 #include "params/ParameterMap.hpp"
@@ -112,6 +113,11 @@ void PolyOscillator::onKeyOff(ActiveNote anote){
         childPool_.release(it->second);
         children_.erase(it);
     }
+}
+
+void PolyOscillator::updateParameters(){
+    BaseComponent::updateParameters();
+    childPool_.forEachActive(&Oscillator::updateParameters);
 }
 
 void PolyOscillator::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
