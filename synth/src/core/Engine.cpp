@@ -368,7 +368,7 @@ void Engine::setup(){
     dt_ = 1.0 / sampleRate;
     
     midiController.initialize();
-    signalController.setup();
+    signalController.updateProcessingGraph();
 }
 
 void Engine::destroy(){

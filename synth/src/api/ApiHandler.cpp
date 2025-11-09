@@ -16,6 +16,7 @@
  */
 
 #include "api/ApiHandler.hpp"
+#include "core/BaseModule.hpp"
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "configs/ComponentConfig.hpp"
@@ -422,9 +423,17 @@ bool ApiHandler::handleModulationConnection(Engine* engine, ConnectionRequest re
 
     if ( request.remove ){
         component->removeParameterModulation(request.inboundParameter.value());
+        // stateful modulators need to be in the signal processing graph
+        if ( dynamic_cast<BaseModule*>(modulator) ){
+            engine->signalController.updateProcessingGraph();
+        }
         return true ;
     }
     
     component->setParameterModulation(request.inboundParameter.value(), modulator);
+    // stateful modulators need to be in the signal processing graph
+    if ( dynamic_cast<BaseModule*>(modulator) ){
+        engine->signalController.updateProcessingGraph();
+    }
     return true ;
 }

@@ -84,7 +84,7 @@ public:
         }
     }
 
-    void setup(){
+    void updateProcessingGraph(){
         signalChain_.calculateTopologicalOrder();
     }
 
