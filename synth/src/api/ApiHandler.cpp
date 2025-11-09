@@ -19,7 +19,6 @@
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "configs/ComponentConfig.hpp"
-#include "meta/ComponentRegistry.hpp"
 #include "types/SocketType.hpp"
 
 #include <iostream>
@@ -190,14 +189,12 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
         if ( action == "set_state" ){
             jResponse["state"] = jRequest["state"] ;
             if ( jResponse["state"] == "run" ){
-                std::cout << "Running engine. " << std::endl ;
                 engine->run();
                 sendSuccess();
                 return ;
             } 
             
             if ( jResponse["state"] == "stop" ){
-                std::cout << "Stopping engine. " << std::endl ;
                 engine->stop();
                 sendSuccess();
                 return ;
@@ -326,6 +323,10 @@ bool ApiHandler::handleSignalConnection(Engine* engine, ConnectionRequest reques
 
     // if the destination is an external endpoint
     if ( ! request.inboundID.has_value() ){
+        if ( request.remove ){
+            engine->signalController.unregisterSink(outbound);
+            return true ;
+        }
         engine->signalController.registerSink(outbound);
         return true ;
     }

@@ -20,6 +20,7 @@
 
 #include <atomic>
 
+#include <condition_variable>
 #include <map>
 #include <rtmidi/RtMidi.h>
 #include <rtaudio/RtAudio.h>
@@ -28,7 +29,6 @@
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiState.hpp"
-#include "types/Waveform.hpp"
 #include "signal/SignalController.hpp"
 #include "core/ComponentManager.hpp"
 #include "core/ComponentFactory.hpp"
@@ -39,95 +39,105 @@ using json = nlohmann::json ;
 
 class Engine {
 public:
-    // set a flag for all threads to stop on
-    static std::atomic<bool> stop_flag ;
-    static void signalHandler(int signum);
-
-    // publically available interfaces
-    ComponentManager componentManager ;
-    ComponentFactory componentFactory ;
-    SignalController signalController ;
-    MidiController   midiController ;
-
-    // static thread functions
-    static void startAudio(Engine* engine);
-    void stopAudio();
-
-    static int audioCallback(void *outputBuffer, void *inputBuffer, unsigned int nBufferFrames,
-                              double streamTime, RtAudioStreamStatus status, void *userData );
-    static void audioCleanup(RtAudio* dac, RtAudioErrorType error);
-
-    static void startMidi(Engine* engine);
-    void stopMidi();
-
-private:
-    // audio
-    RtAudio dac_ ;
-    std::map<int,std::string> availableAudioDevices_ ; // list available devices
-    int selectedAudioOutput_ ; // selected device id
-    double dt_ ; // 1 / sampleRate
-
-    // midi
-    RtMidiIn midiIn_ ;
-    std::map<int,std::string> availableMidiPorts_ ;
-    int selectedMidiPort_ ;  
-
-    // midi manipulation
-    MidiState        midiState_ ;
-    MidiEventHandler midiDefaultHandler_ ;
-
-    // debug / analysis
-    std::thread analysisThread_ ;
-    LockFreeRingBuffer<double> analysisAudioOut_{48000 * 10} ;
-    
-public:
+    // Constructor & Destructor
     Engine();
-
-    // Engine Block Functions
-    void initialize() ;
-    void run() ;
-    void stop() ;
-
-    // Getters & Setters
-    RtAudio* getDac() ;
-    RtMidiIn* getMidiIn() ;
-    MidiController* getMidiController() ;
-    MidiEventHandler* getDefaultMidiHandler() ;
-
+    ~Engine();
+    
+    // Main state functions
+    void initialize();
+    void run();
+    void stop();
+    void shutdown();
+    
+    // Static functions
+    static void signalHandler(int signum);
+    static std::atomic<bool> stop_flag;
+    
+    // Audio callback (must be static for RtAudio)
+    static int audioCallback(
+        void *outputBuffer, 
+        void *inputBuffer, 
+        unsigned int nBufferFrames, 
+        double streamTime, 
+        RtAudioStreamStatus status, 
+        void *userData
+    );
+    
+    // Getters
+    RtAudio* getDac();
+    RtMidiIn* getMidiIn();
+    MidiController* getMidiController();
+    MidiEventHandler* getDefaultMidiHandler();
     double getDeltaTime() const;
-
-    int getAudioDeviceId() const ;
+    int getAudioDeviceId() const;
+    int getMidiDeviceId() const;
+    const std::map<int,std::string> getAvailableMidiDevices() const;
+    const std::map<int, std::string> getAvailableAudioDevices() const;
+    
+    // Setters
     void setAudioDeviceId(int deviceId);
-
-    int getMidiDeviceId() const ;
     void setMidiDeviceId(int deviceId);
-
-    void setup();
-    void destroy();
-
-    void setOscillatorWaveform(int oscillatorID, Waveform wf );
-
-    const std::map<int,std::string> getAvailableMidiDevices() const ;
-    const std::map<int,std::string> getAvailableAudioDevices() const ;
-
-    // connection logic
-    bool setMidiConnection(MidiEventHandler* handler, MidiEventListener* listener);
-    bool removeMidiConnection(MidiEventHandler* handler, MidiEventListener* listener);
-
-    // for use in sending raw midi from the midi state to a handler (only for first handlers in chain)
+    
+    // MIDI connection management
+    bool setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener);
+    bool removeMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener);
     bool registerBaseMidiHandler(MidiEventHandler* handler);
     bool unregisterBaseMidiHandler(MidiEventHandler* handler);
 
-    // analysis / debug
-    void startAnalysis();
+    // publically available controllers
+    ComponentManager componentManager;
+    ComponentFactory componentFactory;
+    SignalController signalController;
+    MidiController midiController;
+
+private:
+    // Thread entry points
+    void midiLoop();
+    void audioLoop();
+    void analysisLoop();
+    
+    // Setup/teardown
+    void setup();
+    void destroy();
+    void stopAudio();
+    void stopMidi();
+    static void audioCleanup(RtAudio* dac, RtAudioErrorType error);
+    
+    // Analysis
     void analyzeBuffer(double* data, size_t count);
-
-
+    
+    // Thread management
+    std::thread apiServerThread_;
+    std::thread midiThread_;
+    std::thread audioThread_;
+    std::thread analysisThread_;
+    
+    // Thread control flags (atomic for thread-safe access)
+    std::atomic<bool> apiServerRunning_;
+    std::atomic<bool> engineRunning_;
+    std::atomic<bool> midiRunning_;
+    std::atomic<bool> audioRunning_;
+    std::atomic<bool> analysisRunning_;
+    
+    // Synchronization
+    std::mutex stateMutex_;
     
     
-
-
-
+    RtAudio dac_;
+    std::map<int, std::string> availableAudioDevices_;
+    int selectedAudioOutput_;
+    
+    RtMidiIn midiIn_;
+    std::map<int, std::string> availableMidiPorts_;
+    int selectedMidiPort_;
+    
+    MidiState midiState_;
+    MidiEventHandler midiDefaultHandler_;
+    
+    // Analysis buffer (assuming you have this)
+    LockFreeRingBuffer<double> analysisAudioOut_;
+    
+    double dt_;
 };
 
 #endif // __ENGINE_HPP_

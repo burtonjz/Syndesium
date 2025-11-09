@@ -37,6 +37,7 @@ public:
         if (!from) return ;
         if (!to) return ;
         to->connectInput(from);
+        signalChain_.calculateTopologicalOrder();
     }
 
     void disconnect(BaseModule* from, BaseModule* to){
@@ -48,26 +49,17 @@ public:
 
     void registerSink(BaseModule* output){
         signalChain_.addSink(output);
+        signalChain_.calculateTopologicalOrder();
     }
 
     void unregisterSink(BaseModule* output){
         signalChain_.removeSink(output);
+        signalChain_.calculateTopologicalOrder();
     }
 
     double processFrame(){
         auto chain = signalChain_.getModuleChain();
         auto sinks = signalChain_.getSinks();
-
-        // debug
-        static bool printed = false ;
-        if (!printed){
-            std::cout << "Processing Chain Order: ";
-            for (BaseModule* mod: chain ){
-                std::cout << mod << " -> ";
-            }
-            std::cout << std::endl ;
-            printed = true ;
-        }
 
         double output = 0 ; 
         for (BaseModule*  mod : chain){
