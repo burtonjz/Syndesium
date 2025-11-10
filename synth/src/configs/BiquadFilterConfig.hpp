@@ -37,7 +37,6 @@ struct BiquadFilterConfig {
     double shelfSlope = 2.0 ;
 };
 
-// Type Traits Specification
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(BiquadFilterConfig, filterType, frequency, gain, qFactor, bandwidth, shelfSlope) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::BiquadFilter>{ 

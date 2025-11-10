@@ -19,6 +19,7 @@
 #define __RTMAP_HPP_
 
 #include <array>
+#include <stdexcept>
 #include <utility>
 
 /**
@@ -173,9 +174,33 @@ public:
 
             if (__k < it->first) break;
         }
-
+        
         // else append
         return insert (__k)->second;
+    }
+
+    mapped_type& at(const key_type& __k)
+    {
+        _err = RTMAP_NO_ERROR;
+        iterator it = find(__k);
+        if (it == end())
+        {
+            _err = RTMAP_INVALID_KEY;
+            throw std::out_of_range("RTMap::at: key not found");
+        }
+        return it->second;
+    }
+
+    const mapped_type& at(const key_type& __k) const
+    {
+        _err = RTMAP_NO_ERROR;
+        const_iterator it = find(__k);
+        if (it == end())
+        {
+            _err = RTMAP_INVALID_KEY;
+            throw std::out_of_range("RTMap::at: key not found");
+        }
+        return it->second;
     }
 
     // @}

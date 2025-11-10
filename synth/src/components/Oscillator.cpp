@@ -21,7 +21,6 @@
 #include "params/ParameterMap.hpp"
 #include "types/ParameterType.hpp"
 #include <cmath>
-#include <cstdint>
 
 Oscillator::Oscillator(ComponentId id, OscillatorConfig cfg):
     BaseComponent(id, ComponentType::Oscillator),
@@ -55,7 +54,7 @@ bool Oscillator::isGenerative() const {
 }
 
 void Oscillator::calculateSample(){
-    Waveform wf = Waveform::from_uint8(parameters_->getValue<ParameterType::WAVEFORM>()); 
+    Waveform wf = Waveform::from_uint8(parameters_->getParameter<ParameterType::WAVEFORM>()->getValue()); 
     auto w = Wavetable::getWavetable(wf) ;
     double frac, wavetableIndex, sample ;
     int index_floor ;
@@ -71,8 +70,11 @@ void Oscillator::calculateSample(){
         frac = wavetableIndex - index_floor;
         sample = (1.0 - frac) * w.first[index_floor] + frac * w.first[index_floor + 1];
     }
-    sample *= parameters_->getInstantaneousValue<ParameterType::AMPLITUDE>() * parameters_->getInstantaneousValue<ParameterType::GAIN>();
-    buffer_[bufferIndex_] = sample;
+    auto amplitude = parameters_->getParameter<ParameterType::AMPLITUDE>()->getInstantaneousValue();
+    auto gain = parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue();
+
+    sample *= amplitude * gain ;
+    buffer_[bufferIndex_] = sample ;
 }
 
 double Oscillator::modulate([[maybe_unused]] double value, [[maybe_unused]] ModulationData* mdat ) const {
@@ -81,7 +83,8 @@ double Oscillator::modulate([[maybe_unused]] double value, [[maybe_unused]] Modu
 
 void Oscillator::tick(){
     BaseModule::tick();
-    increment_ = parameters_->getInstantaneousValue<ParameterType::FREQUENCY>() / sampleRate_ ;
+    auto frequency = parameters_->getParameter<ParameterType::FREQUENCY>()->getInstantaneousValue();
+    increment_ = frequency / sampleRate_ ;
     phase_ = std::fmod(phase_ + increment_, 1.0);
 }
 
@@ -90,14 +93,14 @@ void Oscillator::addReferenceParameters(ParameterMap& map){
 }
 
 void Oscillator::setWaveform(Waveform wave){
-    parameters_->setValue<ParameterType::WAVEFORM>(wave) ;
+    parameters_->getParameter<ParameterType::WAVEFORM>()->setValue(wave) ;
 }
 
 void Oscillator::setFrequency(double freq){
-    parameters_->setValue<ParameterType::FREQUENCY>(freq) ;
+    parameters_->getParameter<ParameterType::FREQUENCY>()->setValue(freq) ;
 }
 
 void Oscillator::setAmplitude(double amp){
-    parameters_->setValue<ParameterType::AMPLITUDE>(amp);
+    parameters_->getParameter<ParameterType::AMPLITUDE>()->setValue(amp);
 }
 

@@ -14,8 +14,8 @@ MidiFilter::MidiFilter(ComponentId id, MidiFilterConfig cfg):
 void MidiFilter::onKeyPressed(const ActiveNote* note, bool rePressed){
     if ( 
         note &&
-        note->note.getMidiNote() >= parameters_->getValue<ParameterType::MIN_VALUE>() &&
-        note->note.getMidiNote() <= parameters_->getValue<ParameterType::MAX_VALUE>()
+        note->note.getMidiNote() >= parameters_->getParameter<ParameterType::MIN_VALUE>()->getValue() &&
+        note->note.getMidiNote() <= parameters_->getParameter<ParameterType::MAX_VALUE>()->getValue()
     ){
         MidiEventHandler::onKeyPressed(note, rePressed);
     }
@@ -23,8 +23,8 @@ void MidiFilter::onKeyPressed(const ActiveNote* note, bool rePressed){
 
 void MidiFilter::onKeyReleased(ActiveNote anote){
     if ( 
-        anote.note.getMidiNote() >= parameters_->getValue<ParameterType::MIN_VALUE>() &&
-        anote.note.getMidiNote() <= parameters_->getValue<ParameterType::MAX_VALUE>()
+        anote.note.getMidiNote() >= parameters_->getParameter<ParameterType::MIN_VALUE>()->getValue() &&
+        anote.note.getMidiNote() <= parameters_->getParameter<ParameterType::MAX_VALUE>()->getValue()
     ){
         MidiEventHandler::onKeyReleased(anote);
     }

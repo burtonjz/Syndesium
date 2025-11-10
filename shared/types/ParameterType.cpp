@@ -19,27 +19,9 @@
 
 ParameterType parameterFromString(std::string str) {
     static const std::unordered_map<std::string, ParameterType> str2Type = {
-        {ParameterTraits<ParameterType::DEPTH>::name, ParameterType::DEPTH},
-        {ParameterTraits<ParameterType::STATUS>::name, ParameterType::STATUS},
-        {ParameterTraits<ParameterType::WAVEFORM>::name, ParameterType::WAVEFORM},
-        {ParameterTraits<ParameterType::FREQUENCY>::name, ParameterType::FREQUENCY},
-        {ParameterTraits<ParameterType::AMPLITUDE>::name, ParameterType::AMPLITUDE},
-        {ParameterTraits<ParameterType::GAIN>::name, ParameterType::GAIN},
-        {ParameterTraits<ParameterType::DBGAIN>::name, ParameterType::DBGAIN},
-        {ParameterTraits<ParameterType::PHASE>::name, ParameterType::PHASE},
-        {ParameterTraits<ParameterType::PAN>::name, ParameterType::PAN},
-        {ParameterTraits<ParameterType::DETUNE>::name, ParameterType::DETUNE},
-        {ParameterTraits<ParameterType::ATTACK>::name, ParameterType::ATTACK},
-        {ParameterTraits<ParameterType::DECAY>::name, ParameterType::DECAY},
-        {ParameterTraits<ParameterType::SUSTAIN>::name, ParameterType::SUSTAIN},
-        {ParameterTraits<ParameterType::RELEASE>::name, ParameterType::RELEASE},
-        {ParameterTraits<ParameterType::MIN_VALUE>::name, ParameterType::MIN_VALUE},
-        {ParameterTraits<ParameterType::MAX_VALUE>::name, ParameterType::MAX_VALUE},
-        {ParameterTraits<ParameterType::FILTER_TYPE>::name, ParameterType::FILTER_TYPE},
-        {ParameterTraits<ParameterType::CUTOFF>::name, ParameterType::CUTOFF},
-        {ParameterTraits<ParameterType::BANDWIDTH>::name, ParameterType::BANDWIDTH},
-        {ParameterTraits<ParameterType::SHELF>::name, ParameterType::SHELF},
-        {ParameterTraits<ParameterType::Q_FACTOR>::name, ParameterType::Q_FACTOR},
+        #define X(NAME) {ParameterTraits<ParameterType::NAME>::name, ParameterType::NAME},
+        PARAMETER_TYPE_LIST
+        #undef X
     };
     
     auto it = str2Type.find(str);

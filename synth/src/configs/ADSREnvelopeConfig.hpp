@@ -34,8 +34,7 @@ struct ADSREnvelopeConfig {
     double release = 0.1 ; 
 };
 
-// Type Traits Specification
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ADSREnvelopeConfig, attack, release) // macro to serialize/deserialize json <-> structs
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(ADSREnvelopeConfig, attack, decay, sustain, release) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::ADSREnvelope>{ 
     using type = ADSREnvelope ;

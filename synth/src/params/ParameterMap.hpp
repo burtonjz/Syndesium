@@ -19,8 +19,8 @@
 #define __PARAMETER_MAP_HPP_
 
 #include "params/Parameter.hpp"
-#include "types/ParameterType.hpp"
 #include "params/ModulationParameter.hpp"
+#include "types/ParameterType.hpp"
 #include "containers/RTMap.hpp"
 #include "containers/AtomicFloat.hpp"
 #include "config/Config.hpp"
@@ -29,10 +29,8 @@
 #include <variant>
 #include <set>
 #include <stdexcept>
-#include <sstream>
 #include <iostream>
 
-#define TYPE_TRAIT(type) typename ParameterTraits<type>::ValueType
 
 // forward declarations
 template<ParameterType typ>
@@ -57,20 +55,35 @@ class ParameterMap {
             reference_()
         {}
 
+        ParameterBase* getParameter(ParameterType p) const {
+            auto it = parameters_.find(p);
+            if ( it == parameters_.end() ) return nullptr ;
+            return it->second ;
+        }
+
+        template <ParameterType typ>
+        Parameter<typ>* getParameter() const {
+            auto it = parameters_.find(typ);
+            if (it == parameters_.end() ) return nullptr ;
+            return dynamic_cast<Parameter<typ>*>(getParameter(typ)) ;
+        }
+
         template <ParameterType typ>
         void add(
-            TYPE_TRAIT(typ) defaultValue,
+            GET_PARAMETER_VALUE_TYPE(typ) defaultValue,
             bool modulatable,
-            TYPE_TRAIT(typ) minValue = ParameterTraits<typ>::minimum, 
-            TYPE_TRAIT(typ) maxValue = ParameterTraits<typ>::maximum, 
+            GET_PARAMETER_VALUE_TYPE(typ) minValue = ParameterTraits<typ>::minimum, 
+            GET_PARAMETER_VALUE_TYPE(typ) maxValue = ParameterTraits<typ>::maximum, 
             BaseModulator* modulator = nullptr, ModulationData modData = {}
         ){
-            auto it = parameters_.find(typ);
-            if (it == parameters_.end()){
-                Parameter<typ>* p = new Parameter<typ>(defaultValue, modulatable, minValue, maxValue, modulator, modData);
-                parameters_[typ] = p ;
-                if (modulatable) modulatable_.insert(typ);
+            if ( getParameter(typ) ){
+                std::cerr << "ERROR: parameter already in map. Exiting..." << std::endl ;
+                return ;
             }
+                
+            Parameter<typ>* p = new Parameter<typ>(defaultValue, modulatable, minValue, maxValue, modulator, modData);
+            parameters_[typ] = p ;
+            if (modulatable) modulatable_.insert(typ);
         }
 
         void addReferences(ParameterMap& other){
@@ -79,109 +92,9 @@ class ParameterMap {
                 parameters_[pair.first] = pair.second ;
                 reference_.insert(pair.first) ;
 
-                // we won't actually perform the modulation in the child object, but we still need to track modulatable parameters
+                // we won't actually perform the modulation in the child object,
+                // but we still need to track modulatable parameters
                 if(pair.second->isModulatable()) modulatable_.insert(pair.first); 
-            }
-        }
-
-        template <ParameterType typ>
-        TYPE_TRAIT(typ) getValue() const {
-            auto it = parameters_.find(typ);
-            if ( it != parameters_.end() ){
-                return dynamic_cast<Parameter<typ>*>(it->second)->getValue();
-            }
-
-            std::stringstream err ;
-            err << "ParameterMap:  requested parameter " << static_cast<int>(typ)
-                << "does not exist in map." ;
-            throw std::runtime_error(err.str());
-        }
-
-        template <ParameterType typ>
-        bool setValue(TYPE_TRAIT(typ) v) const {
-            auto it = parameters_.find(typ);
-            if ( it != parameters_.end() ){
-                dynamic_cast<Parameter<typ>*>(it->second)->setValue(v);
-                return true ;
-            }
-
-            std::cerr << "ParameterMap:  requested parameter " << static_cast<int>(typ)
-                      << "does not exist in map." ;
-            return false ;
-        }
-
-        template <ParameterType typ>
-        TYPE_TRAIT(typ) getInstantaneousValue() const {
-            auto it = parameters_.find(typ);
-            if ( it != parameters_.end() ){
-                return dynamic_cast<Parameter<typ>*>(it->second)->getInstantaneousValue();
-            }
-
-            std::stringstream err ;
-            err << "ParameterMap:  requested parameter " << static_cast<int>(typ)
-                << "does not exist in map." ;
-            throw std::runtime_error(err.str());
-        }
-
-        /**
-         * @brief Get second-order+ modulation depth
-         * 
-         * @param typ The parameter to get depth for
-         * @param depthLevel how deep to delve (0=second-order )
-         * @return Parameter<ParameterType::DEPTH>* 
-         */
-        Parameter<ParameterType::DEPTH>* getParameterDepth(ParameterType typ, int depthLevel){
-            auto it = parameters_.find(typ);
-            if ( it == parameters_.end()) return nullptr ;
-
-            if ( depthLevel > Config::get<int>("modulation.max_depth")) return nullptr ;
-
-            auto current = it->second->getDepth() ;
-            if (!current) return nullptr ;
-
-            // navigate down depth chain
-            for ( int i = 1; i < depthLevel && current; ++i){
-                current = current->getDepth();
-                if (!current) return nullptr ;
-            }
-
-            return current ;
-        }
-
-        void setModulation(ParameterType typ, BaseModulator* modulator, ModulationData modData){
-            auto it = parameters_.find(typ);
-            if (it == parameters_.end() ){
-                std::cout << "ParameterMap: WARN failed to set modulation for parameter " << static_cast<int>(typ)
-                          << " as parameter does not exist in map." << std::endl ;    
-                return ;
-            }
-            it->second->setModulation(modulator, modData);
-            it->second->modulate(); // prime modulator
-        }
-
-        void removeModulation(ParameterType typ){
-            auto it = parameters_.find(typ);
-            if (it == parameters_.end() ){
-                throw std::runtime_error("ParameterMap: ERROR - Parameter does not exist in map.");
-            }
-            it->second->removeModulation();
-        }
-
-        BaseModulator* getModulator(ParameterType typ){
-            auto it = parameters_.find(typ);
-            if ( it != parameters_.end() ){
-                return it->second->getModulator() ;
-            } else {
-                throw std::runtime_error("ParameterMap: ERROR - Parameter does not exist in map.");
-            }
-        }
-
-        ModulationData* getModulationData(ParameterType typ){
-            auto it = parameters_.find(typ);
-            if ( it != parameters_.end() ){
-                return it->second->getModulationData() ;
-            } else {
-                throw std::runtime_error("ParameterMap: ERROR - Parameter does not exist in map.");
             }
         }
 
@@ -189,11 +102,9 @@ class ParameterMap {
             return modulatable_ ;
         }
 
-
         const params& getBaseMap() const {
             return parameters_ ;
         }
-
 
         void modulate(){
             for (auto it = modulatable_.begin(); it != modulatable_.end(); ++it ){
@@ -204,96 +115,53 @@ class ParameterMap {
         // Dispatchers (for API getters/setters)
         bool setValueDispatch(ParameterType p, const json& value){
             switch (p){
-                case ParameterType::STATUS: 
-                    return setValue<ParameterType::STATUS>(value); 
-                case ParameterType::WAVEFORM: 
-                    return setValue<ParameterType::WAVEFORM>(value); 
-                case ParameterType::FREQUENCY: 
-                    return setValue<ParameterType::FREQUENCY>(value); 
-                case ParameterType::AMPLITUDE: 
-                    return setValue<ParameterType::AMPLITUDE>(value); 
-                case ParameterType::GAIN: 
-                    return setValue<ParameterType::GAIN>(value); 
-                case ParameterType::DBGAIN:
-                    return setValue<ParameterType::DBGAIN>(value);
-                case ParameterType::PHASE: 
-                    return setValue<ParameterType::PHASE>(value); 
-                case ParameterType::PAN: 
-                    return setValue<ParameterType::PAN>(value); 
-                case ParameterType::DETUNE: 
-                    return setValue<ParameterType::DETUNE>(value); 
-                case ParameterType::ATTACK: 
-                    return setValue<ParameterType::ATTACK>(value); 
-                case ParameterType::DECAY: 
-                    return setValue<ParameterType::DECAY>(value); 
-                case ParameterType::SUSTAIN: 
-                    return setValue<ParameterType::SUSTAIN>(value); 
-                case ParameterType::RELEASE:  
-                    return setValue<ParameterType::RELEASE>(value); 
-                case ParameterType::MIN_VALUE:
-                    return setValue<ParameterType::MIN_VALUE>(value); 
-                case ParameterType::MAX_VALUE:
-                    return setValue<ParameterType::MAX_VALUE>(value); 
-                case ParameterType::FILTER_TYPE: 
-                    return setValue<ParameterType::FILTER_TYPE>(value); 
-                case ParameterType::CUTOFF: 
-                    return setValue<ParameterType::CUTOFF>(value); 
-                case ParameterType::BANDWIDTH:
-                    return setValue<ParameterType::BANDWIDTH>(value);
-                case ParameterType::SHELF:
-                    return setValue<ParameterType::SHELF>(value);
-                case ParameterType::Q_FACTOR: 
-                    return setValue<ParameterType::Q_FACTOR>(value); 
-                default:
-                    return false ;
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setValue(value);
+                PARAMETER_TYPE_LIST
+                #undef X
+            default:
+                return false ;
             }
         }
 
         ParameterValue getValueDispatch(ParameterType p) const {
             switch (p){
-                case ParameterType::STATUS: 
-                    return getValue<ParameterType::STATUS>();
-                case ParameterType::WAVEFORM: 
-                    return getValue<ParameterType::WAVEFORM>();
-                case ParameterType::FREQUENCY: 
-                    return getValue<ParameterType::FREQUENCY>();
-                case ParameterType::AMPLITUDE: 
-                    return getValue<ParameterType::AMPLITUDE>();
-                case ParameterType::GAIN: 
-                    return getValue<ParameterType::GAIN>();
-                case ParameterType::DBGAIN:
-                    return getValue<ParameterType::DBGAIN>();
-                case ParameterType::PHASE: 
-                    return getValue<ParameterType::PHASE>();
-                case ParameterType::PAN: 
-                    return getValue<ParameterType::PAN>();
-                case ParameterType::DETUNE: 
-                    return getValue<ParameterType::DETUNE>();
-                case ParameterType::ATTACK: 
-                    return getValue<ParameterType::ATTACK>();
-                case ParameterType::DECAY: 
-                    return getValue<ParameterType::DECAY>();
-                case ParameterType::SUSTAIN: 
-                    return getValue<ParameterType::SUSTAIN>();
-                case ParameterType::RELEASE:  
-                    return getValue<ParameterType::RELEASE>();
-                case ParameterType::MIN_VALUE:
-                    return getValue<ParameterType::MIN_VALUE>(); 
-                case ParameterType::MAX_VALUE:
-                    return getValue<ParameterType::MAX_VALUE>(); 
-                case ParameterType::FILTER_TYPE: 
-                    return getValue<ParameterType::FILTER_TYPE>();
-                case ParameterType::CUTOFF: 
-                    return getValue<ParameterType::CUTOFF>();
-                case ParameterType::BANDWIDTH: 
-                    return getValue<ParameterType::BANDWIDTH>();
-                case ParameterType::SHELF:
-                    return getValue<ParameterType::SHELF>();
-                case ParameterType::Q_FACTOR: 
-                    return getValue<ParameterType::Q_FACTOR>();
-                default:
-                    throw std::runtime_error("Invalid Parameter dispatch");
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getValue();
+                PARAMETER_TYPE_LIST
+                #undef X
+            default:
+                throw std::runtime_error("Invalid Parameter dispatch");
             }
+        }
+
+        ParameterValue getMinDispatch(ParameterType p) const {
+            auto param = getParameter(p);
+            switch (p){
+                #define X(NAME) case ParameterType::NAME: \
+                    return dynamic_cast<Parameter<ParameterType::NAME>*>(param)->getMinimum() ;
+                PARAMETER_TYPE_LIST
+                #undef X
+            default:
+                throw std::runtime_error("Invalid Parameter dispatch");
+            }
+        }
+
+        void addParameterDispatch(
+            ParameterType p,
+            const json& cfg
+        ){
+            switch(p){
+                #define X(NAME) case ParameterType::NAME: \
+                    add<ParameterType::NAME>( \
+                        cfg["defaultValue"].get<GET_PARAMETER_VALUE_TYPE(ParameterType::NAME)>(), \
+                        cfg["modulatable"].get<bool>()                                            \
+                    );                                                                            \
+                    break ;
+                PARAMETER_TYPE_LIST
+                #undef X
+            default:
+                throw std::runtime_error("Invalid Parameter dispatch");
+            };
+        
         }
 
         static json dispatchToJson(const ParameterValue& v){
@@ -304,6 +172,27 @@ class ParameterMap {
             }, v);
         }
 
+        json toJson() const {
+            json output ;
+            for (const auto [typ, p] : parameters_ ){
+                if (reference_.find(typ) != reference_.end()){
+                    continue ; // don't store references
+                }
+                
+                output[GET_PARAMETER_TRAIT_MEMBER(typ, name)] = {
+                    {"defaultValue", dispatchToJson(getValueDispatch(typ))},
+                    {"modulatable", getParameter(typ)->isModulatable()}
+                };
+            }
+            return output ;
+        }
+
+        void fromJson(const json& j){
+            for (const auto& [name, value] : j.items() ){
+                ParameterType p = parameterFromString(name);
+                addParameterDispatch(p, value);
+            }
+        }
 
     private:
         void modulateParameter(ParameterType typ){

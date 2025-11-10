@@ -32,7 +32,6 @@ struct LinearFaderConfig {
     double release = 0.5 ; 
 };
 
-// Type Traits Specification
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(LinearFaderConfig, attack, release) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::LinearFader>{ 

@@ -56,9 +56,9 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
     
     if ( it->second.note.getStatus() ){
         // then note is pressed
-        float attack = parameters_->getInstantaneousValue<ParameterType::ATTACK>() ;
-        float decay = parameters_->getInstantaneousValue<ParameterType::DECAY>() ;
-        float sustain = parameters_->getInstantaneousValue<ParameterType::SUSTAIN>() ;
+        float attack = parameters_->getParameter<ParameterType::ATTACK>()->getInstantaneousValue() ;
+        float decay = parameters_->getParameter<ParameterType::DECAY>()->getInstantaneousValue() ;
+        float sustain = parameters_->getParameter<ParameterType::SUSTAIN>()->getInstantaneousValue() ;
         
         if ( it->second.time <= attack ) {
             output = start_level + ( 1.0f - start_level ) * (it->second.time / attack) ;
@@ -68,7 +68,7 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
             output = sustain ;
         }
     } else {
-        float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
+        float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
         if ( it->second.time >= release ){
             output = 0.0 ;
         } else {
@@ -81,6 +81,6 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
 }
 
 bool ADSREnvelope::shouldKillNote(const ActiveNote& note) const {
-    float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
+    float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
     return ( !note.note.getStatus() && note.time > release ) ;
 }

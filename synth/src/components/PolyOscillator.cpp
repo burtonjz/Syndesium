@@ -93,7 +93,7 @@ void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
                 if ( modParams.contains(ModulationParameter::MIDI_NOTE)){
                     modulationData_[p][ModulationParameter::MIDI_NOTE].set(anote->note.getMidiNote());
                 }
-                osc->getParameters()->setModulation(p, modulators_[p], modulationData_[p]);
+                osc->getParameters()->getParameter(p)->setModulation(modulators_[p], modulationData_[p]);
             }
         }
         children_.insert(std::make_pair(anote->note.getMidiNote(),osc));
@@ -141,17 +141,17 @@ void PolyOscillator::onRemoveParameterModulation(ParameterType p){
 }
 
 void PolyOscillator::updateGain(){
-    auto s = std::string(Waveform::getWaveforms()[parameters_->getValue<ParameterType::WAVEFORM>()]) ;
+    auto s = std::string(Waveform::getWaveforms()[parameters_->getParameter<ParameterType::WAVEFORM>()->getValue()]) ;
     float gain = Config::get<float>("oscillator." + s + ".auto_gain").value() / 
         std::sqrt(Config::get<int>("oscillator.expected_voices").value()) ;
     std::cout << "setting gain to " << gain << std::endl ;
-    parameters_->setValue<ParameterType::GAIN>(gain);
+    parameters_->getParameter<ParameterType::GAIN>()->setValue(gain);
 }
 
 void PolyOscillator::updateModulationInitialValue(Oscillator* osc){
     for ( auto p : osc->getParameters()->getModulatableParameters()){
         if ( modulators_.find(p) != modulators_.end() ){
-            auto d = osc->getParameters()->getModulationData(p);
+            auto d = osc->getParameters()->getParameter(p)->getModulationData();
             if ( 
                 d->find(ModulationParameter::INITIAL_VALUE) != modulationData_[p].end() &&
                 d->find(ModulationParameter::OUTPUT_1)    != modulationData_[p].end()

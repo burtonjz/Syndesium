@@ -59,7 +59,7 @@ double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mDat
     
     if ( it->second.note.getStatus() ){
         // note is pressed
-        float attack = parameters_->getInstantaneousValue<ParameterType::ATTACK>() ;
+        float attack = parameters_->getParameter<ParameterType::ATTACK>()->getInstantaneousValue() ;
         if ( it->second.time <= attack ) {
             output = start_level + (1.0f - start_level) * (it->second.time / attack) ;
         } else {
@@ -67,7 +67,7 @@ double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mDat
         }
     } else {
         // note is released
-        float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
+        float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
         if ( it->second.time >= release ){
             output = 0.0 ;
         } else {
@@ -80,6 +80,6 @@ double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mDat
 }
 
 bool LinearFader::shouldKillNote(const ActiveNote& note) const {
-    float release = parameters_->getInstantaneousValue<ParameterType::RELEASE>() ;
+    float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
     return ( !note.note.getStatus() && note.time > release ) ;
 }

@@ -32,7 +32,6 @@ struct PolyOscillatorConfig {
     Waveform waveform = Waveform::SINE ;
 };
 
-// Type Traits Specification
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(PolyOscillatorConfig, waveform) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::PolyOscillator>{ 

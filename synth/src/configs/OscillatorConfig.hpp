@@ -33,7 +33,6 @@ struct OscillatorConfig {
     double frequency = 440.0 ;
 };
 
-// Type Traits Specification
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(OscillatorConfig, waveform) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::Oscillator>{ 

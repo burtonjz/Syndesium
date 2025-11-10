@@ -32,7 +32,6 @@ struct MidiFilterConfig {
     uint8_t min_value = 0 ;
 };
 
-// Type Traits Specification
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MidiFilterConfig, max_value, min_value) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::MidiFilter>{ 

@@ -22,7 +22,6 @@
 
 #include <unordered_set>
 #include <vector>
-#include <algorithm>
 
 // This class will store information regarding tracing a signal back to it's source
 // (either a generator module or eventually an audio input), and handle order of  operations of ticking

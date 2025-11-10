@@ -25,6 +25,15 @@
 
 using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
 
+/*
+To add a ParameterType, the following is required:
+1. add it to the enum class
+2. add it to the X-Macro 
+3. Define the specialized ParameterTraits struct
+
+*/ 
+
+
 /**
  * @brief types of parameters that might exist within any given module
  * 
@@ -53,6 +62,30 @@ enum class ParameterType {
     Q_FACTOR,
     N_PARAMETERS
 };
+
+// X-Macro for generating dispatch functions (see synth/src/params/ParameterMap.cpp for examples)
+#define PARAMETER_TYPE_LIST \
+    X(DEPTH) \
+    X(STATUS) \
+    X(WAVEFORM) \
+    X(FREQUENCY) \
+    X(AMPLITUDE) \
+    X(GAIN) \
+    X(DBGAIN) \
+    X(PHASE) \
+    X(PAN) \
+    X(DETUNE) \
+    X(ATTACK) \
+    X(DECAY) \
+    X(SUSTAIN) \
+    X(RELEASE) \
+    X(MIN_VALUE) \
+    X(MAX_VALUE) \
+    X(FILTER_TYPE) \
+    X(CUTOFF) \
+    X(BANDWIDTH) \
+    X(SHELF) \
+    X(Q_FACTOR) 
 
 constexpr int N_PARAMETER_TYPES = static_cast<int>(ParameterType::N_PARAMETERS) ;
 
@@ -286,34 +319,27 @@ template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
 };
 
 
+/*
+The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime
+
+EX:
+ParameterType p = ParameterType::FREQUENCY ;
+auto defaultFrequency = GET_PARAMETER_TRAIT_MEMBER(p, defaultValue);
+*/ 
+
 template <typename Func>
 auto dispatchParameterTrait(ParameterType p, Func&& func){
      switch(p) { 
-        case ParameterType::DEPTH: return func(ParameterTraits<ParameterType::DEPTH>{});
-        case ParameterType::STATUS: return func(ParameterTraits<ParameterType::STATUS>{});
-        case ParameterType::WAVEFORM: return func(ParameterTraits<ParameterType::WAVEFORM>{});
-        case ParameterType::FREQUENCY: return func(ParameterTraits<ParameterType::FREQUENCY>{});
-        case ParameterType::AMPLITUDE: return func(ParameterTraits<ParameterType::AMPLITUDE>{});
-        case ParameterType::GAIN: return func(ParameterTraits<ParameterType::GAIN>{});
-        case ParameterType::DBGAIN: return func(ParameterTraits<ParameterType::DBGAIN>{});
-        case ParameterType::PHASE: return func(ParameterTraits<ParameterType::PHASE>{});
-        case ParameterType::PAN: return func(ParameterTraits<ParameterType::PAN>{});
-        case ParameterType::DETUNE: return func(ParameterTraits<ParameterType::DETUNE>{});
-        case ParameterType::ATTACK: return func(ParameterTraits<ParameterType::ATTACK>{});
-        case ParameterType::DECAY: return func(ParameterTraits<ParameterType::DECAY>{});
-        case ParameterType::SUSTAIN: return func(ParameterTraits<ParameterType::SUSTAIN>{});
-        case ParameterType::RELEASE: return func(ParameterTraits<ParameterType::RELEASE>{});
-        case ParameterType::MIN_VALUE: return func(ParameterTraits<ParameterType::MIN_VALUE>{});
-        case ParameterType::MAX_VALUE: return func(ParameterTraits<ParameterType::MAX_VALUE>{});
-        case ParameterType::FILTER_TYPE: return func(ParameterTraits<ParameterType::FILTER_TYPE>{});
-        case ParameterType::CUTOFF: return func(ParameterTraits<ParameterType::CUTOFF>{});
-        case ParameterType::BANDWIDTH: return func(ParameterTraits<ParameterType::BANDWIDTH>{});
-        case ParameterType::SHELF: return func(ParameterTraits<ParameterType::SHELF>{});
-        case ParameterType::Q_FACTOR: return func(ParameterTraits<ParameterType::Q_FACTOR>{});
-        default: throw std::runtime_error("Unknown ParameterType");
+        #define X(NAME) case ParameterType::NAME: return func(ParameterTraits<ParameterType::NAME>{});
+        PARAMETER_TYPE_LIST
+        #undef X
+        default: throw std::runtime_error("Unknown ParameterTsype");
     }
 } 
 
+#define GET_PARAMETER_VALUE_TYPE(type) \
+    typename ParameterTraits<type>::ValueType 
+    
 #define GET_PARAMETER_TRAIT_MEMBER(type, member) \
     dispatchParameterTrait(type, [](auto traits) { return decltype(traits)::member ; })
 

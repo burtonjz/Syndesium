@@ -1,27 +1,40 @@
-CORE FUNCTIONALITY TODO:
+TO DO
 
-- Implement right click on socket to expand a menu to delete specific connections
-- Implement API calls to tell backend when connections are removed
-- Implement modulation connection removal logic
-- UI support modulation depth socket parameters (with nesting)
-- Create control parameter UI forms and controls for each module/modulator (or default forms with standard knobs for simple modules/modulators)
-- Improve module add logic so they do not spawn on top of each other.
-- Create max zoom for gui graph panel
-- Improve UI workflow (e.g., setup must be done before play, we need to get these safegaurds in place )
+
+UI
+- Create Save/Load system
+  - Graph Panel json = zoom info, component widget positioning, component identifiers
+  - request all component and parameters from ComponentStore
+  - request all connections from ConnectionManager
+- Midi Control Mapping
+  - Allow user to hit a button then touch the midi device knob to match that knob to that control
+- Modulation Enhancements:
+  - Implement right click on socket to expand a menu to delete specific connections
+  - UI support modulation depth socket parameters ( left click on socket to manage modulation chains as well as depth parameters )
+- Misc
+  - Improve module add logic so they do not spawn on top of each other.
+  - Create max zoom for gui graph panel?
+  - Improve UI workflow (e.g., setup must be done before play, we need to get these safegaurds in place )
+
+ANALYSIS / VISUALS:
+- read system state and produce helpful visuals on detail widgets
+- report out modulation maxes/mins maybe?
 
 PERFORMANCE:
-✓ parameter get depth needs to be readdressed to remove dynamic allocation
-- use of sets are slower than vectors, I should switch all sets to vector and manage pushes to vector to not include duplicates
+- use of sets are slower than vectors, I should switch all sets to vector and manage pushes to vector to not include duplicates?
+
+COMPONENT ENHANCEMENTS:
+- Detune on Polyphonic Oscillator
+- Support for ADSR envelope to be used monophonically (and thus used as a modulation source anywhere!)
 
 COMPONENTS TO ADD:
-- Oscillator (extend to be a modulator)
-- Filter (Module + Modulator)
 - Sequencer (MidiEventHandler)
-- MidiModulator (start with pitchbend, maybe extend to )
+- Pitchbend support
 - Panner
 - Phaser
+- Chorus
+- Reverb
 - Mixer (with different mixing strategies so this can support ring modulation, for example)
-- Sample & Hold
 - Bitcrusher
 
 IMPROVEMENTS:
