@@ -190,18 +190,29 @@ class Parameter : public ParameterBase {
             return minValue_ ;
         }
 
-        void setMinimum(ValueType value){
+        bool setMinimum(ValueType value){
             minValue_ = value ;
+            return true ;
         }
 
         ValueType getMaximum() const {
             return maxValue_ ;
         }
 
-        void setMaximum(ValueType value){
-            return value ;
+        bool setMaximum(ValueType value){
+            maxValue_ = value ;
+            return true ;
         }
 
+        ValueType getDefaultValue() const {
+            return defaultValue_ ;
+        }
+
+        bool setDefaultValue(ValueType value){
+            defaultValue_ = value ;
+            return true ;
+        }
+        
         ValueType getInstantaneousValue() const {
             return instantaneousValue_ ;
         }

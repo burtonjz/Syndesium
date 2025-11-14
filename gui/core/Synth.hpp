@@ -30,7 +30,7 @@
 #include "core/GraphPanel.hpp"
 #include "core/Setup.hpp"
 
-#include "meta/ComponentDescriptor.hpp"
+#include "ui_Synth.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -45,9 +45,20 @@ private:
     GraphPanel* graph_ ;
     Setup* setup_ ;
 
+    // save/load 
+    QString saveFilePath_ ;
+    QJsonObject saveData_ ;
+
 public:
     Synth(ModuleContext ctx, QWidget* parent = nullptr);
     ~Synth();
+
+private:
+    void configureMenuActions();
+    void configureWidgetButtons();
+
+    void performSave();
+    bool saveToFile(const QString& filePath, const QJsonObject& data);
 
 signals:
     void engineStatusChanged(bool status);
@@ -60,6 +71,11 @@ private slots:
     void onStartStopButtonClicked();
     void onEngineStatusChange(bool status);
     void onComponentAdded(int index);
+
+    // menu bar actions
+    void onActionLoad();
+    void onActionSave();
+    void onActionSaveAs();
 
 
 };

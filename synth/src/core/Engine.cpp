@@ -484,6 +484,31 @@ bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
 }
 
 // ============================================================================
+// SERIALIZATION
+// ============================================================================
+json Engine::serialize() const {
+    json output ;
+    // capture component data (parameters, midi, modulation, signal)
+    output["components"] = componentManager.serializeComponents();
+
+    // get audio sinks
+    for ( auto m : signalController.getSinks() ){
+        output["AudioSinks"].push_back(m->getId());
+    }
+
+    // get root midi devices
+    for ( auto m : midiState_.getHandlers() ){
+        output["rootMidiHandlers"] = m->getId() ;
+    }
+
+    return output ;
+}
+
+void Engine::deserialize(const json& j){
+
+}
+
+// ============================================================================
 // ANALYSIS
 // ============================================================================
 

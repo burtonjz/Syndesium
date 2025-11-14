@@ -120,6 +120,13 @@ void PolyOscillator::updateParameters(){
     childPool_.forEachActive(&Oscillator::updateParameters);
 }
 
+BaseModulator* PolyOscillator::getParameterModulator(ParameterType p) const {
+    for ( auto it = modulators_.begin(); it != modulators_.end(); ++it ){
+        if ( it->first == p ) return it->second ;
+    }
+    return nullptr ;
+}
+
 void PolyOscillator::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
     if ( d.empty() ){
         auto required = m->getRequiredModulationParameters();

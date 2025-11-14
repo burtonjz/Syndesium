@@ -48,6 +48,11 @@ If your component will manage any child components, it is responsible for doing 
 
 See `PolyphonicOscillator` for an appropriate example example of implementing a component with children. However, the following is likely necessary: 
 ```cpp
+
+void getParameterModulator(ParameterType p) override {
+    // if children are modulatable, we need to be able to 
+}
+
 // from BaseComponent
 void updateParameters() override {
     parameters_->modulate();  // Update this component's params first

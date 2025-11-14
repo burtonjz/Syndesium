@@ -44,7 +44,7 @@ public:
         return topologicalOrder_ ;
     }
 
-    std::unordered_set<BaseModule*>& getSinks(){
+    const std::unordered_set<BaseModule*>& getSinks() const {
         return outputNodes_ ;
     }
 

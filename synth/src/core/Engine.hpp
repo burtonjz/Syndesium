@@ -53,7 +53,7 @@ public:
     static void signalHandler(int signum);
     static std::atomic<bool> stop_flag;
     
-    // Audio callback (must be static for RtAudio)
+    // Audio callback
     static int audioCallback(
         void *outputBuffer, 
         void *inputBuffer, 
@@ -83,6 +83,9 @@ public:
     bool removeMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener);
     bool registerBaseMidiHandler(MidiEventHandler* handler);
     bool unregisterBaseMidiHandler(MidiEventHandler* handler);
+
+    json serialize() const ;
+    void deserialize(const json& j);
 
     // publically available controllers
     ComponentManager componentManager;
@@ -118,8 +121,6 @@ private:
     std::atomic<bool> midiRunning_;
     std::atomic<bool> audioRunning_;
     std::atomic<bool> analysisRunning_;
-    
-    // Synchronization
     std::mutex stateMutex_;
     
     
@@ -134,7 +135,7 @@ private:
     MidiState midiState_;
     MidiEventHandler midiDefaultHandler_;
     
-    // Analysis buffer (assuming you have this)
+    // Analysis buffer
     LockFreeRingBuffer<double> analysisAudioOut_;
     
     double dt_;

@@ -29,6 +29,8 @@
 #include <QJsonDocument>
 #include <QStandardItemModel>
 #include <QStandardItem>
+#include <QFileDialog>
+#include <QMessageBox>
 #include <qcombobox.h>
 #include <qobject.h>
 
@@ -47,6 +49,22 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     graph_ = new GraphPanel(this);
     ui_->graphPanelContainer->layout()->addWidget(graph_);
 
+    configureWidgetButtons();
+    configureMenuActions();
+
+    // connections
+    connect(this, &Synth::engineStatusChanged, this, &Synth::onEngineStatusChange);
+    connect(ui_->setupButton, &QPushButton::clicked, this, &Synth::onSetupButtonClicked);
+    connect(ui_->startStopButton, &QPushButton::clicked, this, &Synth::onStartStopButtonClicked);
+    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
+}
+
+
+Synth::~Synth(){
+    delete ui_ ;
+}
+
+void Synth::configureWidgetButtons(){
     // widget config
     ui_->addModuleBox->addItem("Add a Module...");
     ui_->addModuleBox->setCurrentIndex(0);
@@ -100,10 +118,6 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     }
 
     // connections
-    connect(this, &Synth::engineStatusChanged, this, &Synth::onEngineStatusChange);
-    connect(ui_->setupButton, &QPushButton::clicked, this, &Synth::onSetupButtonClicked);
-    connect(ui_->startStopButton, &QPushButton::clicked, this, &Synth::onStartStopButtonClicked);
-    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
     connect(ui_->addModuleBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
         this, [this](int index){ onComponentAdded(index); });
     connect(ui_->addModulatorBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
@@ -113,8 +127,10 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     connect(this, &Synth::componentAdded, graph_, &GraphPanel::onComponentAdded);
 }
 
-Synth::~Synth(){
-    delete ui_ ;
+void Synth::configureMenuActions(){
+    connect(ui_->actionLoad, &QAction::triggered, this, &Synth::onActionLoad);
+    connect(ui_->actionSave, &QAction::triggered, this, &Synth::onActionSave);
+    connect(ui_->actionSaveAs, &QAction::triggered, this, &Synth::onActionSaveAs);
 }
 
 void Synth::onApiConnected(){
@@ -140,6 +156,15 @@ void Synth::onApiDataReceived(const QJsonObject &json){
         return ;
     }
 
+    if ( action == "get_configuration" ){
+        if ( json["status"] != "success" ){
+            qDebug() << "request to get configuration data failed." ;
+            return ;
+        }
+
+        saveData_ = json["data"].toObject() ;
+        performSave();
+    }
 }
 
 void Synth::onSetupButtonClicked(){
@@ -189,4 +214,50 @@ void Synth::onComponentAdded(int index){
     ComponentType typ = static_cast<ComponentType>(cbox->itemData(index).toInt());
     cbox->setCurrentIndex(0); 
     emit componentAdded(typ);
+}
+
+void Synth::onActionLoad(){
+
+}
+
+void Synth::onActionSave(){
+    if (saveFilePath_.isEmpty()){
+        onActionSaveAs();
+    } else {
+        QJsonObject obj ;
+        obj["action"] = "get_configuration" ;
+        ApiClient::instance()->sendMessage(obj);
+    }
+}
+
+void Synth::onActionSaveAs(){
+    QString filePath = QFileDialog::getSaveFileName(
+        this,
+        tr("Save Configuration"),
+        QDir::homePath(),
+        tr("JSON Files (*.json);;All Files (*)")
+        //nullptr,
+        //QFileDialog::DontUseNativeDialog
+    );
+
+    if (!filePath.isEmpty()){
+        saveFilePath_ = filePath ;
+        QJsonObject obj ;
+        obj["action"] = "get_configuration" ;
+        ApiClient::instance()->sendMessage(obj);
+    }
+}
+
+void Synth::performSave(){
+    saveData_["positions"] = graph_->getComponentPositions();
+    QFile file(saveFilePath_);
+    if (!file.open(QIODevice::WriteOnly)){
+        QMessageBox::warning(this, "Save Failed",
+            "Could not open file for writing:\n" + saveFilePath_ );
+        return ;
+    }
+
+    QJsonDocument doc(saveData_);
+    file.write(doc.toJson(QJsonDocument::Indented));
+    file.close();
 }

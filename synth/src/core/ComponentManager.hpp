@@ -33,6 +33,9 @@
 #include <memory>
 #include <unordered_map>
 #include <unordered_set>
+#include <nlohmann/json.hpp>
+
+using json = nlohmann::json ;
 
 class ComponentManager {
 private:
@@ -69,14 +72,14 @@ public:
         return id;
     }
 
-    BaseComponent* getRaw(ComponentId id){
+    BaseComponent* getRaw(ComponentId id) const {
         auto it = components_.find(id);
         if ( it == components_.end() ) return nullptr ;
         return it->second.get() ;
     }
 
     template<ComponentType T>
-    ComponentType_t<T>* get(ComponentId id){
+    ComponentType_t<T>* get(ComponentId id) const {
         BaseComponent* m = getRaw(id);
         if (!m) return nullptr ;
 
@@ -87,7 +90,7 @@ public:
         return nullptr ;
     }
 
-    BaseModule* getModule(ComponentId id){
+    BaseModule* getModule(ComponentId id) const {
         if ( modules_.find(id) == modules_.end() ) return nullptr ;
         return dynamic_cast<BaseModule*>(getRaw(id));
     }
@@ -96,30 +99,30 @@ public:
         return modules_ ;
     }
 
-    BaseModulator* getModulator(ComponentId id){
+    BaseModulator* getModulator(ComponentId id) const {
         if ( modulators_.find(id) == modulators_.end() ) return nullptr ;
         return dynamic_cast<BaseModulator*>(getRaw(id));
     }
 
-    std::unordered_set<ComponentId>& getModulatorIds(){
+    const std::unordered_set<ComponentId>& getModulatorIds() const{
         return modulators_ ;
     }
 
-    MidiEventHandler* getMidiHandler(ComponentId id){
+    MidiEventHandler* getMidiHandler(ComponentId id) const {
         if ( midiHandlers_.find(id) == midiHandlers_.end() ) return nullptr ;
         return dynamic_cast<MidiEventHandler*>(getRaw(id));
     }
 
-    std::unordered_set<ComponentId>& getMidiHandlerIds(){
+    const std::unordered_set<ComponentId>& getMidiHandlerIds() const {
         return midiHandlers_ ;
     }
     
-    MidiEventListener* getMidiListener(ComponentId id){
+    MidiEventListener* getMidiListener(ComponentId id) const {
         if ( midiListeners_.find(id) == midiListeners_.end() ) return nullptr ;
         return dynamic_cast<MidiEventListener*>(getRaw(id));
     }
 
-    std::unordered_set<ComponentId>& getMidiListenerIds(){
+    const std::unordered_set<ComponentId>& getMidiListenerIds() const {
         return midiListeners_ ;
     }
 
@@ -153,6 +156,54 @@ public:
         for (auto it = components_.begin(); it != components_.end(); ++it){
             it->second->updateParameters();
         }
+    }
+
+    // saving / loading
+    json serializeComponents() const {
+        json output ;
+        for ( auto it = components_.begin(); it != components_.end(); ++it ){
+            json componentConfig ;
+
+            componentConfig["id"] = it->second->getId() ;
+            componentConfig["type"] = it->second->getType() ;
+
+            // parameters
+            componentConfig["parameters"] = it->second->getParameters()->toJson();
+
+            // get any additional modulations
+            auto modulatableParameters = ComponentRegistry::getComponentDescriptor(it->second->getType()).modulatableParameters ;
+            for ( auto p : modulatableParameters ){
+                auto modulator = it->second->getParameterModulator(p);
+                if ( modulator ){
+                    componentConfig["parameters"][GET_PARAMETER_TRAIT_MEMBER(p, name)]["modulatorId"] = modulator->getId();
+                }
+            }
+
+            // get input signal component ids
+            BaseModule* module = dynamic_cast<BaseModule*>(it->second.get());
+            if ( module ){
+                for ( auto c : module->getInputs() ){
+                    componentConfig["signalInputs"].push_back(c->getId());
+                }
+            }
+
+            // get midi handler listeners
+            MidiEventHandler* handler = dynamic_cast<MidiEventHandler*>(it->second.get());
+            if ( handler ){
+                for ( auto listener : handler->getListeners() ){
+                    auto listenerModule = dynamic_cast<BaseComponent*>(listener);
+                    if ( listenerModule ){
+                        componentConfig["midiListeners"].push_back(listenerModule->getId());
+                    }
+                        
+                }
+            }
+            
+            output.push_back(componentConfig);
+
+            componentConfig.clear();
+        }
+        return output ;
     }
 };
 

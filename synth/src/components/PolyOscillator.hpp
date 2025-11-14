@@ -56,6 +56,7 @@ public:
 
     // BaseComponent Overrides
     void updateParameters() override ;
+    BaseModulator* getParameterModulator(ParameterType p) const  override ;
     void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
     void onRemoveParameterModulation(ParameterType p) override ;
 

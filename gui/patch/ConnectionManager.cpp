@@ -206,8 +206,8 @@ void ConnectionManager::sendConnectionApiRequest(ConnectionID connection, bool r
     auto outboundComponent = dynamic_cast<ComponentWidget*>(outboundSocket->getParent());
     auto inboundComponent = dynamic_cast<ComponentWidget*>(inboundSocket->getParent());
 
-    output["socket"] = static_cast<int>(outboundSocket->getType());
-    input["socket"] = static_cast<int>(inboundSocket->getType());
+    output["socketType"] = static_cast<int>(outboundSocket->getType());
+    input["socketType"] = static_cast<int>(inboundSocket->getType());
     
     // if the widgets are component widgets, then we collect the additional information
     if ( inboundComponent ) input["id"] = inboundComponent->getID();

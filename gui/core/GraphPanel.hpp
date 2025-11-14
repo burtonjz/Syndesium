@@ -21,9 +21,9 @@
 #include <QGraphicsView>
 #include <QGraphicsScene>
 #include <QPointer>
+#include <QJsonArray>
 #include <vector>
 
-#include "meta/ComponentDescriptor.hpp"
 #include "patch/ConnectionManager.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "widgets/ModuleDetailWidget.hpp"
@@ -57,6 +57,8 @@ public:
     void addMidiInput();
     
     void deleteSelectedModules();
+
+    QJsonArray getComponentPositions() const ;
 
 protected:
     void keyPressEvent(QKeyEvent* event) override ;

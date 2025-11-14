@@ -40,6 +40,7 @@
 #include <QMenu>
 
 #include <QJsonObject>
+#include <QJsonArray>
 #include <qdebug.h>
 #include <qevent.h>
 #include <qgraphicsitem.h>
@@ -159,6 +160,23 @@ void GraphPanel::deleteSelectedModules(){
             qDebug() << "Deleted module:" << module->getComponentDescriptor().name ;
         }
     }
+}
+
+QJsonArray GraphPanel::getComponentPositions() const {
+    QJsonArray positions ;
+    for ( auto w : widgets_ ){
+        qDebug() << w ;
+        auto component = dynamic_cast<ComponentWidget*>(w);
+        if ( component ){
+            auto pos = component->pos();
+            positions.append(QJsonObject{
+                {"ComponentID", component->getID()},
+                {"xpos", pos.x()},
+                {"ypos", pos.y()}
+            });
+        }
+    }
+    return positions ;
 }
 
 void GraphPanel::keyPressEvent(QKeyEvent* event){

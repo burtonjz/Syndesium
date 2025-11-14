@@ -206,6 +206,12 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
             return ;
         }
 
+        if ( action == "get_configuration"){
+            jResponse["data"] = engine->serialize();
+            sendSuccess();
+            return ;
+        }
+        
         if ( action == "get_waveforms" ){
             jResponse["data"] = Waveform::getWaveforms() ;
             sendSuccess();
@@ -286,8 +292,8 @@ void ApiHandler::handleClientMessage(Engine* engine, int clientSock, std::string
 ConnectionRequest ApiHandler::parseConnectionRequest(json request){
     ConnectionRequest req ;
     // define API variables
-    req.inboundSocket = static_cast<SocketType>(request["inbound"]["socket"]);
-    req.outboundSocket = static_cast<SocketType>(request["outbound"]["socket"]);
+    req.inboundSocket = static_cast<SocketType>(request["inbound"]["socketType"]);
+    req.outboundSocket = static_cast<SocketType>(request["outbound"]["socketType"]);
     if ( request["inbound"].contains("id")) req.inboundID = request["inbound"]["id"];
     if ( request["outbound"].contains("id")) req.outboundID = request["outbound"]["id"];
     if ( request["inbound"].contains("parameter")) req.inboundParameter = static_cast<ParameterType>(request["inbound"]["parameter"]);

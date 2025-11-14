@@ -66,6 +66,7 @@ void Theme::applyDarkTheme() {
     darkPalette.setColor(QPalette::HighlightedText, Qt::black);
     
     qApp->setStyle("Fusion");
+    
     qApp->setPalette(darkPalette);
     
     // Global stylesheet
@@ -73,7 +74,59 @@ void Theme::applyDarkTheme() {
     QWidget {
         font-size: 11pt;
     }
-    
+    QMessageBox {
+        background-color: %2;
+        color: %5;
+    }
+    QMessageBox QLabel {
+        color: %5;
+    }
+    QMessageBox QPushButton {
+        background-color: %2;
+        color: %5;
+        border: 1px solid %1;
+        padding: 5px 15px;
+        border-radius: 3px;
+    }
+    QMessageBox QPushButton:hover {
+        background-color: %3;
+    }
+    QFileDialog {
+        background-color: %2;
+        color: %5;
+    }
+    QFileDialog QLabel {
+        color: %5;
+    }
+    QFileDialog QPushButton {
+        background-color: %2;
+        color: %5;
+        border: 1px solid %1;
+        padding: 5px 15px;
+        border-radius: 3px;
+    }
+    QFileDialog QPushButton:hover {
+        background-color: %3;
+    }
+    QFileDialog QLineEdit {
+        background-color: %4;
+        color: %5;
+        border: 1px solid %1;
+        padding: 3px;
+        border-radius: 3px;
+    }
+    QFileDialog QListView, QFileDialog QTreeView {
+        background-color: %4;
+        color: %5;
+        border: 1px solid %1;
+    }
+    QFileDialog QListView::item:hover, QFileDialog QTreeView::item:hover {
+        background-color: %3;
+    }
+    QFileDialog QListView::item:selected, QFileDialog QTreeView::item:selected {
+        background-color: %6;
+        color: #000;
+    }
     QToolTip {
         background-color: %2;
         color: %5;
@@ -81,7 +134,6 @@ void Theme::applyDarkTheme() {
         padding: 5px;
         border-radius: 3px;
     }
-
     QMenu {
         background-color: %2;
         color: %5;
@@ -89,18 +141,19 @@ void Theme::applyDarkTheme() {
         padding: 5px;
         border-radius: 3px;
     }
-    
+    QMenuBar {
+        background-color: %2;
+        color: %5
+    }
     QMenu::item {
         padding: 4px 20px;
         border-radius: 3px;
         background-color: transparent;
     }
-
     QMenu::item:selected {
         background-color: %3;
         color: %5;                
     }
-
     QGroupBox {
         font-weight: bold;
         border: 1px solid %1;
@@ -109,13 +162,11 @@ void Theme::applyDarkTheme() {
         padding-top: 10px;
         background-color: %2;
     }
-    
     QGroupBox::title {
         subcontrol-origin: margin;
         left: 10px;
         padding: 0 5px;
     }
-    
     QPushButton {
         padding: 5px 15px;
         border-radius: 3px;
@@ -123,11 +174,9 @@ void Theme::applyDarkTheme() {
         border: 1px solid %1;
         color: %5;
     }
-    
     QPushButton:hover {
         background-color: %3;
     }
-    
     QDoubleSpinBox, QSpinBox, QComboBox {
         padding: 3px;
         background-color: %4;
@@ -135,7 +184,6 @@ void Theme::applyDarkTheme() {
         border-radius: 3px;
         color: %5;
     }
-    
     QComboBox QAbstractItemView {
         background-color: %4;
         border: 1px solid %1;
@@ -143,32 +191,28 @@ void Theme::applyDarkTheme() {
         selection-background-color: %3;
         selection-color: %5;
     }
-    
     QComboBox QAbstractItemView::item {
         border-bottom: 1px solid %7;
         padding: 4px;
     }
-
     QComboBox QAbstractItemView::item:hover {
         background-color: %3;
         color: %5;
     }
-
     QComboBox QAbstractItemView::item:selected {
         background-color: %6;        
         color: #000;                   
     }
-    
     QLabel {
         color: %5;
     }
-)").arg(COMPONENT_BORDER.name())              // %1
+)").arg(COMPONENT_BORDER.name())               // %1
    .arg(BACKGROUND_MEDIUM.name())              // %2
    .arg(COMPONENT_BACKGROUND_HOVER.name())     // %3
    .arg(BACKGROUND_DARK.name())                // %4
    .arg(TEXT_PRIMARY.name())                   // %5
    .arg(ACCENT_COLOR.name())                   // %6
-   .arg(BACKGROUND_LIGHT.name());              // %7 - brighter separator
+   .arg(BACKGROUND_LIGHT.name());              // %7
     
     qApp->setStyleSheet(styleSheet);
 }

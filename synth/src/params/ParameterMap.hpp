@@ -72,8 +72,8 @@ class ParameterMap {
         void add(
             GET_PARAMETER_VALUE_TYPE(typ) defaultValue,
             bool modulatable,
-            GET_PARAMETER_VALUE_TYPE(typ) minValue = ParameterTraits<typ>::minimum, 
-            GET_PARAMETER_VALUE_TYPE(typ) maxValue = ParameterTraits<typ>::maximum, 
+            GET_PARAMETER_VALUE_TYPE(typ) minValue = GET_PARAMETER_TRAIT_MEMBER(typ, minimum), 
+            GET_PARAMETER_VALUE_TYPE(typ) maxValue = GET_PARAMETER_TRAIT_MEMBER(typ, maximum),
             BaseModulator* modulator = nullptr, ModulationData modData = {}
         ){
             if ( getParameter(typ) ){
@@ -113,6 +113,42 @@ class ParameterMap {
         }
 
         // Dispatchers (for API getters/setters)
+        ParameterValue getValueDispatch(ParameterType p) const {
+            switch (p) {
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getValue();
+                PARAMETER_TYPE_LIST
+                #undef X
+                default: throw std::runtime_error("Invalid Parameter dispatch");
+            }
+        }
+
+        ParameterValue getDefaultDispatch(ParameterType p) const {
+            switch (p) {
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getDefaultValue();
+                PARAMETER_TYPE_LIST
+                #undef X
+                default: throw std::runtime_error("Invalid Parameter dispatch");
+            }
+        }
+
+        ParameterValue getMinDispatch(ParameterType p) const {
+            switch (p) {
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getMinimum();
+                PARAMETER_TYPE_LIST
+                #undef X
+                default: throw std::runtime_error("Invalid Parameter dispatch");
+            }
+        }
+
+        ParameterValue getMaxDispatch(ParameterType p) const {
+            switch (p) {
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getMaximum();
+                PARAMETER_TYPE_LIST
+                #undef X
+                default: throw std::runtime_error("Invalid Parameter dispatch");
+            }
+        }
+
         bool setValueDispatch(ParameterType p, const json& value){
             switch (p){
                 #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setValue(value);
@@ -123,25 +159,33 @@ class ParameterMap {
             }
         }
 
-        ParameterValue getValueDispatch(ParameterType p) const {
+        bool setDefaultValueDispatch(ParameterType p, const json& value){
             switch (p){
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getValue();
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setDefaultValue(value);
                 PARAMETER_TYPE_LIST
                 #undef X
             default:
-                throw std::runtime_error("Invalid Parameter dispatch");
+                return false ;
             }
         }
 
-        ParameterValue getMinDispatch(ParameterType p) const {
-            auto param = getParameter(p);
+        bool setMaximumDispatch(ParameterType p, const json& value){
             switch (p){
-                #define X(NAME) case ParameterType::NAME: \
-                    return dynamic_cast<Parameter<ParameterType::NAME>*>(param)->getMinimum() ;
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setMaximum(value);
                 PARAMETER_TYPE_LIST
                 #undef X
             default:
-                throw std::runtime_error("Invalid Parameter dispatch");
+                return false ;
+            }
+        }
+
+        bool setMinimumDispatch(ParameterType p, const json& value){
+            switch (p){
+                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setMinimum(value);
+                PARAMETER_TYPE_LIST
+                #undef X
+            default:
+                return false ;
             }
         }
 
@@ -164,7 +208,7 @@ class ParameterMap {
         
         }
 
-        static json dispatchToJson(const ParameterValue& v){
+        static json ParameterValueToJson(const ParameterValue& v){
             return std::visit([](auto&& v) -> json {
                 if constexpr ( std::is_same_v<std::decay_t<decltype(v)>, uint8_t> ){
                     return static_cast<int>(v);
@@ -179,8 +223,11 @@ class ParameterMap {
                     continue ; // don't store references
                 }
                 
-                output[GET_PARAMETER_TRAIT_MEMBER(typ, name)] = {
-                    {"defaultValue", dispatchToJson(getValueDispatch(typ))},
+                output[GET_PARAMETER_TRAIT_MEMBER(typ, name)] = { 
+                    {"currentValue", ParameterValueToJson(getValueDispatch(typ))},
+                    {"defaultValue", ParameterValueToJson(getValueDispatch(typ))},
+                    {"minimumValue", ParameterValueToJson(getValueDispatch(typ))},
+                    {"maximumValue", ParameterValueToJson(getValueDispatch(typ))},
                     {"modulatable", getParameter(typ)->isModulatable()}
                 };
             }

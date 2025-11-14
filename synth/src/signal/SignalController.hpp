@@ -57,6 +57,10 @@ public:
         signalChain_.calculateTopologicalOrder();
     }
 
+    const std::unordered_set<BaseModule*>& getSinks() const {
+        return signalChain_.getSinks() ;
+    }
+
     double processFrame(){
         auto chain = signalChain_.getModuleChain();
         auto sinks = signalChain_.getSinks();

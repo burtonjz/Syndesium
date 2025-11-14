@@ -48,6 +48,10 @@ void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, Mo
     onSetParameterModulation(p,m,d);
 }
 
+BaseModulator* BaseComponent::getParameterModulator(ParameterType p) const {
+    return parameters_->getParameter(p)->getModulator();
+}
+
 void BaseComponent::removeParameterModulation(ParameterType p){
     if ( ! parameters_ ) return ;
 

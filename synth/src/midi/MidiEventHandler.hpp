@@ -101,6 +101,10 @@ public:
         }
     }
 
+    std::vector<MidiEventListener*>& getListeners(){
+        return listeners_ ;
+    }
+
     // all handlers are listeners so that they can chain operations if desired. 
     // The below functions can be overridded to provide specialized operations when cascading events downwards
     void onKeyPressed(const ActiveNote* note, bool rePressed = false) override {

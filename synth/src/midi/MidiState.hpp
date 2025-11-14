@@ -50,7 +50,11 @@ public:
         }
     }
 
-    // gettrrs/setters
+    const std::vector<MidiEventHandler*>& getHandlers() const {
+        return handlers_ ;
+    }
+    
+    // getters/setters
     const MidiNote* getNote(int midiNote){
         auto it = notes_.find(midiNote);        
         if ( it == notes_.end() ) return nullptr ;
