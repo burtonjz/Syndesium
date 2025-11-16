@@ -236,11 +236,12 @@ void Synth::onActionSaveAs(){
         tr("Save Configuration"),
         QDir::homePath(),
         tr("JSON Files (*.json);;All Files (*)")
-        //nullptr,
-        //QFileDialog::DontUseNativeDialog
     );
 
     if (!filePath.isEmpty()){
+        if ( !filePath.endsWith(".json")){
+            filePath.append(".json");
+        }
         saveFilePath_ = filePath ;
         QJsonObject obj ;
         obj["action"] = "get_configuration" ;
@@ -260,4 +261,7 @@ void Synth::performSave(){
     QJsonDocument doc(saveData_);
     file.write(doc.toJson(QJsonDocument::Indented));
     file.close();
+    QMessageBox::information(this, "Save Complete", 
+        saveFilePath_ + " saved.");
+    return ;
 }
