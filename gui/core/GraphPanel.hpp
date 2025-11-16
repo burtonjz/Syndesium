@@ -88,6 +88,9 @@ public  slots:
     void onComponentAdded(ComponentType type);
     void onWidgetZUpdate();
 
+signals:
+    void wasModified();
+
 };
 
 #endif // __UI_GRAPH_PANEL_HPP_

@@ -23,6 +23,7 @@
 
 #include "ui_Synth.h"
 
+#include <QWindow>
 #include <QJsonArray>
 #include <QJsonObject>
 #include <QJsonValue>
@@ -32,6 +33,8 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <qcombobox.h>
+#include <qkeysequence.h>
+#include <qmessagebox.h>
 #include <qobject.h>
 
 Synth::Synth(ModuleContext ctx, QWidget* parent):
@@ -39,12 +42,18 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     ui_(new Ui::MainWindow),
     ctx_(ctx),
     graph_(nullptr),
-    setup_(nullptr)
+    setup_(nullptr),
+    hasUnsavedChanges_(false)
 {
+    ui_->setupUi(this);
+
+    setWindowTitle(QString(DEFAULT_WINDOW_TITLE) + "[*]");
+    qDebug() << "creating window: " << windowTitle() ;
+
     // API connections
     connect(ApiClient::instance(), &ApiClient::connected, this, &Synth::onApiConnected);
     
-    ui_->setupUi(this);
+    
 
     graph_ = new GraphPanel(this);
     ui_->graphPanelContainer->layout()->addWidget(graph_);
@@ -52,11 +61,15 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     configureWidgetButtons();
     configureMenuActions();
 
-    // connections
+    // api and configuration buttons
     connect(this, &Synth::engineStatusChanged, this, &Synth::onEngineStatusChange);
     connect(ui_->setupButton, &QPushButton::clicked, this, &Synth::onSetupButtonClicked);
     connect(ui_->startStopButton, &QPushButton::clicked, this, &Synth::onStartStopButtonClicked);
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &Synth::onApiDataReceived);
+
+    // mark modified
+    connect(graph_, &GraphPanel::wasModified, this, &Synth::markModified);
+    
 }
 
 
@@ -128,6 +141,9 @@ void Synth::configureWidgetButtons(){
 }
 
 void Synth::configureMenuActions(){
+    ui_->actionSave->setShortcut(QKeySequence::Save);
+    ui_->actionSaveAs->setShortcut(QKeySequence::SaveAs);
+
     connect(ui_->actionLoad, &QAction::triggered, this, &Synth::onActionLoad);
     connect(ui_->actionSave, &QAction::triggered, this, &Synth::onActionSave);
     connect(ui_->actionSaveAs, &QAction::triggered, this, &Synth::onActionSaveAs);
@@ -261,7 +277,18 @@ void Synth::performSave(){
     QJsonDocument doc(saveData_);
     file.write(doc.toJson(QJsonDocument::Indented));
     file.close();
-    QMessageBox::information(this, "Save Complete", 
-        saveFilePath_ + " saved.");
+    qDebug() << "file" << saveFilePath_ << "saved." ; 
+    setWindowModified(false);
+    windowHandle()->requestUpdate();
+    hasUnsavedChanges_ = false ;
     return ;
+}
+
+void Synth::markModified(){
+    if ( !hasUnsavedChanges_ ){
+        qDebug() << "marking modified." ;
+        hasUnsavedChanges_ = true ;
+        setWindowModified(true);
+        windowHandle()->requestUpdate();
+    }
 }

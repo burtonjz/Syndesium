@@ -22,10 +22,12 @@
 #include "core/Synth.hpp"
 
 #include <QApplication>
+#include <qlogging.h>
 #include <qobject.h>
 
 int main(int argc, char *argv[]){
     Theme::applyDarkTheme();
+    qSetMessagePattern("[%{time yyyy-MM-dd hh:mm:ss.zzz}] %{type}: %{message}");
     
     QApplication app(argc, argv);
     ApiClient::instance() ; // initialize ApiClient singleton

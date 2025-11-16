@@ -64,6 +64,9 @@ private slots:
     void onApiDataReceived(const QJsonObject &json);
     void onWidgetPositionChanged();
 
+signals:
+    void wasModified();
+
 };
 
 #endif // __GUI_CONNECTION_MANAGER_HPP_

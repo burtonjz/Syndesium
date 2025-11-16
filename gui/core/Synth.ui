@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Synth</string>
+   <string>Syndesium</string>
   </property>
   <widget class="QWidget" name="centralWidgetFrame">
    <layout class="QHBoxLayout" name="mainHorizontalLayout">

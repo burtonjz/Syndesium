@@ -108,6 +108,7 @@ void ConnectionManager::cancelConnection(ConnectionID connection){
         scene_->removeItem(cable);
         delete cable ;
         connections_.erase(connection);
+        emit wasModified();
     }
 }
 
@@ -230,10 +231,14 @@ void ConnectionManager::onApiDataReceived(const QJsonObject &json){
     QString action = json["action"].toString();
     bool success = json["status"].toString() == "success" ;
 
-    if ( action == "create_connection" && !success ){
-        ConnectionID id = json["connectionID"].toInt(-1);
-        removeConnection(id);
-        return ;
+    if ( action == "create_connection" ){
+        if ( success ){
+            emit wasModified();
+        } else {
+            ConnectionID id = json["connectionID"].toInt(-1);
+            removeConnection(id);
+            return ;
+        }
     } 
 
     if ( action == "remove_connection" && success ){
@@ -256,6 +261,7 @@ void ConnectionManager::onApiDataReceived(const QJsonObject &json){
                 .arg(cable->getToSocket()->getName())
             : "null" ;
         qDebug() << "removing cable connection: " << fromText << " -> " << toText ;
+        
         cancelConnection(id);
     }
 }
@@ -269,4 +275,6 @@ void ConnectionManager::onWidgetPositionChanged(){
             cable->updatePath();
         }
     }
+
+    emit wasModified() ;
 }

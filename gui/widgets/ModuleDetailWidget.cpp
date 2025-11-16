@@ -34,13 +34,32 @@ ModuleDetailWidget::ModuleDetailWidget(int id, ComponentType type, QWidget* pare
     descriptor_(ComponentRegistry::getComponentDescriptor(type))
 {
     setWindowTitle(QString::fromStdString(descriptor_.name));
+
+    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
+    setAttribute(Qt::WA_ShowWithoutActivating);
+
     for ( auto p: descriptor_.controllableParameters ){
         createParameter(p);
     }
 
     setupLayout();
 
-    connect(this, &ModuleDetailWidget::parameterChanged, &ModuleDetailWidget::onParameterChanged);
+    // handle parameter changes
+    parameterChangedTimer_ = new QTimer(this);
+    parameterChangedTimer_->setSingleShot(true);
+    parameterChangedTimer_->setInterval(300);
+
+    connect(parameterChangedTimer_, &QTimer::timeout, this, &ModuleDetailWidget::flushPendingChanges);
+    
+    // notify upstream of changes 
+    modifiedTimer_ = new QTimer(this);
+    modifiedTimer_->setSingleShot(true);
+    modifiedTimer_->setInterval(300);
+
+    connect(modifiedTimer_, &QTimer::timeout, this, &ModuleDetailWidget::wasModified);
+    connect(this, &ModuleDetailWidget::parameterChanged, modifiedTimer_, qOverload<>(&QTimer::start)); 
+
+    
 }
 
 int ModuleDetailWidget::getID() const {
@@ -172,16 +191,25 @@ void ModuleDetailWidget::onValueChange(){
         v = sb->value();
     }
 
-    emit parameterChanged(componentId_, descriptor_, p, v);
-    
+    pendingChanges_[p] = v ;
+
+    qDebug() << "emitting wasModified from component id " << componentId_ ;
+    emit wasModified();
+    parameterChangedTimer_->start();
 }
 
-void ModuleDetailWidget::onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value){
-    QJsonObject obj ;
-    obj["action"] = "set_component_parameter" ;
-    obj["componentId"] = componentId ;
-    obj["parameter"] = static_cast<int>(p);
-    obj["value"] = QVariant::fromStdVariant(value).toJsonValue();
-    
-    ApiClient::instance()->sendMessage(obj); 
+void ModuleDetailWidget::flushPendingChanges(){
+    if ( pendingChanges_.empty() ) return ;
+
+    for ( auto [p, val] : pendingChanges_ ){
+        QJsonObject obj ;
+        obj["action"] = "set_component_parameter" ;
+        obj["componentId"] = componentId_ ;
+        obj["parameter"] = static_cast<int>(p);
+        obj["value"] = QVariant::fromStdVariant(val).toJsonValue();
+        
+        ApiClient::instance()->sendMessage(obj); 
+    }
+
+    pendingChanges_.clear();
 }

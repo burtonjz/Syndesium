@@ -48,7 +48,9 @@ private:
     // save/load 
     QString saveFilePath_ ;
     QJsonObject saveData_ ;
+    bool hasUnsavedChanges_ ;
 
+    static constexpr const char* DEFAULT_WINDOW_TITLE = "Syndesium";
 public:
     Synth(ModuleContext ctx, QWidget* parent = nullptr);
     ~Synth();
@@ -77,6 +79,8 @@ private slots:
     void onActionSave();
     void onActionSaveAs();
 
+public slots:
+    void markModified();
 
 };
 

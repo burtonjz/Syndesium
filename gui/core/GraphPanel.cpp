@@ -20,6 +20,8 @@
 #include "core/Theme.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
+#include "patch/ConnectionManager.hpp"
+#include "widgets/ModuleDetailWidget.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "widgets/ComponentWidget.hpp"
 #include "types/ComponentType.hpp"
@@ -65,7 +67,7 @@ GraphPanel::GraphPanel(QWidget* parent):
 
     // connections
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &GraphPanel::onApiDataReceived);
-
+    connect(connectionManager_, &ConnectionManager::wasModified, this, &GraphPanel::wasModified);
 }
 
 GraphPanel::~GraphPanel(){
@@ -98,12 +100,15 @@ void GraphPanel::createContextMenuActions(){
 
 void GraphPanel::addComponent(int id, ComponentType type){
     auto* component = new ComponentWidget(id, type);
-    auto* detail = new ModuleDetailWidget(id,type);
+    auto* detail = new ModuleDetailWidget(id,type, this);
 
     widgets_.push_back(component);
     details_.push_back(detail);
 
+    // dynamic connections
     connect(component, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
+    connect(component, &SocketContainerWidget::positionChanged, this, &GraphPanel::wasModified );
+    connect(detail, &ModuleDetailWidget::wasModified, this, &GraphPanel::wasModified );
 
     scene_->addItem(component);
     for ( auto socket : component->getSockets() ){
@@ -113,6 +118,7 @@ void GraphPanel::addComponent(int id, ComponentType type){
     component->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
     
     qDebug() << "Created component:" << component->getName() << "at position:" << component->pos() ;
+    emit wasModified() ;
 }
 
 void GraphPanel::addAudioOutput(){
@@ -158,6 +164,7 @@ void GraphPanel::deleteSelectedModules(){
             module->deleteLater();
 
             qDebug() << "Deleted module:" << module->getComponentDescriptor().name ;
+            emit wasModified();
         }
     }
 }
@@ -165,7 +172,6 @@ void GraphPanel::deleteSelectedModules(){
 QJsonArray GraphPanel::getComponentPositions() const {
     QJsonArray positions ;
     for ( auto w : widgets_ ){
-        qDebug() << w ;
         auto component = dynamic_cast<ComponentWidget*>(w);
         if ( component ){
             auto pos = component->pos();
@@ -347,10 +353,13 @@ void GraphPanel::componentDoubleClicked(ComponentWidget* widget){
     ComponentType type = widget->getComponentDescriptor().type ;
 
     for ( auto d : details_ ){
-        if( d->getID() == id && d->getType() == type ){
-            d->show();
-            d->raise();
-            d->activateWindow();
+        if( d->getID() == id ){
+            if ( d->isVisible() ){
+                d->hide();
+            } else {
+                d->show();
+                d->raise();
+            }
             return ;
         }
     }

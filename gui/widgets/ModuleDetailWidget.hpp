@@ -27,6 +27,9 @@
 #include <QComboBox>
 #include <QMap>
 #include <QEvent>
+#include <QTimer>
+
+#include <unordered_map>
 
 #include "types/ParameterType.hpp"
 #include "meta/ComponentDescriptor.hpp"
@@ -41,6 +44,11 @@ private:
     QPushButton* resetButton_ ;
     QPushButton* closeButton_ ;
     QMap<ParameterType, QWidget*> parameterWidgets_ ;
+
+    QTimer* modifiedTimer_ ;
+    QTimer* parameterChangedTimer_ ;
+
+    std::unordered_map<ParameterType, ParameterValue> pendingChanges_ ;
 
     static constexpr qreal PARAMETER_WIDGET_SPACING = 10 ;
     static constexpr qreal PARAMETER_WIDGET_WIDTH = 120 ;
@@ -66,11 +74,12 @@ private:
 signals:
     void widgetClosed();
     void parameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value);
+    void wasModified();
 
 private slots:
     void onCloseButtonClicked();
     void onValueChange();
-    void onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value);
+    void flushPendingChanges();
 
 };
 
