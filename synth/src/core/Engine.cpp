@@ -53,6 +53,8 @@ Engine::Engine():
     // analysis
     analysisAudioOut_(48000 * 10)
 {
+    ApiHandler::instance()->initialize(this);
+
     registerBaseMidiHandler(&midiDefaultHandler_);
     midiController.addHandler(&midiDefaultHandler_);
     signal(SIGINT, Engine::signalHandler);
@@ -85,7 +87,9 @@ void Engine::initialize(){
 
     // Start API server thread
     apiServerRunning_ = true;
-    apiServerThread_ = std::thread(ApiHandler::start, this);
+    apiServerThread_ = std::thread([&](){
+        ApiHandler::instance()->start();
+    });
 
     std::cout << "Engine initialized. API server running." << std::endl;
 

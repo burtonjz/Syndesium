@@ -19,9 +19,12 @@
 #define __API_HANDLER_HPP_
 
 #include <nlohmann/json.hpp>
+#include <functional>
+
 #include "types/SocketType.hpp"
 #include "types/ParameterType.hpp"
 #include "params/ParameterMap.hpp"
+
 
 using json = nlohmann::json ;
 
@@ -41,21 +44,36 @@ struct ConnectionRequest {
 };
 
 class ApiHandler {
-public:
-    ApiHandler() = delete ;
+private:
+    using HandlerFunc = std::function<void(int clientSock, const json& request)>;
+    Engine* engine_ ;
+    std::unordered_map<std::string, HandlerFunc> handlers_ ;
 
-    static void start(Engine* engine);
-    static void onClientConnection(Engine* engine, int clientSock);
-    static void handleClientMessage(Engine* engine, int clientSock, std::string jsonStr);
-    static void sendApiResponse(int clientSock, json response);
+    ApiHandler();
+
+public:
+    static ApiHandler* instance() ;
+    ApiHandler(const ApiHandler&) = delete ;
+    ApiHandler& operator=(const ApiHandler&) = delete ;
+    ApiHandler(ApiHandler&&) = delete ;
+    ApiHandler& operator=(ApiHandler&&) = delete ;
+
+    void initialize(Engine* engine);
+
+    void start();
+    void onClientConnection(int clientSock);
+    void handleClientMessage(int clientSock, std::string jsonStr);
+    void sendApiResponse(int clientSock, json& response, const std::string& err = "");
 
 private:
+    bool loadConfiguration(json request);
+
     // cable connection functions
-    static ConnectionRequest parseConnectionRequest(json request);
-    static bool routeConnectionRequest(Engine* engine, ConnectionRequest request);
-    static bool handleSignalConnection(Engine* engine, ConnectionRequest request);
-    static bool handleMidiConnection(Engine* engine, ConnectionRequest request);
-    static bool handleModulationConnection(Engine* engine, ConnectionRequest request);
+    ConnectionRequest parseConnectionRequest(json request);
+    bool routeConnectionRequest(ConnectionRequest request);
+    bool handleSignalConnection(ConnectionRequest request);
+    bool handleMidiConnection(ConnectionRequest request);
+    bool handleModulationConnection(ConnectionRequest request);
 
 };
 

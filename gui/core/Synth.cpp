@@ -33,6 +33,7 @@
 #include <QFileDialog>
 #include <QMessageBox>
 #include <qcombobox.h>
+#include <qjsonobject.h>
 #include <qkeysequence.h>
 #include <qmessagebox.h>
 #include <qobject.h>
@@ -233,7 +234,52 @@ void Synth::onComponentAdded(int index){
 }
 
 void Synth::onActionLoad(){
+    QString filePath = QFileDialog::getOpenFileName(
+        this,
+        tr("Load Configuration"),
+        QDir::homePath(),
+        tr("JSON Files (*.json);;All Files (*)")
+    );
 
+    if (filePath.isEmpty()) {
+        return; 
+    }
+    
+    QFile file(filePath);
+    if ( !file.open(QIODevice::ReadOnly | QIODevice::Text) ) {
+        QMessageBox::warning(
+            this,
+            tr("Error"),
+            tr("Could not open file: %1").arg(file.errorString()));
+        return;
+    }
+    
+    QByteArray fileData = file.readAll();
+    file.close();
+    
+    QJsonParseError parseError;
+    QJsonDocument doc = QJsonDocument::fromJson(fileData, &parseError);
+    
+    if (parseError.error != QJsonParseError::NoError) {
+        QMessageBox::warning(
+            this,
+            tr("Parse Error"), 
+            tr("JSON parse error: %1").arg(parseError.errorString()));
+        return;
+    }
+    
+    if (!doc.isObject()) {
+        QMessageBox::warning(this, tr("Error"), 
+                           tr("JSON file does not contain an object"));
+        return;
+    }
+    
+    saveData_ = doc.object();
+    saveFilePath_ = filePath ;
+
+    // send API request
+    saveData_["action"] = "load_configuration" ;
+    ApiClient::instance()->sendMessage(saveData_);
 }
 
 void Synth::onActionSave(){

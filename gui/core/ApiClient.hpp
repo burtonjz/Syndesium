@@ -36,6 +36,11 @@ private:
     
 public:
     static ApiClient* instance() ;
+    ApiClient(const ApiClient&) = delete ;
+    ApiClient& operator=(const ApiClient&) = delete ;
+    ApiClient(ApiClient&&) = delete ;
+    ApiClient& operator=(ApiClient&&) = delete ;
+
     void connectToBackend();
     void sendMessage(const QJsonObject &obj);
 

@@ -193,7 +193,6 @@ void ModuleDetailWidget::onValueChange(){
 
     pendingChanges_[p] = v ;
 
-    qDebug() << "emitting wasModified from component id " << componentId_ ;
     emit wasModified();
     parameterChangedTimer_->start();
 }

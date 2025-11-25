@@ -60,7 +60,6 @@ private:
     void configureWidgetButtons();
 
     void performSave();
-    bool saveToFile(const QString& filePath, const QJsonObject& data);
 
 signals:
     void engineStatusChanged(bool status);
