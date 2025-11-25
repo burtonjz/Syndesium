@@ -45,7 +45,7 @@ struct ConnectionRequest {
 
 class ApiHandler {
 private:
-    using HandlerFunc = std::function<void(int clientSock, const json& request)>;
+    using HandlerFunc = std::function<void(int sock, const json& request)>;
     Engine* engine_ ;
     std::unordered_map<std::string, HandlerFunc> handlers_ ;
 
@@ -66,7 +66,21 @@ public:
     void sendApiResponse(int clientSock, json& response, const std::string& err = "");
 
 private:
-    bool loadConfiguration(json request);
+    // handler functions
+    void getAudioDevices(int sock, const json& request);
+    void getMidiDevices(int sock, const json& request);
+    void setAudioDevice(int sock, const json& request);
+    void setMidiDevice(int sock, const json& request);
+    void setState(int sock, const json& request);
+    void getConfiguration(int sock, const json& request);
+    void loadConfiguration(int sock, const json& request);
+    void getWaveforms(int sock, const json& request);
+    void addComponent(int sock, const json& request);
+    void removeComponent(int sock, const json& request);
+    void getComponentParameter(int sock, const json& request);
+    void setComponentParameter(int sock, const json& request);
+    void createConnection(int sock, const json& request);
+    void removeConnection(int sock, const json& request);
 
     // cable connection functions
     ConnectionRequest parseConnectionRequest(json request);

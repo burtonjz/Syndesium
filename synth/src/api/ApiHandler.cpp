@@ -20,6 +20,7 @@
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "configs/ComponentConfig.hpp"
+#include "types/ParameterType.hpp"
 #include "types/SocketType.hpp"
 
 #include <iostream>
@@ -42,6 +43,22 @@ ApiHandler* ApiHandler::instance(){
 
 void ApiHandler::initialize(Engine* engine){
     engine_ = engine ;
+
+    // register api handler functions
+    handlers_["get_audio_devices"] = [this](int sock, const json& request){ getAudioDevices(sock, request); };
+    handlers_["get_midi_devices"] = [this](int sock, const json& request){ getMidiDevices(sock, request); };
+    handlers_["set_audio_device"] = [this](int sock, const json& request){ setAudioDevice(sock, request); };
+    handlers_["set_midi_device"] = [this](int sock, const json& request){ setMidiDevice(sock, request); };
+    handlers_["set_state"] = [this](int sock, const json& request){ setState(sock, request); };
+    handlers_["get_configuration"] = [this](int sock, const json& request){ getConfiguration(sock, request); };
+    handlers_["load_configuration"] = [this](int sock, const json& request){ loadConfiguration(sock, request); };
+    handlers_["get_waveforms"] = [this](int sock, const json& request){ getWaveforms(sock, request); };
+    handlers_["add_component"] = [this](int sock, const json& request){ addComponent(sock, request); };
+    handlers_["remove_component"] = [this](int sock, const json& request){ removeComponent(sock, request); };
+    handlers_["get_component_parameter"] = [this](int sock, const json& request){ getComponentParameter(sock, request); };
+    handlers_["set_component_parameter"] = [this](int sock, const json& request){ setComponentParameter(sock, request); };
+    handlers_["create_connection"] = [this](int sock, const json& request){ createConnection(sock, request); };
+    handlers_["remove_connection"] = [this](int sock, const json& request){ removeConnection(sock, request); };
 }
 
 void ApiHandler::start(){
@@ -83,24 +100,24 @@ void ApiHandler::start(){
 
     // Accept incoming client connections in a loop
     while (!Engine::stop_flag) {
-        int clientSock = accept(serverSock, nullptr, nullptr);
-        if (clientSock >= 0) {
+        int sock = accept(serverSock, nullptr, nullptr);
+        if (sock >= 0) {
             // set client socket to non-blocking
-            int flags = fcntl(clientSock, F_GETFL, 0);
+            int flags = fcntl(sock, F_GETFL, 0);
             if ( flags == -1 ){
                 perror("fcntl F_GETFL");
-                close(clientSock);
+                close(sock);
                 continue ;
             }
-            if ( fcntl(clientSock, F_SETFL, flags | O_NONBLOCK ) == -1 ){
+            if ( fcntl(sock, F_SETFL, flags | O_NONBLOCK ) == -1 ){
                 perror("fcntl F_SETFL");
-                close(clientSock);
+                close(sock);
                 continue ;
             }
 
             // Handle client in a separate thread
-            std::thread([clientSock](){
-                ApiHandler::instance()->onClientConnection(clientSock);
+            std::thread([sock](){
+                ApiHandler::instance()->onClientConnection(sock);
             }).detach();  
         } else {
             // no pending connection; sleep briefly to avoid busy-wait
@@ -112,12 +129,12 @@ void ApiHandler::start(){
     close(serverSock);
 }
 
-void ApiHandler::onClientConnection(int clientSock){
+void ApiHandler::onClientConnection(int sock){
     char buffer[1024] = {0};
     std::string partialData ;
 
     while (!Engine::stop_flag){
-        ssize_t bytesReceived = recv(clientSock, buffer, sizeof(buffer) - 1, 0) ;
+        ssize_t bytesReceived = recv(sock, buffer, sizeof(buffer) - 1, 0) ;
         if (bytesReceived > 0 ){
             buffer[bytesReceived] = '\0' ; // null-terminate the buffer so it can be read into a string
             partialData += buffer ; // read buffered text into data string
@@ -130,7 +147,7 @@ void ApiHandler::onClientConnection(int clientSock){
                 partialData.erase(0, pos + 1); 
 
                 // handle the parsed json string
-                handleClientMessage(clientSock, jsonStr);
+                handleClientMessage(sock, jsonStr);
             }
         } else if (bytesReceived == 0){
             break ;
@@ -145,10 +162,10 @@ void ApiHandler::onClientConnection(int clientSock){
         }
     }
 
-    close(clientSock);
+    close(sock);
 }
 
-void ApiHandler::sendApiResponse(int clientSock, json& response, const std::string& err){
+void ApiHandler::sendApiResponse(int sock, json& response, const std::string& err){
     if ( err == "" ){
         response["status"] = "success" ;
     } else {
@@ -157,158 +174,228 @@ void ApiHandler::sendApiResponse(int clientSock, json& response, const std::stri
     }
     std::string r = response.dump() + '\n' ;
     std::cout << "sending API response: " << r.c_str() << std::endl  ;
-    send(clientSock, r.c_str(), r.size(), 0);
+    send(sock, r.c_str(), r.size(), 0);
 }
 
 
-void ApiHandler::handleClientMessage(int clientSock, std::string jsonStr){
-    json jResponse ;
-    json jRequest ;
-
-    std::string err ;
-
+void ApiHandler::handleClientMessage(int sock, std::string jsonStr){
+    json request;
+    std::string err = "";
+    std::string action ;
     try {
-        jRequest = json::parse(jsonStr);
-
-        std::string action = jRequest["action"] ;
-        jResponse["action"] = action ;
-
-        std::cout << "received request for action: " << action << std::endl ;
-
-        if ( action == "get_audio_devices" ) {
-            jResponse["data"] = engine_->getAvailableAudioDevices() ;
-            sendApiResponse(clientSock,jResponse);
-            return ;
-        }
-
-        if ( action == "get_midi_devices" ){
-            jResponse["data"] = engine_->getAvailableMidiDevices() ;
-            sendApiResponse(clientSock,jResponse);
-            return ;
-        }
-
-        if ( action == "set_audio_device" ){
-            int deviceId = jRequest["device_id"] ;
-            engine_->setAudioDeviceId(deviceId);
-            sendApiResponse(clientSock,jResponse);
-            return ;
-        } 
-        
-        if ( action == "set_midi_device" ){
-            int deviceId = jRequest["device_id"] ;
-            engine_->setMidiDeviceId(deviceId);
-            sendApiResponse(clientSock,jResponse);
-            return ;
-        }
-
-        if ( action == "set_state" ){
-            jResponse["state"] = jRequest["state"] ;
-            if ( jResponse["state"] == "run" ){
-                engine_->run();
-                sendApiResponse(clientSock,jResponse);
-                return ;
-            } 
-            
-            if ( jResponse["state"] == "stop" ){
-                engine_->stop();
-                sendApiResponse(clientSock,jResponse);
-                return ;
-            } 
-            
-            err = "Unrecognized engine state requested: " + jResponse["state"].get<std::string>() ;
-            sendApiResponse(clientSock,jResponse, err);
-            return ;
-        }
-
-        if ( action == "get_configuration"){
-            jResponse["data"] = engine_->serialize();
-            sendApiResponse(clientSock,jResponse);
-            return ;
-        }
-        
-        if ( action == "load_configuration" ){
-            return ;
-        }
-
-        if ( action == "get_waveforms" ){
-            jResponse["data"] = Waveform::getWaveforms() ;
-            sendApiResponse(clientSock,jResponse);
-            return ;
-        }
-        // COMPONENTS
-        if ( action == "add_component"){
-            jResponse["type"] = jRequest["type"] ;
-            jResponse["name"] = jRequest["name"] ;
-
-            ComponentType type = static_cast<ComponentType>(jRequest["type"]);
-            ComponentId id = engine_->componentFactory.createFromJson(type, jResponse["name"], getDefaultConfig(jResponse["type"]));
-
-            jResponse["component_id"] = id;
-            sendApiResponse(clientSock,jResponse);
-            return ;
-        }
-
-        if ( action == "set_component_parameter"){
-            int componentId = jRequest["componentId"];
-            ParameterType p = static_cast<ParameterType>(jRequest["parameter"]);
-
-            jResponse["status"] = engine_->componentManager.setComponentParameter(componentId, p, jRequest["value"]);
-            jResponse["componentId"] = jRequest["componentId"];
-            jResponse["parameter"] = jRequest["parameter"];
-
-            if ( jResponse["status"] ){
-                sendApiResponse(clientSock,jResponse);
-                return ;
-            } else {
-                sendApiResponse(clientSock,jResponse, "Error setting component parameter." );
-                return ;
-            }
-        }
-
-        if ( action == "create_connection" ){
-            // save variables into response
-            jResponse["connectionID"] = jRequest["connectionID"];
-            jResponse["inbound"] = jRequest["inbound"] ;
-            jResponse["outbound"] = jRequest["outbound"] ;
-
-            ConnectionRequest request = parseConnectionRequest(jRequest);
-            if ( routeConnectionRequest(request)){
-                sendApiResponse(clientSock,jResponse);
-                return ;
-            } else {
-                sendApiResponse(clientSock,jResponse, "failed to make requested connection");
-                return ;
-            }
-        }
-
-        if ( action == "remove_connection" ){
-            jResponse["connectionID"] = jRequest["connectionID"];
-            jResponse["inbound"] = jRequest["inbound"] ;
-            jResponse["outbound"] = jRequest["outbound"] ; 
-
-            ConnectionRequest request = parseConnectionRequest(jRequest);
-            request.remove = true ;
-
-            if ( routeConnectionRequest(request)){
-                sendApiResponse(clientSock,jResponse);
-                return ;
-            } else {
-                sendApiResponse(clientSock,jResponse, "failed to remove specified connection");
-                return ;
-            }
-        }
-
-        err = "Unknown action requested: " + action ;
-        sendApiResponse(clientSock,jResponse, err);
-
+        request = json::parse(jsonStr);
+        action = request["action"];
     } catch (const std::exception& e){
-        err = "JSON parse error: " + std::string(e.what()) ;
-        sendApiResponse(clientSock,jResponse, err);
+        err = "Error parsing json request: " + std::string(e.what()) ;
+        sendApiResponse(sock,request, err);
+        return ;
+    }
+    
+    auto it = handlers_.find(action);
+    if ( it == handlers_.end() ){
+        sendApiResponse(sock, request, "unknown action requested: " + action );
+        return ;
+    }
+    
+    it->second(sock, request);
+}
+
+void ApiHandler::getAudioDevices(int sock, const json& request){
+    json response = request ;
+    response["data"] = engine_->getAvailableAudioDevices() ;
+    sendApiResponse(sock,response);
+}
+
+void ApiHandler::getMidiDevices(int sock, const json& request){
+    json response = request ;
+    response["data"] = engine_->getAvailableMidiDevices() ;
+    sendApiResponse(sock,response);
+}
+
+void ApiHandler::setAudioDevice(int sock, const json& request){
+    json response = request ;
+    int deviceId ;
+    std::string err ;
+    
+    try {
+        deviceId = response["device_id"];
+    } catch (const std::exception& e){
+        err = "Error processing json request: " + std::string(e.what()) ;
+        sendApiResponse(sock,response, err);
+        return ;
+    }
+
+    if ( engine_->setAudioDeviceId(deviceId) ){
+        sendApiResponse(sock,response);
+    } else {
+        sendApiResponse(sock, response, "failed to set audio device");
     }
 }
 
-bool ApiHandler::loadConfiguration(json request){
+void ApiHandler::setMidiDevice(int sock, const json& request){
+    json response = request ;
+    int deviceId ;
+    std::string err ;
+    
+    try {
+        deviceId = response["device_id"];
+    } catch (const std::exception& e){
+        err = "Error processing json request " + std::string(e.what()) ;
+        sendApiResponse(sock,response, err);
+        return ;
+    }
 
+    if ( engine_->setMidiDeviceId(deviceId) ){
+        sendApiResponse(sock,response);
+    } else {
+        sendApiResponse(sock, response, "failed to set midi device");
+    }
+}
+void ApiHandler::setState(int sock, const json& request){
+    json response = request ;
+    std::string state ;
+    std::string err ;
+
+    try {
+        state = response["state"];
+    } catch (const std::exception& e){
+        err = "Error processing json request: " + std::string(e.what()) ;
+        sendApiResponse(sock,response, err);
+        return ;
+    }
+
+    if ( state == "run" ){
+        engine_->run();
+        sendApiResponse(sock,response);
+        return ;
+    }
+
+    if ( state == "stop" ){
+        engine_->stop();
+        sendApiResponse(sock,response);
+        return ;
+    }
+
+    sendApiResponse(sock,response, "Unrecognized engine state requested: " + state);
+}
+
+void ApiHandler::getConfiguration(int sock, const json& request){
+    json response = request ;
+    response["data"] = engine_->serialize();
+    sendApiResponse(sock,response);
+}
+
+void ApiHandler::loadConfiguration(int sock, const json& request){
+    std::cout << "load configuration not yet implemented" << std::endl ;
+}
+
+void ApiHandler::getWaveforms(int sock, const json& request){
+    json response = request ;
+    response["data"] = Waveform::getWaveforms() ;
+    sendApiResponse(sock,response);
+}
+
+void ApiHandler::addComponent(int sock, const json& request){
+    json response = request ;
+    ComponentType type ;
+    std::string name ;
+    std::string err ;
+
+    try {
+        type = static_cast<ComponentType>(response["type"]);
+        name = response["name"];
+    } catch (const std::exception& e){
+        err = "Error processing json request: " + std::string(e.what()) ;
+        sendApiResponse(sock,response, err);
+        return ;
+    }
+
+    ComponentId id = engine_->componentFactory.createFromJson(type, name, getDefaultConfig(type));
+    response["component_id"] = id;
+    sendApiResponse(sock,response);
+}
+
+void ApiHandler::removeComponent(int sock, const json& request){
+    std::cout << "remove component not yet implemented" << std::endl ;
+}
+
+void ApiHandler::getComponentParameter(int sock, const json& request){
+    std::cout << "get component parameter not yet implemented" << std::endl ;
+}
+
+void ApiHandler::setComponentParameter(int sock, const json& request){
+    json response = request ;
+    ComponentId id ;
+    ParameterType param ;
+    std::string err ;
+
+    try {
+        id = response["componentId"];
+        param = static_cast<ParameterType>(response["parameter"]);
+        response.at("value"); // verify present
+    } catch (const std::exception& e){
+        err = "Error processing json request: " + std::string(e.what()) ;
+        sendApiResponse(sock,response, err);
+        return ;
+    }
+
+
+    if ( engine_->componentManager.setComponentParameter(id, param, response["value"]) ){
+        sendApiResponse(sock,response);
+        return ;
+    } else {
+        sendApiResponse(sock,response, "Error setting component parameter." );
+        return ;
+    }
+}
+void ApiHandler::createConnection(int sock, const json& request){
+    json response = request ;
+    std::string err ;
+
+    try {
+        response.at("connectionId");
+        response.at("inbound");
+        response.at("outbound");
+    } catch (const std::exception& e){
+        err = "Error processing json request: " + std::string(e.what()) ;
+        sendApiResponse(sock,response, err);
+        return ;
+    }
+
+    ConnectionRequest req = parseConnectionRequest(response);
+    if ( routeConnectionRequest(req)){
+        sendApiResponse(sock,response);
+        return ;
+    } else {
+        sendApiResponse(sock,response, "failed to make requested connection");
+        return ;
+    }
+}
+
+void ApiHandler::removeConnection(int sock, const json& request){
+    json response = request ;
+    std::string err ;
+
+    try {
+        response.at("connectionId");
+        response.at("inbound");
+        response.at("outbound");
+    } catch (const std::exception& e){
+        err = "Error processing json request: " + std::string(e.what()) ;
+        sendApiResponse(sock,response, err);
+        return ;
+    }
+
+    ConnectionRequest req = parseConnectionRequest(response);
+    req.remove = true ;
+
+    if ( routeConnectionRequest(req)){
+        sendApiResponse(sock,response);
+        return ;
+    } else {
+        sendApiResponse(sock,response, "failed to make requested connection");
+        return ;
+    }
 }
 
 ConnectionRequest ApiHandler::parseConnectionRequest(json request){
@@ -437,7 +524,6 @@ bool ApiHandler::handleModulationConnection(ConnectionRequest request){
 
     BaseModulator* modulator = engine_->componentManager.getModulator(request.outboundID.value());
     BaseComponent* component = engine_->componentManager.getRaw(request.inboundID.value());
-    std::cout << "modulator with id = " << request.outboundID.value() << " is at address " << modulator << std::endl ;
 
     if (!modulator ){
         std::cerr << "valid modulator not found.\n";

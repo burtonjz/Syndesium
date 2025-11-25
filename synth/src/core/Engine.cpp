@@ -409,18 +409,32 @@ int Engine::getAudioDeviceId() const {
     return selectedAudioOutput_;
 }
 
-void Engine::setAudioDeviceId(int deviceId){
-    std::cout << "Audio output device set to id " << deviceId << "." << std::endl;
-    selectedAudioOutput_ = deviceId;
+bool Engine::setAudioDeviceId(int deviceId){
+    auto it = availableAudioDevices_.find(deviceId);
+    if ( it == availableAudioDevices_.end() ){
+        std::cerr << "Cannot set audio device id to " << deviceId << ". Invalid Id." << std::endl ;
+        return false ;
+    }
+
+    std::cout << "audio device id set to " << deviceId << std::endl ;
+    selectedAudioOutput_ = deviceId ;
+    return true ;
 }
 
 int Engine::getMidiDeviceId() const {
     return selectedMidiPort_;
 }
 
-void Engine::setMidiDeviceId(int deviceId){
-    std::cout << "MIDI device set to id " << deviceId << "." << std::endl;
-    selectedMidiPort_ = deviceId;
+bool Engine::setMidiDeviceId(int deviceId){
+    auto it = availableMidiPorts_.find(deviceId);
+    if ( it == availableMidiPorts_.end() ){
+        std::cerr << "Cannot set midi device id to " << deviceId << ". Invalid Id." << std::endl ;
+        return false ;
+    }
+
+    std::cout << "midi device id set to " << deviceId << std::endl ;
+    selectedMidiPort_ = deviceId ;
+    return true ;
 }
 
 const std::map<int,std::string> Engine::getAvailableMidiDevices() const {

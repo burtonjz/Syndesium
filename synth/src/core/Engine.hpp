@@ -75,8 +75,8 @@ public:
     const std::map<int, std::string> getAvailableAudioDevices() const;
     
     // Setters
-    void setAudioDeviceId(int deviceId);
-    void setMidiDeviceId(int deviceId);
+    bool setAudioDeviceId(int deviceId);
+    bool setMidiDeviceId(int deviceId);
     
     // MIDI connection management
     bool setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener);

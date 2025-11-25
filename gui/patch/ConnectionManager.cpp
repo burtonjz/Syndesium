@@ -219,7 +219,7 @@ void ConnectionManager::sendConnectionApiRequest(ConnectionID connection, bool r
         input["parameter"] = static_cast<int>(parameterFromString(inboundSocket->getName().toStdString()));
     }
     
-    obj["connectionID"] = connection ;
+    obj["connectionId"] = connection ;
     obj["outbound"] = output ;
     obj["inbound"] = input ;
     
@@ -242,7 +242,7 @@ void ConnectionManager::onApiDataReceived(const QJsonObject &json){
     } 
 
     if ( action == "remove_connection" && success ){
-        ConnectionID id = json["connectionID"].toInt(-1);
+        ConnectionID id = json["connectionId"].toInt(-1);
         ConnectionCable* cable = connections_[id];
         if ( !cable ){
             qDebug() << "connectionID value " << id << "is not present in map. Cannot remove connection." ;

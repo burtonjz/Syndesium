@@ -56,7 +56,7 @@ void BaseComponent::removeParameterModulation(ParameterType p){
     if ( ! parameters_ ) return ;
 
     // if the modulator is stateful (also a module), remove tracking
-    BaseModulator* modulator = parameters_->getParameter(p)->getModulator();
+    BaseModulator* modulator = getParameterModulator(p);
     if ( BaseModule* module = dynamic_cast<BaseModule*>(modulator) ){
         modulationModules_.erase(module);
     }
