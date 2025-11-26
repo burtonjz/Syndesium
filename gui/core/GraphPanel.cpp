@@ -48,6 +48,7 @@
 #include <qgraphicsitem.h>
 #include <qgraphicsscene.h>
 #include <qjsonobject.h>
+#include <qlogging.h>
 #include <qnamespace.h>
 #include <qvarlengtharray.h>
 
@@ -122,32 +123,41 @@ void GraphPanel::addComponent(int id, ComponentType type){
 }
 
 void GraphPanel::addAudioOutput(){
-    auto* container = new SocketContainerWidget("Audio Ouput Device");
-    container->createSockets({{SocketType::SignalInput, "Audio In"}});
-    scene_->addItem(container);
+    audioOut_ = new SocketContainerWidget("Audio Output Device");
+    audioOut_->createSockets({{SocketType::SignalInput, "Audio In"}});
+    scene_->addItem(audioOut_);
 
-    widgets_.push_back(container);
-    for ( auto socket : container->getSockets() ){
+    widgets_.push_back(audioOut_);
+    for ( auto socket : audioOut_->getSockets() ){
         scene_->addItem(socket);
     }
 
-    connect(container, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
+    connect(audioOut_, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
 
-    qDebug() << "Created Audio Output Device Widget:" << container->getName() << "at position:" << container->pos() ;
+    qDebug() << "Created Audio Output Device Widget:" << audioOut_->getName() << "at position:" << audioOut_->pos() ;
 }
 
 void GraphPanel::addMidiInput(){
-    auto* container = new SocketContainerWidget("MIDI Input Device");
-    container->createSockets({{SocketType::MidiOutput, "MIDI Out"}});
-    scene_->addItem(container);
+    midiIn_ = new SocketContainerWidget("MIDI Input Device");
+    midiIn_->createSockets({{SocketType::MidiOutput, "MIDI Out"}});
+    scene_->addItem(midiIn_);
 
-    widgets_.push_back(container);
-    for ( auto socket : container->getSockets() ){
+    widgets_.push_back(midiIn_);
+    for ( auto socket : midiIn_->getSockets() ){
         scene_->addItem(socket);
     }
     
-    connect(container, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
-    qDebug() << "Created Midi Input Device Widget:" << container->getName() << "at position:" << container->pos() ;
+    connect(midiIn_, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
+    qDebug() << "Created Midi Input Device Widget:" << midiIn_->getName() << "at position:" << midiIn_->pos() ;
+}
+
+SocketContainerWidget* GraphPanel::getWidget(int componentId){
+    for ( auto widget : widgets_ ){
+        auto component = dynamic_cast<ComponentWidget*>(widget);
+        if ( component->getID() == componentId){
+            return widget ;
+        }
+    }
 }
 
 void GraphPanel::deleteSelectedModules(){
@@ -183,6 +193,74 @@ QJsonArray GraphPanel::getComponentPositions() const {
         }
     }
     return positions ;
+}
+
+void GraphPanel::loadConnection(const QJsonObject& json){
+    int inboundId = json["inbound"]["id"].toInt(-1);
+    int outboundId = json["outbound"]["id"].toInt(-1);
+    SocketType inboundType = static_cast<SocketType>(json["inbound"]["socketType"].toInt());
+    SocketType outboundType = static_cast<SocketType>(json["outbound"]["socketType"].toInt());
+
+    SocketContainerWidget* inboundWidget ;
+    SocketContainerWidget* outboundWidget ;
+
+    if ( inboundId == -1 && inboundType == SocketType::SignalInput ){
+        inboundWidget = audioOut_ ;
+    } else {
+        inboundWidget = getWidget(inboundId);
+    }
+
+    if ( outboundId == -1 && outboundType == SocketType::MidiInput){
+        outboundWidget = midiIn_ ;
+    } else {
+        inboundWidget = getWidget(outboundId);
+    }
+
+    if ( ! inboundWidget || ! outboundWidget ){
+        qWarning() << "Json connection not successfully loaded: invalid connection request" ;
+        return ;
+    }
+
+    // find specific sockets now
+    SocketWidget* inboundSocket ;
+    SocketWidget* outboundSocket ;
+
+    if ( inboundType == SocketType::ModulationInput ){
+        ParameterType modulatedParam = static_cast<ParameterType>(json["inbound"]["parameter"].toInt());
+        inboundSocket = getWidgetSocket(inboundWidget, inboundType, modulatedParam);
+        outboundSocket = getWidgetSocket(outboundWidget, outboundType);
+    } else {
+        inboundSocket = getWidgetSocket(inboundWidget, inboundType);
+        outboundSocket = getWidgetSocket(outboundWidget, outboundType);
+    }
+    
+    if ( ! inboundSocket || ! outboundSocket ){
+        qWarning() << "Json connection not successfully loaded: sockets not found" ;
+    }
+    
+    connectionManager_->startConnection(outboundSocket);
+    connectionManager_->finishConnection(inboundSocket);
+}
+
+SocketWidget* GraphPanel::getWidgetSocket(SocketContainerWidget* w, SocketType t, ParameterType p){
+    if (!w){
+        qWarning() << "invalid widget specified." ;
+        return nullptr ;
+    }
+
+    for ( auto s : w->getSockets() ){
+        if ( s->getType() == t ){
+            if ( t == SocketType::ModulationInput ){
+                if ( p == parameterFromString(s->getName().toStdString())){
+                    return s ;
+                }
+            } else {
+                return s ;
+            }
+        }
+    }
+
+    return nullptr ;
 }
 
 void GraphPanel::keyPressEvent(QKeyEvent* event){
@@ -345,6 +423,13 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
         int id = json["component_id"].toInt();
         ComponentType type = static_cast<ComponentType>(json["type"].toInt());
         addComponent(id, type);
+    }
+
+    // if the load api creates a connection, we need to draw it here
+    if ( action == "create_connection" ){
+        if ( json["status"] == "success" && ! json.contains("connectionId") ){
+            loadConnection(json);
+        }
     }
 }
 

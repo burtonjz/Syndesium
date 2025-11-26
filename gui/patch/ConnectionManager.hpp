@@ -40,13 +40,17 @@ private:
 public:
     explicit ConnectionManager(QGraphicsScene* scene, QObject* parent = nullptr);
 
+    // UI creating a connection
     void startConnection(SocketWidget* fromSocket);
     void updateDragConnection(const QPointF& scenePos);
     void finishConnection(const QPointF& scenePos);
+    ConnectionID finishConnection(SocketWidget* toWidget);
+
     void cancelConnection();
     void cancelConnection(ConnectionID connection);
 
     bool hasConnection(SocketWidget* socket) const ;
+    
     void removeConnection(ConnectionID connection);
     void removeSocketConnections(SocketWidget* socket);
     void removeAllConnections(SocketContainerWidget* widget);

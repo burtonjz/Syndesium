@@ -28,6 +28,7 @@
 #include <qdebug.h>
 #include <qgraphicsitem.h>
 #include <algorithm>
+#include <qjsonobject.h>
 
 ConnectionManager::ConnectionManager(QGraphicsScene* scene, QObject* parent): 
     QObject(parent), 
@@ -54,42 +55,59 @@ void ConnectionManager::updateDragConnection(const QPointF& scenePos){
 }
 
 void ConnectionManager::finishConnection(const QPointF& scenePos){
-    if (!dragConnection_ || !dragFromSocket_) {
-        qDebug() << "Cancelling connection." ;
-        cancelConnection();
-        return ;
-    }
-    
-    dragFromSocket_->ungrabMouse();
-
     SocketWidget* toSocket = findSocketAt(scenePos);
-    if (toSocket && canConnect(dragFromSocket_, toSocket)) {
-        // Complete the connection
-        dragConnection_->setToSocket(toSocket);
-    
-        // connect to position changes
-        SocketContainerWidget* fromWidget = dragFromSocket_->getParent();
-        SocketContainerWidget* toWidget = toSocket->getParent();
 
-        // set connection cable layering
-        dragConnection_->setZValue(std::max(fromWidget->zValue(), toWidget->zValue()) - 0.1);
+    ConnectionID id = finishConnection(toSocket);
 
-        connect(fromWidget, &SocketContainerWidget::positionChanged, 
-            this, &ConnectionManager::onWidgetPositionChanged);
-        connect(toWidget, &SocketContainerWidget::positionChanged, 
-            this, &ConnectionManager::onWidgetPositionChanged);
+    if ( id == -1 ) return ;
 
-        // add connection to map
-        ConnectionID id = currentConnectionID_++ ;
-        connections_[id] = dragConnection_ ;
+    sendConnectionApiRequest(id);    
+}
 
-        sendConnectionApiRequest(id);
-    } else {
+ConnectionID ConnectionManager::finishConnection(SocketWidget* toSocket){
+    if (!dragConnection_ || !dragFromSocket_) {
+        qWarning() << "from connection not specified. This shouldn't happen!" ;
         cancelConnection();
+        return -1 ;
     }
+
+    dragFromSocket_->ungrabMouse();
     
+    if (!toSocket){
+        qWarning() << "invalid toSocket specified." ;
+        cancelConnection();
+        return -1 ;
+    }
+
+    if ( ! canConnect(dragFromSocket_, toSocket)){
+        qWarning() << "invalid socket combination. Sockets cannot be connected" ;
+        cancelConnection();
+        return -1 ;
+    }
+
+    // Complete the connection
+    dragConnection_->setToSocket(toSocket);
+
+    // connect to position changes
+    SocketContainerWidget* fromWidget = dragFromSocket_->getParent();
+    SocketContainerWidget* toWidget = toSocket->getParent();
+
+    connect(fromWidget, &SocketContainerWidget::positionChanged, 
+        this, &ConnectionManager::onWidgetPositionChanged);
+    connect(toWidget, &SocketContainerWidget::positionChanged, 
+        this, &ConnectionManager::onWidgetPositionChanged);
+
+    // set connection cable layering
+    dragConnection_->setZValue(std::max(fromWidget->zValue(), toWidget->zValue()) - 0.1);
+
+    // add connection to map
+    ConnectionID id = currentConnectionID_++ ;
+    connections_[id] = dragConnection_ ;
+
     dragConnection_ = nullptr;
     dragFromSocket_ = nullptr;
+
+    return id ;
 }
 
 void ConnectionManager::cancelConnection()

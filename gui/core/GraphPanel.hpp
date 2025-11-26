@@ -22,6 +22,7 @@
 #include <QGraphicsScene>
 #include <QPointer>
 #include <QJsonArray>
+#include <qjsonobject.h>
 #include <vector>
 
 #include "patch/ConnectionManager.hpp"
@@ -48,6 +49,10 @@ private:
     SocketWidget* clickedSocket_ ;
     QAction* disconnectAllAct_ ;
 
+    // hardware widgets
+    SocketContainerWidget* audioOut_ ;
+    SocketContainerWidget* midiIn_ ;
+
 public:
     explicit GraphPanel(QWidget* parent = nullptr);
     ~GraphPanel();
@@ -59,6 +64,19 @@ public:
     void deleteSelectedModules();
 
     QJsonArray getComponentPositions() const ;
+
+    /**
+     * @brief draw connection created via load API
+     * 
+     * because connections are drawn as they are created, we need
+     * an interface to draw out a connection that is loaded through the
+     * load API. 
+     * 
+     * @param request 
+     */
+    void loadConnection(const QJsonObject& request); 
+    SocketContainerWidget* getWidget(int ComponentId);
+    SocketWidget* getWidgetSocket(SocketContainerWidget* w, SocketType t, ParameterType p = ParameterType::N_PARAMETERS );
 
 protected:
     void keyPressEvent(QKeyEvent* event) override ;

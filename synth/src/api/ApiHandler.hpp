@@ -45,7 +45,7 @@ struct ConnectionRequest {
 
 class ApiHandler {
 private:
-    using HandlerFunc = std::function<void(int sock, const json& request)>;
+    using HandlerFunc = std::function<json(int sock, const json& request)>;
     Engine* engine_ ;
     std::unordered_map<std::string, HandlerFunc> handlers_ ;
 
@@ -63,24 +63,28 @@ public:
     void start();
     void onClientConnection(int clientSock);
     void handleClientMessage(int clientSock, std::string jsonStr);
-    void sendApiResponse(int clientSock, json& response, const std::string& err = "");
+    json sendApiResponse(int clientSock, json& response, const std::string& err = "");
 
 private:
     // handler functions
-    void getAudioDevices(int sock, const json& request);
-    void getMidiDevices(int sock, const json& request);
-    void setAudioDevice(int sock, const json& request);
-    void setMidiDevice(int sock, const json& request);
-    void setState(int sock, const json& request);
-    void getConfiguration(int sock, const json& request);
-    void loadConfiguration(int sock, const json& request);
-    void getWaveforms(int sock, const json& request);
-    void addComponent(int sock, const json& request);
-    void removeComponent(int sock, const json& request);
-    void getComponentParameter(int sock, const json& request);
-    void setComponentParameter(int sock, const json& request);
-    void createConnection(int sock, const json& request);
-    void removeConnection(int sock, const json& request);
+    json getAudioDevices(int sock, const json& request);
+    json getMidiDevices(int sock, const json& request);
+    json setAudioDevice(int sock, const json& request);
+    json setMidiDevice(int sock, const json& request);
+    json setState(int sock, const json& request);
+    json getConfiguration(int sock, const json& request);
+    json loadConfiguration(int sock, const json& request);
+    json getWaveforms(int sock, const json& request);
+    json addComponent(int sock, const json& request);
+    json removeComponent(int sock, const json& request);
+    json getComponentParameter(int sock, const json& request);
+    json setComponentParameter(int sock, const json& request);
+    json createConnection(int sock, const json& request);
+    json removeConnection(int sock, const json& request);
+
+    // load functions
+    bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);
+    bool loadConnectComponent(int sock, const json& components, const std::unordered_map<int,int>& idMap);
 
     // cable connection functions
     ConnectionRequest parseConnectionRequest(json request);
