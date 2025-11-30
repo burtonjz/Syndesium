@@ -13,6 +13,7 @@
 #include <chrono>
 #include <csignal>
 #include <iostream>
+#include <mutex>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <fcntl.h>
@@ -516,14 +517,10 @@ json Engine::serialize() const {
 
     // get root midi devices
     for ( auto m : midiState_.getHandlers() ){
-        output["rootMidiHandlers"] = m->getId() ;
+        output["rootMidiHandlers"].push_back(m->getId()) ;
     }
 
     return output ;
-}
-
-void Engine::deserialize(const json& j){
-
 }
 
 // ============================================================================

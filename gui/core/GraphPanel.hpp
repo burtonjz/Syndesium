@@ -75,6 +75,8 @@ public:
      * @param request 
      */
     void loadConnection(const QJsonObject& request); 
+    void loadPositions(const QJsonObject& request);
+
     SocketContainerWidget* getWidget(int ComponentId);
     SocketWidget* getWidgetSocket(SocketContainerWidget* w, SocketType t, ParameterType p = ParameterType::N_PARAMETERS );
 

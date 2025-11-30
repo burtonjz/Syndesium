@@ -294,19 +294,24 @@ json ApiHandler::loadConfiguration(int sock, const json& request){
     
     // create components
     try {
-        request.at("components");
-        assert(request["components"].is_array() && "components is not a json array");
+        response.at("components");
+        assert(response["components"].is_array() && "components is not a json array");
     } catch ( const std::exception& e ){
         return sendApiResponse(sock, response, "Error processing json request " + std::string(e.what()));
     }
 
     std::unordered_map<int,int> idMap ;
-    if ( ! loadCreateComponent(sock,request["components"], idMap) ){
+    if ( ! loadCreateComponent(sock,response["components"], idMap) ){
         return sendApiResponse(sock, response, "Error creating components");
     }
 
+    // update response data with new component ids
+    std::cout << "before id update: " << response.dump() << std::endl ;
+    loadUpdateIds(response, idMap);
+    std::cout << "after id update: " << response.dump() << std::endl ;
+
     // connect components
-    if ( ! loadConnectComponent(sock, request, idMap) ){
+    if ( ! loadConnectComponent(sock, response) ){
         return sendApiResponse(sock, response, "Error connecting components");
     }
 
@@ -339,11 +344,13 @@ json ApiHandler::addComponent(int sock, const json& request){
 }
 
 json ApiHandler::removeComponent(int sock, const json& request){
-    std::cout << "remove component not yet implemented" << std::endl ;
+    json response = request ;
+    return sendApiResponse(sock, response, "remove component not yet implemented");
 }
 
 json ApiHandler::getComponentParameter(int sock, const json& request){
-    std::cout << "get component parameter not yet implemented" << std::endl ;
+    json response = request ;
+    return sendApiResponse(sock, response, "get component parameter not yet implemented");
 }
 
 json ApiHandler::setComponentParameter(int sock, const json& request){
@@ -604,6 +611,221 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
     return true ;
 }
 
-bool ApiHandler::loadConnectComponent(int sock, const json& components, const std::unordered_map<int,int>& idMap){
+bool ApiHandler::loadConnectComponent(int sock, const json& config){
+    // first handle audio sinks
+    json audioSinks ;
+    try {
+        assert(config["AudioSinks"].is_array() && "'AudioSinks' json data is not in expected format");
+    } catch (const std::exception& e){
+        std::cout << "Error processing json request: " << std::string(e.what()) ;
+        return false ;
+    }
+
+    json request ;
+    json connectionResponse ;
+    json inbound ;
+    json outbound ;
+    for ( const auto& id : config["AudioSinks"] ){
+        request["action"] = "create_connection" ;
+        inbound["socketType"] = SocketType::SignalInput ;
+        outbound["socketType"] = SocketType::SignalOutput ;
+        outbound["id"] = id ;
+        
+        request["inbound"] = inbound ;
+        request["outbound"] = outbound ;
+        connectionResponse = createConnection(sock, request);
+        if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
+            std::cerr << "error requesting connection: " << connectionResponse.dump() << std::endl ;
+            return false ;
+        }
+
+        request.clear();
+        inbound.clear();
+        outbound.clear();
+    }
+
+    // now rootMidiHandlers
+    json midiHandlers ;
+    try {
+        assert(config["rootMidiHandlers"].is_array() && "'rootMidiHandlers' json data is not in expected format");
+    } catch (const std::exception& e){
+        std::cout << "Error processing json request: " << std::string(e.what()) ;
+        return false ;
+    }
+
+    for ( const auto& id : config["rootMidiHandlers"] ){
+        request["action"] = "create_connection" ;
+        inbound["socketType"] = SocketType::MidiInput ;
+        outbound["socketType"] = SocketType::MidiOutput ;
+        inbound["id"] = id ;
+
+        request["inbound"] = inbound ;
+        request["outbound"] = outbound ;
+
+        connectionResponse = createConnection(sock, request);
+        if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
+            std::cerr << "error requestion connection: " << connectionResponse.dump() << std::endl ;
+            return false ;
+        }
+
+        request.clear();
+        inbound.clear();
+        outbound.clear();
+    }
+
+    // lastly, component to component connections
+    try {
+        assert(config["components"].is_array() && "'components' json data is not in expected format");
+    } catch (const std::exception& e){
+        std::cout << "Error processing json request: " << std::string(e.what()) ;
+        return false ;
+    }
+
+    json params ;
+    json midiListeners ;
+    json signalInputs ;
+    ComponentId id ;
+
     
+    for ( const auto& component : config["components"] ){
+        std::cout << "current component: " << component.dump() << std::endl ;
+        if ( ! component.is_object() ){
+            std::cerr << "component is not in expected format: " << component.dump() ;
+            return false ;
+        }
+
+        try {
+            id = component["id"] ;
+            params = component["parameters"];
+            assert(params.is_object() && "parameters is not in the correct format.");
+        } catch (const std::exception& e){
+            std::cout << "Error processing json components object: " << std::string(e.what()) ;
+            return false ;
+        } 
+
+        // audio connections
+        if ( component.contains("signalInputs") && component["signalInputs"].is_array() ){
+            for ( const auto& outboundId : component["signalInputs"] ) {
+                request["action"] = "create_connection" ;
+
+                inbound["id"] = id ;
+                inbound["socketType"] = SocketType::SignalInput ;
+
+                outbound["id"] = outboundId ;
+                outbound["socketType"] = SocketType::SignalOutput ;
+
+                request["inbound"] = inbound ;
+                request["outbound"] = outbound ;
+
+                connectionResponse = createConnection(sock, request);
+                if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
+                    std::cerr << "error requesting connection: " << connectionResponse.dump() << std::endl ;
+                    return false ;
+                }
+
+                request.clear();
+                inbound.clear();
+                outbound.clear();
+            }
+        }
+
+        // midi connections
+        if ( component.contains("midiListeners") && component["midiListeners"].is_array()){
+            for ( const auto& inboundId : component["midiListeners"] ){
+                request["action"] = "create_connection" ;
+
+                inbound["id"] = inboundId ;
+                inbound["socketType"] = SocketType::MidiInput ;
+                
+                outbound["id"] = id ;
+                outbound["socketType"] = SocketType::MidiOutput ;
+
+                request["inbound"] = inbound ;
+                request["outbound"] = outbound ;
+
+                connectionResponse = createConnection(sock, request);
+                if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
+                    std::cerr << "error requesting connection: " << connectionResponse.dump() << std::endl ;
+                    return false ;
+                }
+
+                request.clear();
+                inbound.clear();
+                outbound.clear();
+            }
+        }
+
+        // modulation connections
+        for ( const auto& [p, data] : params.items() ){
+            if ( data.contains("modulatorId") ){
+                request["action"] = "create_connection" ;
+
+                inbound["id"] = id ;
+                inbound["socketType"] = SocketType::ModulationInput ;
+                inbound["parameter"] = parameterFromString(p);
+
+                outbound["id"] = data["modulatorId"];
+                outbound["socketType"] = SocketType::ModulationOutput ;
+                
+                request["inbound"] = inbound ;
+                request["outbound"] = outbound ;
+
+                connectionResponse = createConnection(sock, request);
+                if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
+                    std::cerr << "error requesting connection: " << connectionResponse.dump() << std::endl ;
+                    return false ;
+                }
+
+                request.clear();
+                inbound.clear();
+                outbound.clear();
+            }
+        }
+    }
+
+    return true ;
+
+}
+
+
+void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap){
+    std::vector<std::string> keys = {"id", "ComponentId", "signalInputs", "rootMidiHandlers", "midiListeners", "modulatorId", "AudioSinks"};
+    if ( j.is_object() ) {
+        for ( const auto& key : keys ) {
+            // single values
+            if ( j.contains(key) && j[key].is_number_integer() ) {
+                int currentId = j[key];
+                auto it = idMap.find(currentId);
+                if ( it != idMap.end() ) {
+                    std::cout << "replacing id " << j[key] << " with new id " << it->second << std::endl ;
+                    j[key] = it->second; 
+                }
+            }
+
+            // array values
+            if (j.contains(key) && j[key].is_array()) {
+                for (auto& element : j[key]) {
+                    if (element.is_number_integer()) {
+                        int currentId = element;
+                        auto it = idMap.find(currentId);
+                        if (it != idMap.end()) {
+                            std::cout << "replacing id " << element << " with new id " << it->second << std::endl;
+                            element = it->second;
+                        }
+                    }
+                }
+            }
+        }
+        
+        // recurse nested values
+        for ( auto& [key, value] : j.items() ) {
+            loadUpdateIds(value, idMap);
+        }
+    }
+    else if ( j.is_array() ) {
+        // recurse array elements
+        for (auto& element : j) {
+            loadUpdateIds(element, idMap);
+        }
+    }
 }

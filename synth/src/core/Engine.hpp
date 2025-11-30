@@ -20,7 +20,6 @@
 
 #include <atomic>
 
-#include <condition_variable>
 #include <map>
 #include <rtmidi/RtMidi.h>
 #include <rtaudio/RtAudio.h>
@@ -85,7 +84,6 @@ public:
     bool unregisterBaseMidiHandler(MidiEventHandler* handler);
 
     json serialize() const ;
-    void deserialize(const json& j);
 
     // publically available controllers
     ComponentManager componentManager;

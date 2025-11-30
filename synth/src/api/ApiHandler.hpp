@@ -84,7 +84,8 @@ private:
 
     // load functions
     bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);
-    bool loadConnectComponent(int sock, const json& components, const std::unordered_map<int,int>& idMap);
+    bool loadConnectComponent(int sock, const json& config);
+    void loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap);
 
     // cable connection functions
     ConnectionRequest parseConnectionRequest(json request);

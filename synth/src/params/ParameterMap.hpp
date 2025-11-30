@@ -218,7 +218,7 @@ class ParameterMap {
 
         json toJson() const {
             json output ;
-            for (const auto [typ, p] : parameters_ ){
+            for (const auto& [typ, p] : parameters_ ){
                 if (reference_.find(typ) != reference_.end()){
                     continue ; // don't store references
                 }

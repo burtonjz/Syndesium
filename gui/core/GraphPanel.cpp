@@ -154,10 +154,11 @@ void GraphPanel::addMidiInput(){
 SocketContainerWidget* GraphPanel::getWidget(int componentId){
     for ( auto widget : widgets_ ){
         auto component = dynamic_cast<ComponentWidget*>(widget);
-        if ( component->getID() == componentId){
+        if ( component && component->getID() == componentId){
             return widget ;
         }
     }
+    return nullptr ;
 }
 
 void GraphPanel::deleteSelectedModules(){
@@ -186,7 +187,7 @@ QJsonArray GraphPanel::getComponentPositions() const {
         if ( component ){
             auto pos = component->pos();
             positions.append(QJsonObject{
-                {"ComponentID", component->getID()},
+                {"ComponentId", component->getID()},
                 {"xpos", pos.x()},
                 {"ypos", pos.y()}
             });
@@ -195,14 +196,14 @@ QJsonArray GraphPanel::getComponentPositions() const {
     return positions ;
 }
 
-void GraphPanel::loadConnection(const QJsonObject& json){
-    int inboundId = json["inbound"]["id"].toInt(-1);
-    int outboundId = json["outbound"]["id"].toInt(-1);
-    SocketType inboundType = static_cast<SocketType>(json["inbound"]["socketType"].toInt());
-    SocketType outboundType = static_cast<SocketType>(json["outbound"]["socketType"].toInt());
+void GraphPanel::loadConnection(const QJsonObject& request){
+    int inboundId = request["inbound"]["id"].toInt(-1);
+    int outboundId = request["outbound"]["id"].toInt(-1);
+    SocketType inboundType = static_cast<SocketType>(request["inbound"]["socketType"].toInt());
+    SocketType outboundType = static_cast<SocketType>(request["outbound"]["socketType"].toInt());
 
-    SocketContainerWidget* inboundWidget ;
-    SocketContainerWidget* outboundWidget ;
+    SocketContainerWidget* inboundWidget = nullptr ;
+    SocketContainerWidget* outboundWidget = nullptr ;
 
     if ( inboundId == -1 && inboundType == SocketType::SignalInput ){
         inboundWidget = audioOut_ ;
@@ -210,10 +211,10 @@ void GraphPanel::loadConnection(const QJsonObject& json){
         inboundWidget = getWidget(inboundId);
     }
 
-    if ( outboundId == -1 && outboundType == SocketType::MidiInput){
+    if ( outboundId == -1 && outboundType == SocketType::MidiOutput){
         outboundWidget = midiIn_ ;
     } else {
-        inboundWidget = getWidget(outboundId);
+        outboundWidget = getWidget(outboundId);
     }
 
     if ( ! inboundWidget || ! outboundWidget ){
@@ -226,7 +227,7 @@ void GraphPanel::loadConnection(const QJsonObject& json){
     SocketWidget* outboundSocket ;
 
     if ( inboundType == SocketType::ModulationInput ){
-        ParameterType modulatedParam = static_cast<ParameterType>(json["inbound"]["parameter"].toInt());
+        ParameterType modulatedParam = static_cast<ParameterType>(request["inbound"]["parameter"].toInt());
         inboundSocket = getWidgetSocket(inboundWidget, inboundType, modulatedParam);
         outboundSocket = getWidgetSocket(outboundWidget, outboundType);
     } else {
@@ -241,6 +242,25 @@ void GraphPanel::loadConnection(const QJsonObject& json){
     connectionManager_->startConnection(outboundSocket);
     connectionManager_->finishConnection(inboundSocket);
 }
+
+void GraphPanel::loadPositions(const QJsonObject& request){
+    // Loop through each position object
+    auto positions = request["positions"].toArray();
+
+    for (const QJsonValue& value : positions) {
+        QJsonObject posObj = value.toObject();
+        
+        int componentID = posObj["ComponentId"].toInt();
+        int xpos = posObj["xpos"].toInt();
+        int ypos = posObj["ypos"].toInt();
+        
+        auto c = getWidget(componentID);
+        if ( c ){
+            c->setPos(xpos,ypos);
+        }
+    }
+}
+
 
 SocketWidget* GraphPanel::getWidgetSocket(SocketContainerWidget* w, SocketType t, ParameterType p){
     if (!w){
@@ -429,6 +449,12 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
     if ( action == "create_connection" ){
         if ( json["status"] == "success" && ! json.contains("connectionId") ){
             loadConnection(json);
+        }
+    }
+
+    if ( action == "load_configuration" ){
+        if ( json["status"] == "success"){
+            loadPositions(json);
         }
     }
 }
