@@ -16,6 +16,7 @@
  */
 
 #include "components/Oscillator.hpp"
+#include "dsp/detune.hpp"
 #include "types/ComponentType.hpp"
 #include "dsp/Wavetable.hpp"
 #include "params/ParameterMap.hpp"
@@ -83,7 +84,13 @@ double Oscillator::modulate([[maybe_unused]] double value, [[maybe_unused]] Modu
 
 void Oscillator::tick(){
     BaseModule::tick();
+
     auto frequency = parameters_->getParameter<ParameterType::FREQUENCY>()->getInstantaneousValue();
+    auto detune = parameters_->getParameter<ParameterType::DETUNE>();
+    if ( detune ){
+        frequency *= dsp::getDetuneScale(detune->getInstantaneousValue());
+    }
+
     increment_ = frequency / sampleRate_ ;
     phase_ = std::fmod(phase_ + increment_, 1.0);
 }

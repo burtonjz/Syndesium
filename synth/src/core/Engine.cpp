@@ -9,6 +9,7 @@
 #include "midi/MidiEventListener.hpp"
 #include "types/Waveform.hpp"
 #include "midi/MidiController.hpp"
+#include "dsp/detune.hpp"
 
 #include <chrono>
 #include <csignal>
@@ -59,6 +60,8 @@ Engine::Engine():
     registerBaseMidiHandler(&midiDefaultHandler_);
     midiController.addHandler(&midiDefaultHandler_);
     signal(SIGINT, Engine::signalHandler);
+
+    dsp::initializeDetuneLUT();
 }
 
 // Destructor - ensure clean shutdown
