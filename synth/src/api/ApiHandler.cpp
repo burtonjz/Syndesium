@@ -306,9 +306,7 @@ json ApiHandler::loadConfiguration(int sock, const json& request){
     }
 
     // update response data with new component ids
-    std::cout << "before id update: " << response.dump() << std::endl ;
     loadUpdateIds(response, idMap);
-    std::cout << "after id update: " << response.dump() << std::endl ;
 
     // connect components
     if ( ! loadConnectComponent(sock, response) ){
@@ -595,7 +593,6 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
                 if ( ! data.contains("currentValue") ){
                     continue ; // just has modulation
                 }
-                std::cout << "parameter type = " << p << std::endl ;
                 parameterType = static_cast<ParameterType>(parameterFromString(p));
                 parameterRequest["action"] = "set_component_parameter" ;
                 parameterRequest["componentId"] = idMap[id] ;
@@ -688,7 +685,6 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
 
     
     for ( const auto& component : config["components"] ){
-        std::cout << "current component: " << component.dump() << std::endl ;
         if ( ! component.is_object() ){
             std::cerr << "component is not in expected format: " << component.dump() ;
             return false ;
@@ -797,7 +793,6 @@ void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMa
                 int currentId = j[key];
                 auto it = idMap.find(currentId);
                 if ( it != idMap.end() ) {
-                    std::cout << "replacing id " << j[key] << " with new id " << it->second << std::endl ;
                     j[key] = it->second; 
                 }
             }
@@ -809,7 +804,6 @@ void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMa
                         int currentId = element;
                         auto it = idMap.find(currentId);
                         if (it != idMap.end()) {
-                            std::cout << "replacing id " << element << " with new id " << it->second << std::endl;
                             element = it->second;
                         }
                     }
