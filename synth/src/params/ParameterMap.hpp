@@ -39,13 +39,12 @@ class ParameterBase ;
 class BaseModulator ;
 
 using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PARAMETERS> ;
-using params = RTMap<ParameterType, ParameterBase*, N_PARAMETER_TYPES> ;
+using params = std::array<ParameterBase*, N_PARAMETER_TYPES> ;
 using json = nlohmann::json ;
 
 class ParameterMap {
     private:
-        params parameters_ ;
-        std::array<ParameterBase*, static_cast<size_t>(ParameterType::N_PARAMETERS)> cache_{} ;
+        params parameters_{} ;
         std::set<ParameterType> modulatable_ ; 
         std::set<ParameterType> reference_ ; // parameters that are reference only to a parent parameter map (like a polyOscillator managing child oscillators)
 
@@ -57,16 +56,11 @@ class ParameterMap {
         {}
 
         ParameterBase* getParameter(ParameterType p) const {
-            // auto it = parameters_.find(p);
-            // if ( it == parameters_.end() ) return nullptr ;
-            // return it->second ;
-            return cache_[static_cast<size_t>(p)];
+            return parameters_[static_cast<size_t>(p)];
         }
 
         template <ParameterType typ>
         Parameter<typ>* getParameter() const {
-            auto it = parameters_.find(typ);
-            if (it == parameters_.end() ) return nullptr ;
             return dynamic_cast<Parameter<typ>*>(getParameter(typ)) ;
         }
 
@@ -84,26 +78,19 @@ class ParameterMap {
             }
                 
             Parameter<typ>* p = new Parameter<typ>(defaultValue, modulatable, minValue, maxValue, modulator, modData);
-            parameters_[typ] = p ;
+            parameters_[static_cast<size_t>(typ)] = p ;
             if (modulatable) modulatable_.insert(typ);
         }
 
         void addReferences(ParameterMap& other){
             const params& otherParams = other.getBaseMap();
-            for (const auto& pair : otherParams ){
-                parameters_[pair.first] = pair.second ;
-                reference_.insert(pair.first) ;
+            for ( size_t i = 0 ; i < otherParams.size() ; ++i ){
+                parameters_[i] = otherParams[i] ;
+                reference_.insert(ParameterType(i)) ;
 
                 // we won't actually perform the modulation in the child object,
                 // but we still need to track modulatable parameters
-                if(pair.second->isModulatable()) modulatable_.insert(pair.first); 
-            }
-        }
-
-        void finalizeParameters(){
-            std::fill(cache_.begin(), cache_.end(), nullptr);
-            for (auto& [type, p] : parameters_ ){
-                cache_[static_cast<size_t>(type)] = p ;
+                if(otherParams[i]->isModulatable()) modulatable_.insert(ParameterType(i)); 
             }
         }
 
@@ -227,7 +214,8 @@ class ParameterMap {
 
         json toJson() const {
             json output ;
-            for (const auto& [typ, p] : parameters_ ){
+            for ( size_t p = 0 ; p < N_PARAMETER_TYPES ; ++p ){
+                ParameterType typ = static_cast<ParameterType>(p);
                 if (reference_.find(typ) != reference_.end()){
                     continue ; // don't store references
                 }
@@ -252,12 +240,12 @@ class ParameterMap {
 
     private:
         void modulateParameter(ParameterType typ){
-            auto p = parameters_.find(typ);
+            auto p = getParameter(typ);
             auto r = reference_.find(typ);
 
-            if ( p == parameters_.end() || r != reference_.end() ) return ;
+            if ( ! p || r != reference_.end() ) return ;
 
-            p->second->modulate();
+            p->modulate();
         }
 
 };

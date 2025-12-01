@@ -24,7 +24,6 @@
 #include "types/ParameterType.hpp"
 #include "core/BaseModulator.hpp"
 #include "config/Config.hpp"
-#include "dsp/detune.hpp"
 
 #include <cmath>
 #include <utility>
@@ -42,7 +41,6 @@ PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
     parameters_->add<ParameterType::WAVEFORM>(cfg.waveform,false);
     parameters_->add<ParameterType::GAIN>(1.0 , false);
     parameters_->add<ParameterType::DETUNE>(0, false);
-    parameters_->finalizeParameters();
 
     updateGain();
 

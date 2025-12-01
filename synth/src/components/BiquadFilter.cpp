@@ -17,7 +17,6 @@ BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     parameters_->add<ParameterType::Q_FACTOR>(cfg.qFactor,true);
     parameters_->add<ParameterType::BANDWIDTH>(cfg.bandwidth,true);
     parameters_->add<ParameterType::SHELF>(cfg.shelfSlope,true);
-    parameters_->finalizeParameters();
 
     sampleRate_ = Config::get<double>("audio.sample_rate").value();
 }

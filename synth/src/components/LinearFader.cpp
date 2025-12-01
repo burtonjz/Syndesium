@@ -30,7 +30,6 @@ LinearFader::LinearFader(ComponentId id, LinearFaderConfig cfg):
 {
     parameters_->add<ParameterType::ATTACK>(cfg.attack, true);
     parameters_->add<ParameterType::RELEASE>(cfg.release, true);
-    parameters_->finalizeParameters();
 
     requiredParams_ = {
         ModulationParameter::MIDI_NOTE, 

@@ -27,7 +27,6 @@ ADSREnvelope::ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg):
     parameters_->add<ParameterType::DECAY>(cfg.decay, true);
     parameters_->add<ParameterType::SUSTAIN>(cfg.sustain, true);
     parameters_->add<ParameterType::RELEASE>(cfg.release, true);
-    parameters_->finalizeParameters();
 
     requiredParams_ = {
         ModulationParameter::MIDI_NOTE, 

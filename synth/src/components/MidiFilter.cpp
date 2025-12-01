@@ -8,8 +8,6 @@ MidiFilter::MidiFilter(ComponentId id, MidiFilterConfig cfg):
 {
     parameters_->add<ParameterType::MIN_VALUE>(cfg.min_value,false);
     parameters_->add<ParameterType::MAX_VALUE>(cfg.max_value,false);
-    parameters_->finalizeParameters();
-
 }
 
 void MidiFilter::onKeyPressed(const ActiveNote* note, bool rePressed){

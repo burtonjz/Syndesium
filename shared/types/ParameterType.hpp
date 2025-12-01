@@ -38,7 +38,7 @@ To add a ParameterType, the following is required:
  * @brief types of parameters that might exist within any given module
  * 
 */
-enum class ParameterType {
+enum class ParameterType: uint8_t {
     DEPTH,
     STATUS,
     WAVEFORM,
