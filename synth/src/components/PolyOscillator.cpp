@@ -42,6 +42,7 @@ PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
     parameters_->add<ParameterType::WAVEFORM>(cfg.waveform,false);
     parameters_->add<ParameterType::GAIN>(1.0 , false);
     parameters_->add<ParameterType::DETUNE>(0, false);
+    parameters_->finalizeParameters();
 
     updateGain();
 

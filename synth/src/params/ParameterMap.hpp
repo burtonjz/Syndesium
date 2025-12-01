@@ -45,6 +45,7 @@ using json = nlohmann::json ;
 class ParameterMap {
     private:
         params parameters_ ;
+        std::array<ParameterBase*, static_cast<size_t>(ParameterType::N_PARAMETERS)> cache_{} ;
         std::set<ParameterType> modulatable_ ; 
         std::set<ParameterType> reference_ ; // parameters that are reference only to a parent parameter map (like a polyOscillator managing child oscillators)
 
@@ -56,9 +57,10 @@ class ParameterMap {
         {}
 
         ParameterBase* getParameter(ParameterType p) const {
-            auto it = parameters_.find(p);
-            if ( it == parameters_.end() ) return nullptr ;
-            return it->second ;
+            // auto it = parameters_.find(p);
+            // if ( it == parameters_.end() ) return nullptr ;
+            // return it->second ;
+            return cache_[static_cast<size_t>(p)];
         }
 
         template <ParameterType typ>
@@ -95,6 +97,13 @@ class ParameterMap {
                 // we won't actually perform the modulation in the child object,
                 // but we still need to track modulatable parameters
                 if(pair.second->isModulatable()) modulatable_.insert(pair.first); 
+            }
+        }
+
+        void finalizeParameters(){
+            std::fill(cache_.begin(), cache_.end(), nullptr);
+            for (auto& [type, p] : parameters_ ){
+                cache_[static_cast<size_t>(type)] = p ;
             }
         }
 

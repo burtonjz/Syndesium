@@ -35,7 +35,9 @@ Oscillator::Oscillator(ComponentId id, OscillatorConfig cfg):
     parameters_->add<ParameterType::AMPLITUDE>(1.0,true);
     parameters_->add<ParameterType::FREQUENCY>(cfg.frequency, true, 0.0, sampleRate_ / 2.0); // limit to nyquist frequency
     parameters_->add<ParameterType::GAIN>(1.0,false);
+    parameters_->finalizeParameters();
 }
+
 
 Oscillator::Oscillator(ParameterMap& parent, double frequency):
     BaseComponent(-1, ComponentType::Oscillator),
@@ -48,6 +50,7 @@ Oscillator::Oscillator(ParameterMap& parent, double frequency):
     parameters_->addReferences(parent);
     parameters_->add<ParameterType::AMPLITUDE>(1.0,true);
     parameters_->add<ParameterType::FREQUENCY>(frequency, true, 0.0, sampleRate_ / 2.0); // limit to nyquist frequency
+    parameters_->finalizeParameters();
 }
 
 bool Oscillator::isGenerative() const {
