@@ -42,40 +42,40 @@ double LinearFader::modulate([[maybe_unused]] double value, ModulationData* mDat
 
     // check required data / set to defaults
     if ( !mData ) return output ; 
-    if ( mData->find(ModulationParameter::MIDI_NOTE)     == mData->end() ) return output ;
+    if ( !mData->has(ModulationParameter::MIDI_NOTE) ) return output ;
     
-    if ( mData->find(ModulationParameter::INITIAL_VALUE) == mData->end() ){ 
-        (*mData)[ModulationParameter::INITIAL_VALUE] = 0.0f ;     
+    if ( !mData->has(ModulationParameter::INITIAL_VALUE) ){ 
+        mData->set(ModulationParameter::INITIAL_VALUE, 0.0f) ;     
     }
-    if ( mData->find(ModulationParameter::OUTPUT_1)    == mData->end() ){ 
-        (*mData)[ModulationParameter::OUTPUT_1] = 0.0f ;    
+    if ( !mData->has(ModulationParameter::OUTPUT_1) ){ 
+        mData->set(ModulationParameter::OUTPUT_1, 0.0f );    
     }
     
-    uint8_t midiNote = static_cast<uint8_t>((*mData)[ModulationParameter::MIDI_NOTE].get()) ;
-    auto it = notes_.find(midiNote) ;
-    if ( it == notes_.end() ){ return output ; }
+    uint8_t midiNote = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
+    auto anote = notes_[midiNote] ;
+    if ( !isNoteActive(midiNote) ) return output ;
 
-    float start_level = (*mData)[ModulationParameter::INITIAL_VALUE].get() ;
+    float start_level = mData->get(ModulationParameter::INITIAL_VALUE) ;
     
-    if ( it->second.note.getStatus() ){
+    if ( anote.note.getStatus() ){
         // note is pressed
         float attack = parameters_->getParameter<ParameterType::ATTACK>()->getInstantaneousValue() ;
-        if ( it->second.time <= attack ) {
-            output = start_level + (1.0f - start_level) * (it->second.time / attack) ;
+        if ( anote.time <= attack ) {
+            output = start_level + (1.0f - start_level) * (anote.time / attack) ;
         } else {
             output = 1.0f ; // full modulation
         }
     } else {
         // note is released
         float release = parameters_->getParameter<ParameterType::RELEASE>()->getInstantaneousValue() ;
-        if ( it->second.time >= release ){
+        if ( anote.time >= release ){
             output = 0.0 ;
         } else {
-            output =  start_level * (1.0f - ( it->second.time / release )); 
+            output =  start_level * (1.0f - ( anote.time / release )); 
         }
     }
 
-    (*mData)[ModulationParameter::OUTPUT_1].set(output) ;
+    mData->set(ModulationParameter::OUTPUT_1, output) ;
     return output ;
 }
 

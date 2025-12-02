@@ -21,7 +21,6 @@
 #include "core/BaseModule.hpp"
 #include "core/BaseModulator.hpp"
 #include "configs/OscillatorConfig.hpp"
-#include "params/Parameter.hpp"
 #include "types/Waveform.hpp"
 
 class Oscillator : public BaseModule, public BaseModulator {

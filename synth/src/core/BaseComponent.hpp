@@ -21,11 +21,8 @@
 #include "types/ParameterType.hpp"
 #include "types/ComponentType.hpp"
 #include "params/ModulationParameter.hpp"
-#include "containers/AtomicFloat.hpp"
-#include "containers/RTMap.hpp"
-#include <nlohmann/json.hpp>
 
-#include <memory>
+#include <nlohmann/json.hpp>
 #include <unordered_set>
 
 // forward declarations (needed to support modulation derived classes)
@@ -33,7 +30,6 @@ class ParameterMap ;
 class BaseModulator ;
 class BaseModule ;
 
-using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PARAMETERS> ;
 using json = nlohmann::json ;
 using ComponentId = int ;
 
@@ -41,7 +37,7 @@ class BaseComponent {
 protected:
     ComponentId id_ ;
     ComponentType type_ ;
-    std::unique_ptr<ParameterMap> parameters_ ; 
+    ParameterMap* parameters_ ; 
     std::unordered_set<BaseModule*> modulationModules_ ;
 
 public:
@@ -51,7 +47,7 @@ public:
     
     ComponentId getId() const { return id_ ; }
     ComponentType getType() const { return type_ ; }
-    ParameterMap* getParameters() { return parameters_.get() ;}
+    ParameterMap* getParameters() { return parameters_ ;}
     std::unordered_set<BaseModule*>& getModulationInputs() ;
 
     bool setParameterValue(ParameterType t, const json& value);

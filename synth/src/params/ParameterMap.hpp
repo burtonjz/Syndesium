@@ -21,8 +21,6 @@
 #include "params/Parameter.hpp"
 #include "params/ModulationParameter.hpp"
 #include "types/ParameterType.hpp"
-#include "containers/RTMap.hpp"
-#include "containers/AtomicFloat.hpp"
 #include "config/Config.hpp"
 
 #include <nlohmann/json.hpp>
@@ -38,7 +36,6 @@ class Parameter ;
 class ParameterBase ;
 class BaseModulator ;
 
-using  ModulationData = RTMap<ModulationParameter, AtomicFloat, N_MODULATION_PARAMETERS> ;
 using params = std::array<ParameterBase*, N_PARAMETER_TYPES> ;
 using json = nlohmann::json ;
 
@@ -61,7 +58,7 @@ class ParameterMap {
 
         template <ParameterType typ>
         Parameter<typ>* getParameter() const {
-            return dynamic_cast<Parameter<typ>*>(getParameter(typ)) ;
+            return static_cast<Parameter<typ>*>(getParameter(typ)) ;
         }
 
         template <ParameterType typ>
@@ -85,6 +82,8 @@ class ParameterMap {
         void addReferences(ParameterMap& other){
             const params& otherParams = other.getBaseMap();
             for ( size_t i = 0 ; i < otherParams.size() ; ++i ){
+                if ( !otherParams[i] ) continue ;
+
                 parameters_[i] = otherParams[i] ;
                 reference_.insert(ParameterType(i)) ;
 
@@ -216,9 +215,9 @@ class ParameterMap {
             json output ;
             for ( size_t p = 0 ; p < N_PARAMETER_TYPES ; ++p ){
                 ParameterType typ = static_cast<ParameterType>(p);
-                if (reference_.find(typ) != reference_.end()){
-                    continue ; // don't store references
-                }
+
+                if ( !parameters_[p] ) continue ;
+                if (reference_.find(typ) != reference_.end()) continue ;
                 
                 output[GET_PARAMETER_TRAIT_MEMBER(typ, name)] = { 
                     {"currentValue", ParameterValueToJson(getValueDispatch(typ))},

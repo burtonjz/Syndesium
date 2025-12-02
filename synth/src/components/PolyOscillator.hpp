@@ -24,7 +24,6 @@
 #include "containers/RTMap.hpp"
 #include "containers/FixedPool.hpp"
 #include "components/Oscillator.hpp"
-#include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
 #include "configs/PolyOscillatorConfig.hpp"
 #include <cstdint>
@@ -36,8 +35,8 @@ private:
     FixedPool<Oscillator, 128> childPool_ ;
 
     // modulation
-    RTMap<ParameterType, BaseModulator*, N_PARAMETER_TYPES> modulators_ ;
-    RTMap<ParameterType, ModulationData, N_PARAMETER_TYPES> modulationData_ ;
+    std::array<BaseModulator*, N_PARAMETER_TYPES> modulators_ ;
+    std::array<ModulationData, N_PARAMETER_TYPES> modulationData_ ;
     
 public:
     // Constructors

@@ -105,32 +105,32 @@ double BiquadFilter::modulate(double value, ModulationData* mData) const {
 
     // check required data
     if ( !mData ) return output ; 
-    if ( mData->find(ModulationParameter::INPUT_1)  == mData->end() ){
-        (*mData)[ModulationParameter::INPUT_1] = 0.0 ;    
+    if ( ! mData->has(ModulationParameter::INPUT_1) ){
+        mData->set(ModulationParameter::INPUT_1, 0.0);
     }
-    if ( mData->find(ModulationParameter::INPUT_2)  == mData->end() ){
-        (*mData)[ModulationParameter::INPUT_2] = 0.0 ;    
+    if ( ! mData->has(ModulationParameter::INPUT_2) ){
+        mData->set(ModulationParameter::INPUT_2, 0.0);
     }
-    if ( mData->find(ModulationParameter::OUTPUT_1) == mData->end() ){
-        (*mData)[ModulationParameter::OUTPUT_1] = 0.0 ;    
+    if ( ! mData->has(ModulationParameter::OUTPUT_1) ){
+        mData->set(ModulationParameter::OUTPUT_1, 0.0);
     }
-    if ( mData->find(ModulationParameter::OUTPUT_2) == mData->end() ){
-        (*mData)[ModulationParameter::OUTPUT_2] = 0.0 ;    
+    if ( ! mData->has(ModulationParameter::OUTPUT_2) ){
+        mData->set(ModulationParameter::OUTPUT_2, 0.0);
     }
 
     output = getCurrentOutput(
         value,
-        (*mData)[ModulationParameter::INPUT_1],
-        (*mData)[ModulationParameter::INPUT_2],
-        (*mData)[ModulationParameter::OUTPUT_1],
-        (*mData)[ModulationParameter::OUTPUT_2]
+        mData->get(ModulationParameter::INPUT_1),
+        mData->get(ModulationParameter::INPUT_2),
+        mData->get(ModulationParameter::OUTPUT_1),
+        mData->get(ModulationParameter::OUTPUT_2)
     );
 
     // tick modulation data
-    (*mData)[ModulationParameter::OUTPUT_2] = (*mData)[ModulationParameter::OUTPUT_1] ;
-    (*mData)[ModulationParameter::OUTPUT_1] = output ;
-    (*mData)[ModulationParameter::INPUT_2] = (*mData)[ModulationParameter::INPUT_1] ;
-    (*mData)[ModulationParameter::INPUT_1] = value ;
+    mData->set(ModulationParameter::OUTPUT_2, mData->get(ModulationParameter::OUTPUT_1));
+    mData->set(ModulationParameter::OUTPUT_1, output);
+    mData->set(ModulationParameter::INPUT_2, mData->get(ModulationParameter::INPUT_1));
+    mData->set(ModulationParameter::INPUT_1, value);
     
     return output ;
 }

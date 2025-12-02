@@ -23,10 +23,12 @@
 BaseComponent::BaseComponent(ComponentId id, ComponentType type):
     id_(id),
     type_(type),
-    parameters_(std::make_unique<ParameterMap>())
+    parameters_(new ParameterMap)
 {}
 
-BaseComponent::~BaseComponent() = default ;
+BaseComponent::~BaseComponent(){
+    delete parameters_ ;
+};
 
 std::unordered_set<BaseModule*>& BaseComponent::getModulationInputs(){
     return modulationModules_ ;
@@ -69,10 +71,10 @@ void BaseComponent::updateParameters(){
 }
 
 void BaseComponent::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d ){
-    if ( d.empty() && m ){
+    if ( d.isEmpty() && m ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){
-            d[mp];
+            d.set(mp,0.0f);
         }
     }
     parameters_->getParameter(p)->setModulation(m,d);

@@ -23,13 +23,15 @@
 #include "midi/MidiEventListener.hpp"
 #include "midi/MidiEventQueue.hpp"
 
-#include <iostream>
 #include <vector>
 #include <algorithm>
 
 class MidiEventHandler : public MidiEventListener, public virtual BaseComponent {
 protected:
-    ActiveNoteMap notes_ ;
+    std::array<ActiveNote,128> notes_ ;
+    std::array<uint8_t,128> noteIndices_ ;
+    uint8_t activeCount_ = 0 ;
+
     std::vector<MidiEventListener*> listeners_ ;
     MidiEventQueue queue_ ;
 
@@ -105,6 +107,32 @@ public:
         return listeners_ ;
     }
 
+    bool isNoteActive(uint8_t n) const {
+        for ( uint8_t i = 0 ; i < activeCount_; ++i ){
+            if (noteIndices_[i] == n ) return true ;
+        }
+        return false ;
+    }
+
+    void activateNote(const ActiveNote& anote){
+        uint8_t midiNote = anote.note.getMidiNote() ;
+        notes_[midiNote] = anote ;
+
+        if ( isNoteActive(midiNote) ){
+            return ;
+        }
+        noteIndices_[activeCount_++] = midiNote ;
+    }
+
+    void deactivateNote(uint8_t n){
+        for ( uint8_t i = 0 ; i < activeCount_; ++i ){
+            if ( noteIndices_[i] == n ){
+                noteIndices_[i] = noteIndices_[--activeCount_];
+                break ;
+            }
+        }
+    }
+
     // all handlers are listeners so that they can chain operations if desired. 
     // The below functions can be overridded to provide specialized operations when cascading events downwards
     void onKeyPressed(const ActiveNote* note, bool rePressed = false) override {
@@ -132,15 +160,16 @@ public:
         ActiveNote n{note};
     
         bool rePress = false ;
-        if ( notes_.find(note.getMidiNote()) != notes_.end()){
+        if ( isNoteActive(note.getMidiNote()) ){
             rePress = true ;
         }
         onKeyPressed(&n, rePress);
     };
 
     void handleKeyReleased(const MidiNote note){
-        if ( notes_.find(note.getMidiNote()) == notes_.end() ) return ;
         auto anote = notes_[note.getMidiNote()] ;
+        if ( ! isNoteActive(note.getMidiNote()) ) return ;
+        
         anote.note = note ;
         onKeyReleased(anote);
     };
@@ -159,19 +188,20 @@ public:
     void processEvents(){
         MidiEvent e ;
         while (queue_.pop(e)){    
-            ActiveNote note = e.anote ;
+            ActiveNote anote = e.anote ;
+            uint8_t midiNote = anote.note.getMidiNote() ;
             switch (e.type){
             case MidiEvent::Type::NotePressed:
-                notes_[e.anote.note.getMidiNote()] = note ;
-                notifyKeyPressed(&notes_[e.anote.note.getMidiNote()], e.rePressed);
+                activateNote(anote);
+                notifyKeyPressed(&notes_[midiNote], e.rePressed);
                 break ;
             case MidiEvent::Type::NoteReleased:
-                notes_[e.anote.note.getMidiNote()] = note ;
-                notifyKeyReleased(note);
+                notes_[e.anote.note.getMidiNote()] = anote ;
+                notifyKeyReleased(anote);
                 break ;
             case MidiEvent::Type::NoteOff:
-                notifyKeyOff(note);
-                notes_.erase(note.note.getMidiNote());
+                notifyKeyOff(anote);
+                deactivateNote(midiNote);
                 break ;
             }
         }
@@ -181,12 +211,13 @@ public:
         processEvents();
 
         // check for any notes that need to be released
-        for (auto it = notes_.begin(); it != notes_.end(); ++it ){
-            if ( shouldKillNote(it->second) ){
-                MidiEvent e = {MidiEvent::Type::NoteOff, it->second};
+        for ( uint8_t i = 0; i < activeCount_ ; ++i ){
+            ActiveNote& note = notes_[noteIndices_[i]];
+            if ( shouldKillNote(note) ){
+                MidiEvent e = {MidiEvent::Type::NoteOff, note};
                 queue_.push(e);
             } else {
-                it->second.updateTime(dt);
+                note.updateTime(dt);
             }
         }
     }

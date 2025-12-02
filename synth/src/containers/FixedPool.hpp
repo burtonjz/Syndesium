@@ -20,16 +20,34 @@
 #include <array>
 #include <bitset>
 #include <type_traits>
-
 #include "core/BaseModule.hpp"
 
 template<typename T, size_t N>
 class FixedPool {
     static_assert(std::is_base_of<BaseModule, T>::value, "FixedPool<T>: T must derive from Module");
+    static_assert(N <= 256, "FixedPool: N must fit in uint8_t for index storage");
+    
 private:
-    std::array<std::aligned_storage_t<sizeof(T), alignof(T)>, N> storage_ ;
-    std::bitset<N> inUse_ ;
-
+    std::array<std::aligned_storage_t<sizeof(T), alignof(T)>, N> storage_;
+    std::bitset<N> inUse_;
+    
+    // NEW: Track active indices directly
+    std::array<uint8_t, N> activeIndices_;
+    uint8_t activeCount_ = 0;
+    
+    void addToActiveList(uint8_t index) {
+        activeIndices_[activeCount_++] = index;
+    }
+    
+    void removeFromActiveList(uint8_t index) {
+        for (uint8_t i = 0; i < activeCount_; ++i) {
+            if (activeIndices_[i] == index) {
+                activeIndices_[i] = activeIndices_[--activeCount_];
+                return;
+            }
+        }
+    }
+    
 public:
     template<typename... Args>
     void initializeAll(Args&&... args) {
@@ -38,44 +56,45 @@ public:
             new (place) T(std::forward<Args>(args)...);
             inUse_.reset(i);
         }
+        activeCount_ = 0;
     }
-
+    
     T* allocate() {
         for (size_t i = 0; i < N; ++i) {
             if (!inUse_.test(i)) {
                 inUse_.set(i);
+                addToActiveList(static_cast<uint8_t>(i));
                 return reinterpret_cast<T*>(&storage_[i]);
             }
         }
         return nullptr; // Pool exhausted
     }
-
+    
     void release(T* ptr) {
         size_t index = static_cast<size_t>(ptr - reinterpret_cast<T*>(&storage_[0]));
         if (index < N && inUse_.test(index)) {
             inUse_.reset(index);
+            removeFromActiveList(static_cast<uint8_t>(index));
         }
     }
-
+    
     template <typename Func, typename... Args>
-    void forEachActive(Func&& func, Args&&... args){
-        for ( std::size_t i = 0; i < N; ++i ){
-            if (inUse_.test(i)){
-                T& obj = *reinterpret_cast<T*>(&storage_[i]);
-                std::invoke(std::forward<Func>(func), obj, std::forward<Args>(args)...);
-            }
+    void forEachActive(Func&& func, Args&&... args) {
+        for (uint8_t i = 0; i < activeCount_; ++i) {
+            uint8_t idx = activeIndices_[i];
+            T& obj = *reinterpret_cast<T*>(&storage_[idx]);
+            std::invoke(std::forward<Func>(func), obj, std::forward<Args>(args)...);
         }
     }
-
+    
     std::size_t countActiveVoices() const {
-        return inUse_.count() ;
+        return activeCount_;  // Now O(1) instead of O(N)
     }
-
+    
     ~FixedPool() {
-        for (size_t i = 0; i < N; ++i) {
-            if (inUse_.test(i)) {
-                reinterpret_cast<T*>(&storage_[i])->~T();
-            }
+        for (uint8_t i = 0; i < activeCount_; ++i) {
+            uint8_t idx = activeIndices_[i];
+            reinterpret_cast<T*>(&storage_[idx])->~T();
         }
     }
 };

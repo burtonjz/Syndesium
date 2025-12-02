@@ -29,8 +29,6 @@ struct MidiEvent {
     bool rePressed = false ;
 };
 
-using ActiveNoteMap = RTMap<uint8_t, ActiveNote, 128> ;
-
 class MidiEventQueue {
 private:
     std::array<MidiEvent, 128> buffer_ ;

@@ -117,6 +117,5 @@ struct ActiveNote {
 };
 
 using KeyMap = RTMap<uint8_t, MidiNote, 128> ;
-using ActiveNoteMap = RTMap<uint8_t, ActiveNote, 128> ;
 
 #endif // __NOTE_HPP_

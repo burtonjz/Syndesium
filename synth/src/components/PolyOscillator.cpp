@@ -35,8 +35,8 @@ PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
     BaseModule(),
     MidiEventListener(),
     children_(),
-    modulators_(),
-    modulationData_()
+    modulators_{},
+    modulationData_({})
 {
     parameters_->add<ParameterType::WAVEFORM>(cfg.waveform,false);
     parameters_->add<ParameterType::GAIN>(1.0 , false);
@@ -90,12 +90,13 @@ void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
         
         // if there are modulators that need MIDI_NOTE, the module needs to make sure that gets set
         for ( auto p : osc->getParameters()->getModulatableParameters()){
-            if ( modulators_.find(p) != modulators_.end() ){
-                auto modParams = modulators_[p]->getRequiredModulationParameters();
+            auto pIndex = static_cast<size_t>(p);
+            if ( modulators_[pIndex] ){
+                auto modParams = modulators_[pIndex]->getRequiredModulationParameters();
                 if ( modParams.contains(ModulationParameter::MIDI_NOTE)){
-                    modulationData_[p][ModulationParameter::MIDI_NOTE].set(anote->note.getMidiNote());
+                    modulationData_[static_cast<size_t>(p)].set(ModulationParameter::MIDI_NOTE, anote->note.getMidiNote());
                 }
-                osc->getParameters()->getParameter(p)->setModulation(modulators_[p], modulationData_[p]);
+                osc->getParameters()->getParameter(p)->setModulation(modulators_[pIndex], modulationData_[pIndex]);
             }
         }
         children_.insert(std::make_pair(anote->note.getMidiNote(),osc));
@@ -123,28 +124,25 @@ void PolyOscillator::updateParameters(){
 }
 
 BaseModulator* PolyOscillator::getParameterModulator(ParameterType p) const {
-    for ( auto it = modulators_.begin(); it != modulators_.end(); ++it ){
-        if ( it->first == p ) return it->second ;
-    }
-    return nullptr ;
+    return modulators_[static_cast<size_t>(p)] ;
 }
 
 void PolyOscillator::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
-    if ( d.empty() ){
+    if ( d.isEmpty() ){
         auto required = m->getRequiredModulationParameters();
         for ( auto mp : required ){
-            d[mp];
+            d.set(mp, 0.0f);
         }
     }
-    modulators_[p] = m ;
-    modulationData_[p] = d ;
+    modulators_[static_cast<size_t>(p)] = m ;
+    modulationData_[static_cast<size_t>(p)] = d ;
 
     childPool_.forEachActive(&Oscillator::setParameterModulation, p, m, d);
 }
 
 void PolyOscillator::onRemoveParameterModulation(ParameterType p){
-    modulators_[p] = nullptr ;
-    modulationData_[p] = {} ;
+    modulators_[static_cast<size_t>(p)] = nullptr ;
+    modulationData_[static_cast<size_t>(p)] = {} ;
 
     childPool_.forEachActive(&Oscillator::removeParameterModulation, p);
 }
@@ -159,13 +157,13 @@ void PolyOscillator::updateGain(){
 
 void PolyOscillator::updateModulationInitialValue(Oscillator* osc){
     for ( auto p : osc->getParameters()->getModulatableParameters()){
-        if ( modulators_.find(p) != modulators_.end() ){
+        if ( modulators_[static_cast<size_t>(p)] ){
             auto d = osc->getParameters()->getParameter(p)->getModulationData();
             if ( 
-                d->find(ModulationParameter::INITIAL_VALUE) != modulationData_[p].end() &&
-                d->find(ModulationParameter::OUTPUT_1)    != modulationData_[p].end()
+                d->has(ModulationParameter::INITIAL_VALUE) &&
+                d->has(ModulationParameter::OUTPUT_1)
             ){
-                (*d)[ModulationParameter::INITIAL_VALUE].set((*d)[ModulationParameter::OUTPUT_1].get()) ;
+                d->set(ModulationParameter::INITIAL_VALUE, d->get(ModulationParameter::OUTPUT_1)) ;
             }
         }
     } 
