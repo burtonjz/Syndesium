@@ -520,7 +520,10 @@ json Engine::serialize() const {
 
     // get root midi devices
     for ( auto m : midiState_.getHandlers() ){
-        output["rootMidiHandlers"].push_back(m->getId()) ;
+        ComponentId id = m->getId() ;
+        if (id != -1){
+            output["rootMidiHandlers"].push_back(m->getId()) ;
+        }
     }
 
     return output ;
