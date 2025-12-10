@@ -19,6 +19,7 @@ find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(RTAUDIO REQUIRED rtaudio)
 pkg_check_modules(RTMIDI REQUIRED rtmidi)
+pkg_check_modules(KISSFFT REQUIRED kissfft-float)
 
 file(GLOB SRC "${SRC_DIR}/*.cpp" "${SRC_DIR}/*/*.cpp")
 
@@ -34,6 +35,7 @@ target_link_libraries(synth PRIVATE
     shared
     ${RTAUDIO_LIBRARIES}
     ${RTMIDI_LIBRARIES}
+    ${KISSFFT_LIBRARIES}
     m
 )
 

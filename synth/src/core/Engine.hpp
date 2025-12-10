@@ -104,9 +104,6 @@ private:
     void stopMidi();
     static void audioCleanup(RtAudio* dac, RtAudioErrorType error);
     
-    // Analysis
-    void analyzeBuffer(double* data, size_t count);
-    
     // Thread management
     std::thread apiServerThread_;
     std::thread midiThread_;

@@ -29,6 +29,10 @@
     },
     "modulation": {
         "max_depth": 2        
-    } 
+    },
+    "analysis":{
+        "buffer_size": 2048,
+        "port": 12346
+    }
 }
 

@@ -3,6 +3,7 @@
  */
 
 #include "core/Engine.hpp"
+#include "dsp/AnalyticsEngine.hpp"
 #include "config/Config.hpp"
 #include "api/ApiHandler.hpp"
 #include "midi/MidiEventHandler.hpp"
@@ -222,6 +223,10 @@ void Engine::audioLoop(){
     unsigned int sampleRate = Config::get<unsigned int>("audio.sample_rate").value();
     
     RtAudio::StreamParameters parameters;
+    RtAudio::StreamOptions options ;
+    options.flags = RTAUDIO_SCHEDULE_REALTIME ;
+    options.priority = 50 ;
+
     std::map<int,std::string> devices = getAvailableAudioDevices();
     int deviceId = getAudioDeviceId();
     RtAudio::DeviceInfo deviceInfo;
@@ -259,7 +264,8 @@ void Engine::audioLoop(){
         sampleRate,
         &buffer,
         &audioCallback,
-        userData
+        userData,
+        &options
     )){
         std::cerr << "Error initializing audio: " << dac_.getErrorText() << std::endl;
         audioRunning_ = false;
@@ -290,18 +296,24 @@ void Engine::audioLoop(){
 void Engine::analysisLoop(){
     std::cout << "Analysis thread started" << std::endl;
     
-    std::vector<double> buffer(4096);
+    Config::load();
+
+    AnalyticsEngine::instance()->start();
+
+    size_t bufferSize = Config::get<int>("analysis.buffer_size").value_or(1024);
+    std::vector<double> buffer(bufferSize);
     
     while (analysisRunning_ && engineRunning_){
         size_t count = analysisAudioOut_.pop(buffer.data(), buffer.size());
         
         if (count > 0){
-            analyzeBuffer(buffer.data(), count);
+            AnalyticsEngine::instance()->analyzeBuffer(buffer.data(), count);
         }
         
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     
+    AnalyticsEngine::instance()->stop();
     std::cout << "Analysis thread stopping" << std::endl;
 }
 
@@ -521,18 +533,10 @@ json Engine::serialize() const {
     // get root midi devices
     for ( auto m : midiState_.getHandlers() ){
         ComponentId id = m->getId() ;
-        if (id != -1){
+        if ( id != -1 ){
             output["rootMidiHandlers"].push_back(m->getId()) ;
         }
     }
 
     return output ;
-}
-
-// ============================================================================
-// ANALYSIS
-// ============================================================================
-
-void Engine::analyzeBuffer([[maybe_unused]] double* data, [[maybe_unused]] size_t count){
-    // Your analysis implementation here
 }
