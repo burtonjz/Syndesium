@@ -300,7 +300,7 @@ void Engine::analysisLoop(){
 
     AnalyticsEngine::instance()->start();
 
-    size_t bufferSize = Config::get<int>("analysis.buffer_size").value_or(1024);
+    size_t bufferSize = Config::get<int>("analysis.buffer_size").value_or(2048);
     std::vector<double> buffer(bufferSize);
     
     while (analysisRunning_ && engineRunning_){
@@ -308,9 +308,9 @@ void Engine::analysisLoop(){
         
         if (count > 0){
             AnalyticsEngine::instance()->analyzeBuffer(buffer.data(), count);
-        }
+        } 
         
-        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+        std::this_thread::sleep_for(std::chrono::milliseconds(33));
     }
     
     AnalyticsEngine::instance()->stop();

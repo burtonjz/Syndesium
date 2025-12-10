@@ -175,13 +175,15 @@ void AnalyticsEngine::processFFT() {
 }
 
 void AnalyticsEngine::sendFFTData(const std::vector<float>& magnitudes) {
-    if ( udpSocket_ == INVALID_SOCKET ) return ;
-    
+    if ( udpSocket_ == INVALID_SOCKET ){
+        return ;
+    }
+
     // Simple binary format: [float, float, float, ...]
     const char* data = reinterpret_cast<const char*>(magnitudes.data());
     size_t dataSize = magnitudes.size() * sizeof(float);
     
     sendto(udpSocket_, data, static_cast<int>(dataSize), 0,
         (struct sockaddr*)&destAddr_, sizeof(destAddr_));
-    
+
 }

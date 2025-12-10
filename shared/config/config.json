@@ -32,7 +32,7 @@
     },
     "analysis":{
         "buffer_size": 2048,
-        "port": 12346
+        "port": 54322
     }
 }
 

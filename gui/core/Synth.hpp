@@ -29,6 +29,7 @@
 #include "core/ModuleContext.hpp"
 #include "core/GraphPanel.hpp"
 #include "core/Setup.hpp"
+#include "widgets/SpectrumAnalyzerWidget.hpp"
 
 #include "ui_Synth.h"
 
@@ -44,6 +45,9 @@ private:
     ModuleContext ctx_ ;
     GraphPanel* graph_ ;
     Setup* setup_ ;
+
+    // menu widgets
+    QPointer<SpectrumAnalyzerWidget> spectrumWidget_ ;
 
     // save/load 
     QString saveFilePath_ ;
@@ -77,6 +81,7 @@ private slots:
     void onActionLoad();
     void onActionSave();
     void onActionSaveAs();
+    void onActionSpectrumAnalyzer();
 
 public slots:
     void markModified();

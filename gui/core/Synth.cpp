@@ -20,8 +20,11 @@
 #include "core/ApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "types/ComponentType.hpp"
+#include "config/Config.hpp"
+#include "widgets/SpectrumAnalyzerWidget.hpp"
 
 #include "ui_Synth.h"
+
 
 #include <QWindow>
 #include <QJsonArray>
@@ -32,6 +35,7 @@
 #include <QStandardItem>
 #include <QFileDialog>
 #include <QMessageBox>
+#include <qaction.h>
 #include <qcombobox.h>
 #include <qjsonobject.h>
 #include <qkeysequence.h>
@@ -43,6 +47,7 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
     ui_(new Ui::MainWindow),
     ctx_(ctx),
     graph_(nullptr),
+    spectrumWidget_(nullptr),
     setup_(nullptr),
     hasUnsavedChanges_(false)
 {
@@ -148,6 +153,7 @@ void Synth::configureMenuActions(){
     connect(ui_->actionLoad, &QAction::triggered, this, &Synth::onActionLoad);
     connect(ui_->actionSave, &QAction::triggered, this, &Synth::onActionSave);
     connect(ui_->actionSaveAs, &QAction::triggered, this, &Synth::onActionSaveAs);
+    connect(ui_->actionSpectrumAnalyzer, &QAction::triggered, this, &Synth::onActionSpectrumAnalyzer);
 }
 
 void Synth::onApiConnected(){
@@ -189,7 +195,7 @@ void Synth::onSetupButtonClicked(){
     if ( !setup_ ){
         qDebug() << "Setup window does not exist, creating widget..." ;
         ModuleContext ctx = {ctx_.state, "Setup"};
-        setup_ = new Setup(ctx, this) ;
+        setup_ = new Setup(ctx) ;
         setup_->show();
     } else {
         qDebug() << "Setup window already exists, displaying..." ;
@@ -337,4 +343,17 @@ void Synth::markModified(){
         setWindowModified(true);
         windowHandle()->requestUpdate();
     }
+}
+
+void Synth::onActionSpectrumAnalyzer(){
+    if ( !spectrumWidget_ ){
+        spectrumWidget_ = new SpectrumAnalyzerWidget();
+        int port = Config::get<int>("analysis.port").value_or(54322);
+        spectrumWidget_->setPort(port);
+        spectrumWidget_->setAttribute(Qt::WA_DeleteOnClose);
+    }
+
+    spectrumWidget_->show();
+    spectrumWidget_->raise();
+    spectrumWidget_->activateWindow();
 }
