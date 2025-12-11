@@ -37,6 +37,7 @@
 #include <QMessageBox>
 #include <qaction.h>
 #include <qcombobox.h>
+#include <qevent.h>
 #include <qjsonobject.h>
 #include <qkeysequence.h>
 #include <qmessagebox.h>
@@ -80,6 +81,7 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
 
 
 Synth::~Synth(){
+    if ( spectrumWidget_ ) spectrumWidget_->close();
     delete ui_ ;
 }
 
@@ -154,6 +156,13 @@ void Synth::configureMenuActions(){
     connect(ui_->actionSave, &QAction::triggered, this, &Synth::onActionSave);
     connect(ui_->actionSaveAs, &QAction::triggered, this, &Synth::onActionSaveAs);
     connect(ui_->actionSpectrumAnalyzer, &QAction::triggered, this, &Synth::onActionSpectrumAnalyzer);
+}
+
+void Synth::closeEvent(QCloseEvent* event){
+    if ( spectrumWidget_ ) spectrumWidget_->close();
+    if ( setup_ ) setup_->close() ;
+
+    event->accept();
 }
 
 void Synth::onApiConnected(){
@@ -348,7 +357,7 @@ void Synth::markModified(){
 void Synth::onActionSpectrumAnalyzer(){
     if ( !spectrumWidget_ ){
         spectrumWidget_ = new SpectrumAnalyzerWidget();
-        int port = Config::get<int>("analysis.port").value_or(54322);
+        int port = Config::get<int>("analysis.spectrum_analyzer.port").value_or(54322);
         spectrumWidget_->setPort(port);
         spectrumWidget_->setAttribute(Qt::WA_DeleteOnClose);
     }

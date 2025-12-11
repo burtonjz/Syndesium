@@ -51,8 +51,11 @@ private:
     quint16 port_;
     
     // FFT data
-    std::vector<float> spectrumData_;
+    std::vector<float> spectrumData_ ;
+    std::vector<float> smoothedData_ ;
+    
     size_t fftSize_;
+    float smoothFactor_ ;
     double sampleRate_;
     
     // Display ranges

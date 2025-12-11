@@ -40,7 +40,7 @@ AnalyticsEngine::AnalyticsEngine():
 {
     Config::load();
     sampleRate_ = Config::get<unsigned int>("audio.sample_rate").value_or(44100);
-    fftSize_ = Config::get<unsigned int>("analysis.buffer_size").value_or(1024);
+    fftSize_ = Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value_or(1024);
 
     fftBuffer_.resize(fftSize_);
 
@@ -91,7 +91,7 @@ void AnalyticsEngine::initSocket() {
     // Set up destination address (localhost)
     memset(&destAddr_, 0, sizeof(destAddr_));
     destAddr_.sin_family = AF_INET ;
-    destAddr_.sin_port = htons(Config::get<unsigned int>("analysis.port").value());
+    destAddr_.sin_port = htons(Config::get<unsigned int>("analysis.spectrum_analyzer.port").value_or(54322));
     
 #ifdef _WIN32
     destAddr_.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
@@ -167,7 +167,8 @@ void AnalyticsEngine::processFFT() {
         kiss_fft_scalar imag = fftOutput[i].i ;
         float magnitude = std::sqrt(real * real + imag * imag);
         
-        magnitude = std::max(magnitude, 1e-10f); // convert to db, floor for log(0)
+        // convert to db, floor out small values to avoid log(0), and normalize by N/2 for single side spectrum
+        magnitude = std::max(magnitude, 1e-10f) / (fftSize_ / 2.0); 
         magnitudes[i] = 20.0 * std::log10(magnitude);
     }
     

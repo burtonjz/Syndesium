@@ -16,6 +16,7 @@
  */
 
 #include "widgets/SpectrumAnalyzerWidget.hpp"
+#include "core/Theme.hpp"
 #include "config/Config.hpp"
 #include <QPaintEvent>
 #include <QPainterPath>
@@ -25,20 +26,22 @@
 SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     QWidget(parent),
     udpSocket_(new QUdpSocket(this)),
-    minFreq_(20.0),
-    maxFreq_(20000.0),
+    minFreq_(5.0),
+    maxFreq_(25000.0),
     minDb_(-100.0),
-    maxDb_(60.0),
+    maxDb_(20.0),
     updateTimer_(new QTimer(this)),
     dataReady_(false)
 {
     Config::load();
 
-    port_ = Config::get<unsigned int>("analysis.port").value_or(54322);
+    port_ = Config::get<unsigned int>("analysis.spectrum_analyzer.port").value_or(54322);
     sampleRate_ = Config::get<double>("audio.sample_rate").value_or(44100);
-    fftSize_ = Config::get<unsigned int>("analysis.buffer_size").value_or(2048);
-    
+    fftSize_ = Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value_or(2048);
+    smoothFactor_ = Config::get<double>("analysis.spectrum_analyzer.smooth_factor").value_or(0.7);
+
     spectrumData_.resize(fftSize_ / 2, minDb_);
+    smoothedData_.resize(fftSize_ / 2, minDb_);
     updateTimer_->setInterval(33); // ~30 FPS
 
     setMinimumSize(400, 300);
@@ -90,18 +93,29 @@ void SpectrumAnalyzerWidget::setSampleRate(double sampleRate) {
 
 void SpectrumAnalyzerWidget::onReadyRead() {
     while (udpSocket_->hasPendingDatagrams()) {
-        QByteArray datagram;
+        QByteArray datagram ;
         datagram.resize(udpSocket_->pendingDatagramSize());
         udpSocket_->readDatagram(datagram.data(), datagram.size());
         
         // Parse float array
         const float* data = reinterpret_cast<const float*>(datagram.data());
-        size_t count = datagram.size() / sizeof(float);
+        size_t count = datagram.size() / sizeof(float) ;
         
-        if (count > 0) {
+        if ( count > 0 ){
             spectrumData_.assign(data, data + count);
-            fftSize_ = count * 2; // Assuming we receive half the FFT (Nyquist)
-            dataReady_ = true;
+
+            if ( smoothedData_.size() != count ){ // don't smooth on first packed
+                smoothedData_.resize(count);
+                smoothedData_ = spectrumData_ ; 
+            } else {
+                for ( size_t i = 0 ; i < count; ++i ){
+                    smoothedData_[i] = smoothFactor_ * smoothedData_[i] + 
+                        (1.0f - smoothFactor_) * spectrumData_[i] ;
+                }
+            }
+
+            fftSize_ = count * 2 ; 
+            dataReady_ = true ;
         }
     }
 }
@@ -134,10 +148,10 @@ void SpectrumAnalyzerWidget::resizeEvent(QResizeEvent *event) {
 }
 
 void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
-    painter.setPen(QColor(60, 60, 60));
+    painter.setPen(Theme::COMPONENT_BORDER);
     
-    int plotWidth = width() - MARGIN_LEFT - MARGIN_RIGHT;
-    int plotHeight = height() - MARGIN_TOP - MARGIN_BOTTOM;
+    int plotWidth = width() - MARGIN_LEFT - MARGIN_RIGHT ;
+    int plotHeight = height() - MARGIN_TOP - MARGIN_BOTTOM ;
     
     // Horizontal grid lines (dB)
     for (double db = minDb_; db <= maxDb_; db += 10.0) {
@@ -156,19 +170,19 @@ void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
 }
 
 void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
-    if (spectrumData_.empty()) return;
+    if (smoothedData_.empty()) return;
     
     // Create path for spectrum
     QPainterPath path;
     bool firstPoint = true;
     
-    for (size_t bin = 0; bin < spectrumData_.size(); ++bin) {
+    for (size_t bin = 0; bin < smoothedData_.size(); ++bin) {
         double freq = binToFreq(bin);
         
         // Only draw frequencies in our display range
         if (freq < minFreq_ || freq > maxFreq_) continue;
         
-        double db = spectrumData_[bin];
+        double db = smoothedData_[bin];
         db = std::max(minDb_, std::min(maxDb_, db)); // Clamp
         
         double x = freqToX(freq);
@@ -183,12 +197,12 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
     }
     
     // Draw the spectrum line
-    painter.setPen(QPen(QColor(0, 255, 128), 2));
+    painter.setPen(QPen(Theme::ACCENT_COLOR, 2));
     painter.drawPath(path);
 }
 
 void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
-    painter.setPen(QColor(200, 200, 200));
+    painter.setPen(Theme::COMPONENT_TEXT);
     QFont font = painter.font();
     font.setPointSize(9);
     painter.setFont(font);
@@ -241,10 +255,10 @@ double SpectrumAnalyzerWidget::dbToY(double db) const {
     int plotHeight = height() - MARGIN_TOP - MARGIN_BOTTOM;
     
     // Linear mapping (inverted - lower dB = higher on screen)
-    double normalized = (db - minDb_) / (maxDb_ - minDb_);
-    return MARGIN_TOP + (1.0 - normalized) * plotHeight;
+    double normalized = (db - minDb_) / (maxDb_ - minDb_) ;
+    return MARGIN_TOP + (1.0 - normalized) * plotHeight ;
 }
 
 double SpectrumAnalyzerWidget::binToFreq(size_t bin) const {
-    return (bin * sampleRate_) / fftSize_;
+    return (bin * sampleRate_) / fftSize_ ;
 }

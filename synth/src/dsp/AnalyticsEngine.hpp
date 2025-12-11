@@ -52,7 +52,7 @@ private:
     
     std::vector<double> fftBuffer_ ;
     size_t bufferPosition_ ;
-
+    
     size_t fftSize_ ;
     kiss_fft_cfg fftConfig_ ;
     unsigned int sampleRate_ ;

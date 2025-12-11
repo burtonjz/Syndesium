@@ -31,8 +31,11 @@
         "max_depth": 2        
     },
     "analysis":{
-        "buffer_size": 2048,
-        "port": 54322
+        "spectrum_analyzer" : {
+            "port": 54322,
+            "buffer_size": 2048,
+            "smooth_factor": 0.7
+        }
     }
 }
 

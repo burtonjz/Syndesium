@@ -24,6 +24,7 @@
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QPushButton>
+#include <qevent.h>
 #include <qtmetamacros.h>
 
 #include "core/ModuleContext.hpp"
@@ -54,7 +55,7 @@ private:
     QJsonObject saveData_ ;
     bool hasUnsavedChanges_ ;
 
-    static constexpr const char* DEFAULT_WINDOW_TITLE = "Syndesium";
+    static constexpr const char* DEFAULT_WINDOW_TITLE = "Syndesium" ;
 public:
     Synth(ModuleContext ctx, QWidget* parent = nullptr);
     ~Synth();
@@ -64,6 +65,8 @@ private:
     void configureWidgetButtons();
 
     void performSave();
+
+    void closeEvent(QCloseEvent* event) override ;
 
 signals:
     void engineStatusChanged(bool status);
