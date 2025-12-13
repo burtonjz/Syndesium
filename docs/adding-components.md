@@ -166,10 +166,10 @@ This registry is shared between frontend and backend.
 ---
 
 ## Step 9: Frontend Integration (Optional)
-**Location:** `gui/widgets/ModuleDetailWidget.hpp`
+**Location:** `gui/widgets/ComponentDetailWidget.hpp`
 
 Only needed if you want custom parameter visualizations for a newly created parameter
 
-Update `ModuleDetailWidget::createParameter()`:
+Update `ComponentDetailWidget::createParameter()`:
 
 ---

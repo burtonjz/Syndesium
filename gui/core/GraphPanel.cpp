@@ -21,7 +21,7 @@
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "patch/ConnectionManager.hpp"
-#include "widgets/ModuleDetailWidget.hpp"
+#include "widgets/ComponentDetailWidget.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "widgets/ComponentWidget.hpp"
 #include "types/ComponentType.hpp"
@@ -101,7 +101,7 @@ void GraphPanel::createContextMenuActions(){
 
 void GraphPanel::addComponent(int id, ComponentType type){
     auto* component = new ComponentWidget(id, type);
-    auto* detail = new ModuleDetailWidget(id,type, this);
+    auto* detail = new ComponentDetailWidget(id,type, this);
 
     widgets_.push_back(component);
     details_.push_back(detail);
@@ -109,7 +109,7 @@ void GraphPanel::addComponent(int id, ComponentType type){
     // dynamic connections
     connect(component, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
     connect(component, &SocketContainerWidget::positionChanged, this, &GraphPanel::wasModified );
-    connect(detail, &ModuleDetailWidget::wasModified, this, &GraphPanel::wasModified );
+    connect(detail, &ComponentDetailWidget::wasModified, this, &GraphPanel::wasModified );
 
     scene_->addItem(component);
     for ( auto socket : component->getSockets() ){
@@ -440,7 +440,7 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
             return ;
         }
 
-        int id = json["component_id"].toInt();
+        int id = json["componentId"].toInt();
         ComponentType type = static_cast<ComponentType>(json["type"].toInt());
         addComponent(id, type);
     }

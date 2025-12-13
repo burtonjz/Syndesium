@@ -30,12 +30,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 ComponentType::Oscillator,
                 {ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, // modulatable params
                 {ParameterType::WAVEFORM, ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, //control params
-                0, // audio inputs
-                1, // audio outputs
-                0, // midi inputs
-                0, // midi outputs
-                true, // modulator
-                false  // polyphonic
+                0,
+                1,
+                0, 
+                0,
+                true,
+                false
             }
         },
         {
@@ -45,12 +45,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 ComponentType::PolyOscillator,
                 {ParameterType::AMPLITUDE, ParameterType::FREQUENCY, ParameterType::PHASE}, // modulatable params
                 {ParameterType::WAVEFORM, ParameterType::DETUNE}, //control params
-                0, // audio inputs
-                1, // audio outputs
-                1, // midi inputs
-                0, // midi outputs
-                false, // modulator
-                true  // polyphonic
+                0, 
+                1, 
+                1,
+                0, 
+                false,
+                false  
             }
         },
         {
@@ -111,6 +111,21 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 0,
                 true,
                 false
+            }
+        },
+        {
+            ComponentType::Sequencer,
+            {
+                "Sequencer",
+                ComponentType::Sequencer,
+                {ParameterType::AMPLITUDE},
+                {ParameterType::STATUS, ParameterType::AMPLITUDE, ParameterType::BPM, ParameterType::MAX_VALUE},
+                0,
+                0,
+                0,
+                1,
+                false,
+                true
             }
         }
     };

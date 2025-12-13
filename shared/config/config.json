@@ -33,7 +33,7 @@
     "analysis":{
         "spectrum_analyzer" : {
             "port": 54322,
-            "buffer_size": 2048,
+            "buffer_size": 4096,
             "smooth_factor": 0.7
         }
     }

@@ -15,20 +15,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MIDI_FILTER_HPP_
-#define __MIDI_FILTER_HPP_
+#ifndef __HPP_CONFIGS_SEQUENCER_
+#define __HPP_CONFIGS_SEQUENCER_
 
-#include "configs/MidiFilterConfig.hpp"
-#include "midi/MidiEventHandler.hpp"
+#include "types/ComponentType.hpp"
+#include <nlohmann/json.hpp>
 
-class MidiFilter : public MidiEventHandler {
-protected:
-    void onKeyPressed(const ActiveNote* note, bool rePressed = false) override ;
-    void onKeyReleased(ActiveNote anote) override ;
+using json = nlohmann::json ;
 
-public:
-    MidiFilter(ComponentId id, MidiFilterConfig cfg);
+// forward declare class
+class Sequencer ;
 
+// define default configuration
+struct SequencerConfig {
+    int velocity = 100 ; // midi velocity
+    int length = 16 ; // in beats
+    int max_length = 64 ; // in beats
+    int bpm = 120 ;
 };
 
-#endif // __MIDI_FILTER_HPP_
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SequencerConfig, velocity, length, max_length, bpm) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::Sequencer>{ 
+    using type = Sequencer ;
+    using config = SequencerConfig ;
+};
+
+#endif // __HPP_CONFIGS_SEQUENCER_

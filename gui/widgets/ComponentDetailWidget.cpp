@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "widgets/ModuleDetailWidget.hpp"
+#include "widgets/ComponentDetailWidget.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "types/ComponentType.hpp"
@@ -23,15 +23,19 @@
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
 #include "core/ApiClient.hpp"
+#include "widgets/SequenceWidget.hpp"
 
 #include <QJsonObject>
 #include <QEvent>
 #include <QCloseEvent>
+#include <QBoxLayout>
+#include <QScrollArea>
 
-ModuleDetailWidget::ModuleDetailWidget(int id, ComponentType type, QWidget* parent):
+ComponentDetailWidget::ComponentDetailWidget(int id, ComponentType type, QWidget* parent):
     QWidget(parent),
     componentId_(id),
-    descriptor_(ComponentRegistry::getComponentDescriptor(type))
+    descriptor_(ComponentRegistry::getComponentDescriptor(type)),
+    sequenceWidget_(nullptr)
 {
     setWindowTitle(QString::fromStdString(descriptor_.name));
 
@@ -49,28 +53,28 @@ ModuleDetailWidget::ModuleDetailWidget(int id, ComponentType type, QWidget* pare
     parameterChangedTimer_->setSingleShot(true);
     parameterChangedTimer_->setInterval(300);
 
-    connect(parameterChangedTimer_, &QTimer::timeout, this, &ModuleDetailWidget::flushPendingChanges);
+    connect(parameterChangedTimer_, &QTimer::timeout, this, &ComponentDetailWidget::flushPendingChanges);
     
     // notify upstream of changes 
     modifiedTimer_ = new QTimer(this);
     modifiedTimer_->setSingleShot(true);
     modifiedTimer_->setInterval(300);
 
-    connect(modifiedTimer_, &QTimer::timeout, this, &ModuleDetailWidget::wasModified);
-    connect(this, &ModuleDetailWidget::parameterChanged, modifiedTimer_, qOverload<>(&QTimer::start)); 
+    connect(modifiedTimer_, &QTimer::timeout, this, &ComponentDetailWidget::wasModified);
+    connect(this, &ComponentDetailWidget::parameterChanged, modifiedTimer_, qOverload<>(&QTimer::start)); 
 
     
 }
 
-int ModuleDetailWidget::getID() const {
+int ComponentDetailWidget::getID() const {
     return componentId_ ;
 }
 
-ComponentType ModuleDetailWidget::getType() const {
+ComponentType ComponentDetailWidget::getType() const {
     return descriptor_.type ;
 }
 
-void ModuleDetailWidget::createParameter(ParameterType p){
+void ComponentDetailWidget::createParameter(ParameterType p){
     switch(p){
     case ParameterType::WAVEFORM:
         createWaveformWidget();
@@ -84,7 +88,7 @@ void ModuleDetailWidget::createParameter(ParameterType p){
     }
 }
 
-void ModuleDetailWidget::createWaveformWidget(){
+void ComponentDetailWidget::createWaveformWidget(){
     // populate combo box with available waveforms
     auto w = new QComboBox(this);
     for ( auto wf : Waveform::getWaveforms()){
@@ -99,10 +103,10 @@ void ModuleDetailWidget::createWaveformWidget(){
     } 
 
     parameterWidgets_[ParameterType::WAVEFORM] = w ;
-    connect(w, &QComboBox::currentTextChanged, this, &ModuleDetailWidget::onValueChange);
+    connect(w, &QComboBox::currentTextChanged, this, &ComponentDetailWidget::onValueChange);
 }
 
-void ModuleDetailWidget::createFilterTypeWidget(){
+void ComponentDetailWidget::createFilterTypeWidget(){
     auto w = new QComboBox(this);
     for ( auto ft : FilterType::getFilterTypes()){
         FilterType f = FilterType(ft);
@@ -116,10 +120,10 @@ void ModuleDetailWidget::createFilterTypeWidget(){
     } 
 
     parameterWidgets_[ParameterType::FILTER_TYPE] = w ;
-    connect(w, &QComboBox::currentTextChanged, this, &ModuleDetailWidget::onValueChange);
+    connect(w, &QComboBox::currentTextChanged, this, &ComponentDetailWidget::onValueChange);
 }
 
-void ModuleDetailWidget::createSpinWidget(ParameterType p){
+void ComponentDetailWidget::createSpinWidget(ParameterType p){
     auto w = new QDoubleSpinBox(this);
     
     auto step = GET_PARAMETER_TRAIT_MEMBER(p, uiStepPrecision);
@@ -128,36 +132,47 @@ void ModuleDetailWidget::createSpinWidget(ParameterType p){
     w->setValue(GET_PARAMETER_TRAIT_MEMBER(p, defaultValue));
 
     parameterWidgets_[p] = w ;
-    connect(w, &QDoubleSpinBox::valueChanged, this, &ModuleDetailWidget::onValueChange);
+    connect(w, &QDoubleSpinBox::valueChanged, this, &ComponentDetailWidget::onValueChange);
 }
 
-void ModuleDetailWidget::setupLayout(){
+void ComponentDetailWidget::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     QHBoxLayout* buttonLayout = new QHBoxLayout();
     QHBoxLayout* parameterLayout = new QHBoxLayout();
+
+
+    // sequence ( if applicable)
+    if ( descriptor_.sequenceable ){
+        auto* scroll = new QScrollArea() ;
+        QHBoxLayout* sequenceLayout = new QHBoxLayout();
+        sequenceWidget_ = new SequenceWidget(componentId_);
+        scroll->setWidget(sequenceWidget_);
+        sequenceLayout->addWidget(scroll);
+        mainLayout->addLayout(sequenceLayout);
+    }
 
     // parameters
     parameterLayout->setSpacing(PARAMETER_WIDGET_SPACING);
 
     for ( auto p : descriptor_.controllableParameters ){
         QWidget* w = parameterWidgets_[p];
-        QVBoxLayout* column = new QVBoxLayout();
+        QHBoxLayout* row = new QHBoxLayout();
         std::string name = GET_PARAMETER_TRAIT_MEMBER(p, name);
         QString labelText = QString::fromStdString(name);
         QLabel* label = new QLabel(labelText, this);
 
-        column->addWidget(label);
-        column->addWidget(w);
-        parameterLayout->addLayout(column);
+        row->addWidget(label);
+        row->addWidget(w);
+        parameterLayout->addLayout(row);
     }
+
+    mainLayout->addLayout(parameterLayout);
     
     // buttons
     closeButton_ = new QPushButton("Close",this);
     resetButton_ = new QPushButton("Reset", this);
     buttonLayout->addWidget(closeButton_);
     buttonLayout->addWidget(resetButton_);
-
-    mainLayout->addLayout(parameterLayout);
     mainLayout->addLayout(buttonLayout);
 
     // resize this widget to fit all parameters
@@ -166,18 +181,18 @@ void ModuleDetailWidget::setupLayout(){
     resize(width, sizeHint().height());
 }
 
-void ModuleDetailWidget::closeEvent(QCloseEvent* event){
+void ComponentDetailWidget::closeEvent(QCloseEvent* event){
     event->ignore();
     hide();
     emit widgetClosed();
 }
 
-void ModuleDetailWidget::onCloseButtonClicked(){
+void ComponentDetailWidget::onCloseButtonClicked(){
     hide();
     emit widgetClosed();
 }
 
-void ModuleDetailWidget::onValueChange(){
+void ComponentDetailWidget::onValueChange(){
     auto widget = dynamic_cast<QWidget*>(sender());
     
     auto it = std::find(parameterWidgets_.begin(), parameterWidgets_.end(), widget);
@@ -197,7 +212,7 @@ void ModuleDetailWidget::onValueChange(){
     parameterChangedTimer_->start();
 }
 
-void ModuleDetailWidget::flushPendingChanges(){
+void ComponentDetailWidget::flushPendingChanges(){
     if ( pendingChanges_.empty() ) return ;
 
     for ( auto [p, val] : pendingChanges_ ){

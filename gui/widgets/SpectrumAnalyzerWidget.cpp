@@ -26,10 +26,10 @@
 SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     QWidget(parent),
     udpSocket_(new QUdpSocket(this)),
-    minFreq_(5.0),
+    minFreq_(10.0),
     maxFreq_(25000.0),
     minDb_(-100.0),
-    maxDb_(20.0),
+    maxDb_(5.0),
     updateTimer_(new QTimer(this)),
     dataReady_(false)
 {
@@ -160,7 +160,7 @@ void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
     }
     
     // Vertical grid lines (frequency, logarithmic)
-    std::vector<double> freqs = {20, 50, 100, 200, 500, 1000, 2000, 5000, 10000, 20000};
+    std::vector<double> freqs = {20, 50, 100, 2.0, 500, 1000, 2000, 5000, 10000, 20000};
     for (double freq : freqs) {
         if (freq >= minFreq_ && freq <= maxFreq_) {
             int x = static_cast<int>(freqToX(freq));
@@ -176,14 +176,15 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
     QPainterPath path;
     bool firstPoint = true;
     
-    for (size_t bin = 0; bin < smoothedData_.size(); ++bin) {
+    // skip bin 0 (DC Control)
+    for (size_t bin = 1; bin < smoothedData_.size(); ++bin) {
         double freq = binToFreq(bin);
         
         // Only draw frequencies in our display range
-        if (freq < minFreq_ || freq > maxFreq_) continue;
+        if (freq < minFreq_ || freq > maxFreq_) continue ;
         
         double db = smoothedData_[bin];
-        db = std::max(minDb_, std::min(maxDb_, db)); // Clamp
+        db = std::max(minDb_, std::min(maxDb_, db)); 
         
         double x = freqToX(freq);
         double y = dbToY(db);
@@ -259,6 +260,6 @@ double SpectrumAnalyzerWidget::dbToY(double db) const {
     return MARGIN_TOP + (1.0 - normalized) * plotHeight ;
 }
 
-double SpectrumAnalyzerWidget::binToFreq(size_t bin) const {
+double SpectrumAnalyzerWidget:: binToFreq(size_t bin) const {
     return (bin * sampleRate_) / fftSize_ ;
 }

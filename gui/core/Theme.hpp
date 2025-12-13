@@ -56,6 +56,15 @@ public:
     static const QColor TEXT_SECONDARY ;
     static const QColor ACCENT_COLOR ;
     
+    // Piano Roll
+    static const QColor PIANO_ROLL_KEY_WHITE ;
+    static const QColor PIANO_ROLL_KEY_BLACK ;
+    static const QColor PIANO_ROLL_KEY_BORDER ;
+    static const QColor PIANO_ROLL_KEY_LABEL ;
+    static const QColor PIANO_ROLL_NOTE_COLOR ;
+    static const QColor PIANO_ROLL_NOTE_CREATION_COLOR ;
+    static const QColor PIANO_ROLL_NOTE_BORDER ;
+
     // Modulation indicator
     static const QColor MODULATION_ACTIVE ;
     

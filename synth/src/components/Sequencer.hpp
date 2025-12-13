@@ -15,20 +15,23 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MIDI_FILTER_HPP_
-#define __MIDI_FILTER_HPP_
+#ifndef SEQUENCER_HPP_
+#define SEQUENCER_HPP_
 
-#include "configs/MidiFilterConfig.hpp"
 #include "midi/MidiEventHandler.hpp"
+#include "configs/SequencerConfig.hpp"
 
-class MidiFilter : public MidiEventHandler {
-protected:
-    void onKeyPressed(const ActiveNote* note, bool rePressed = false) override ;
-    void onKeyReleased(ActiveNote anote) override ;
+class Sequencer : public MidiEventHandler {
+private:
+    float currentTime_ ;
+    std::set<uint8_t> activeNotes_ ;
 
 public:
-    MidiFilter(ComponentId id, MidiFilterConfig cfg);
+    Sequencer(ComponentId id, SequencerConfig cfg);
+
+    bool shouldKillNote(const ActiveNote& anote) const override ;
+    void onTick(float dt) override ;
 
 };
 
-#endif // __MIDI_FILTER_HPP_
+#endif // SEQUENCER_HPP_

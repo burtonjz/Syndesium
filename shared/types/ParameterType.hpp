@@ -33,7 +33,6 @@ To add a ParameterType, the following is required:
 
 */ 
 
-
 /**
  * @brief types of parameters that might exist within any given module
  * 
@@ -60,6 +59,7 @@ enum class ParameterType: uint8_t {
     BANDWIDTH,
     SHELF,
     Q_FACTOR,
+    BPM,
     N_PARAMETERS
 };
 
@@ -85,7 +85,8 @@ enum class ParameterType: uint8_t {
     X(CUTOFF) \
     X(BANDWIDTH) \
     X(SHELF) \
-    X(Q_FACTOR) 
+    X(Q_FACTOR) \
+    X(BPM)
 
 constexpr int N_PARAMETER_TYPES = static_cast<int>(ParameterType::N_PARAMETERS) ;
 
@@ -318,6 +319,15 @@ template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
     static constexpr double uiStepPrecision = 0.1 ;
 };
 
+template <> struct ParameterTraits<ParameterType::BPM>{
+    using ValueType = int;
+    static constexpr std::string name = "bpm";
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 300 ;
+    static constexpr float defaultValue = 120 ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::MULTIPLICATIVE ;
+    static constexpr double uiStepPrecision = 0.1 ;
+};
 
 /*
 The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime

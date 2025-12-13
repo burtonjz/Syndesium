@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __UI_MODULE_DETAIL_WIDGET_HPP_
-#define __UI_MODULE_DETAIL_WIDGET_HPP_
+#ifndef __UI_COMPONENT_DETAIL_WIDGET_HPP_
+#define __UI_COMPONENT_DETAIL_WIDGET_HPP_
 
 #include <QWidget>
 #include <QLabel>
@@ -33,13 +33,16 @@
 
 #include "types/ParameterType.hpp"
 #include "meta/ComponentDescriptor.hpp"
+#include "widgets/SequenceWidget.hpp"
 
-class ModuleDetailWidget : public QWidget {
+class ComponentDetailWidget : public QWidget {
     Q_OBJECT
     
 private:
     int componentId_ ;
     ComponentDescriptor descriptor_ ;
+
+    SequenceWidget* sequenceWidget_ ;
 
     QPushButton* resetButton_ ;
     QPushButton* closeButton_ ;
@@ -55,8 +58,8 @@ private:
     static constexpr qreal MODULE_DETAIL_MARGINS = 20 ;
 
 public:
-    explicit ModuleDetailWidget(int id, ComponentType typ, QWidget* parent = nullptr);
-    ~ModuleDetailWidget() override = default ;
+    explicit ComponentDetailWidget(int id, ComponentType typ, QWidget* parent = nullptr);
+    ~ComponentDetailWidget() override = default ;
 
     int getID() const ;
     ComponentType getType() const ;
@@ -80,8 +83,7 @@ private slots:
     void onCloseButtonClicked();
     void onValueChange();
     void flushPendingChanges();
-
 };
 
 
-#endif // __UI_MODULE_DETAIL_WIDGET_HPP_
+#endif // __UI_COMPONENT_DETAIL_WIDGET_HPP_

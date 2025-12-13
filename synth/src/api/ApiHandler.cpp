@@ -26,6 +26,7 @@
 
 #include <iostream>
 #include <netinet/in.h>
+#include <string>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <thread>
@@ -61,6 +62,9 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["set_component_parameter"] = [this](int sock, const json& request){ return setComponentParameter(sock, request); };
     handlers_["create_connection"] = [this](int sock, const json& request){ return createConnection(sock, request); };
     handlers_["remove_connection"] = [this](int sock, const json& request){ return removeConnection(sock, request); };
+    handlers_["get_sequence"] = [this](int sock, const json& request){ return getSequence(sock, request); };
+    handlers_["add_sequence_note"] = [this](int sock, const json& request){ return addSequenceNote(sock, request); };
+    handlers_["remove_sequence_note"] = [this](int sock, const json& request){ return removeSequenceNote(sock, request); };
 }
 
 void ApiHandler::start(){
@@ -183,7 +187,6 @@ json ApiHandler::sendApiResponse(int sock, json& response, const std::string& er
 
 void ApiHandler::handleClientMessage(int sock, std::string jsonStr){
     json request;
-    std::string err = "";
     std::string action ;
 
     std::cout << "received request: " << jsonStr << std::endl ;
@@ -192,8 +195,7 @@ void ApiHandler::handleClientMessage(int sock, std::string jsonStr){
         request = json::parse(jsonStr);
         action = request["action"];
     } catch (const std::exception& e){
-        err = "Error parsing json request: " + std::string(e.what()) ;
-        sendApiResponse(sock,request, err);
+        sendApiResponse(sock,request, "Error parsing json request: " + std::string(e.what()));
         return ;
     }
     
@@ -226,8 +228,7 @@ json ApiHandler::setAudioDevice(int sock, const json& request){
     try {
         deviceId = response["device_id"];
     } catch (const std::exception& e){
-        err = "Error processing json request: " + std::string(e.what()) ;
-        return sendApiResponse(sock,response, err);
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     if ( engine_->setAudioDeviceId(deviceId) ){
@@ -242,13 +243,11 @@ json ApiHandler::setAudioDevice(int sock, const json& request){
 json ApiHandler::setMidiDevice(int sock, const json& request){
     json response = request ;
     int deviceId ;
-    std::string err ;
     
     try {
         deviceId = response["device_id"];
     } catch (const std::exception& e){
-        err = "Error processing json request " + std::string(e.what()) ;
-        return sendApiResponse(sock,response, err);
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     if ( engine_->setMidiDeviceId(deviceId) ){
@@ -261,13 +260,11 @@ json ApiHandler::setMidiDevice(int sock, const json& request){
 json ApiHandler::setState(int sock, const json& request){
     json response = request ;
     std::string state ;
-    std::string err ;
 
     try {
         state = response["state"];
     } catch (const std::exception& e){
-        err = "Error processing json request: " + std::string(e.what()) ;
-        return sendApiResponse(sock,response, err);
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     if ( state == "run" ){
@@ -326,18 +323,16 @@ json ApiHandler::addComponent(int sock, const json& request){
     json response = request ;
     ComponentType type ;
     std::string name ;
-    std::string err ;
 
     try {
         type = static_cast<ComponentType>(response["type"]);
         name = response["name"];
     } catch (const std::exception& e){
-        err = "Error processing json request: " + std::string(e.what()) ;
-        return sendApiResponse(sock,response, err);
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     ComponentId id = engine_->componentFactory.createFromJson(type, name, getDefaultConfig(type));
-    response["component_id"] = id;
+    response["componentId"] = id;
     return sendApiResponse(sock,response);
 }
 
@@ -355,15 +350,13 @@ json ApiHandler::setComponentParameter(int sock, const json& request){
     json response = request ;
     ComponentId id ;
     ParameterType param ;
-    std::string err ;
 
     try {
         id = response["componentId"];
         param = static_cast<ParameterType>(response["parameter"]);
         response.at("value"); // verify present
     } catch (const std::exception& e){
-        err = "Error processing json request: " + std::string(e.what()) ;
-        return sendApiResponse(sock,response, err);
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
 
@@ -376,14 +369,12 @@ json ApiHandler::setComponentParameter(int sock, const json& request){
 
 json ApiHandler::createConnection(int sock, const json& request){
     json response = request ;
-    std::string err ;
 
     try {
         response.at("inbound");
         response.at("outbound");
     } catch (const std::exception& e){
-        err = "Error processing json request: " + std::string(e.what()) ;
-        return sendApiResponse(sock,response, err);
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     ConnectionRequest req = parseConnectionRequest(response);
@@ -396,14 +387,12 @@ json ApiHandler::createConnection(int sock, const json& request){
 
 json ApiHandler::removeConnection(int sock, const json& request){
     json response = request ;
-    std::string err ;
 
     try {
         response.at("inbound");
         response.at("outbound");
     } catch (const std::exception& e){
-        err = "Error processing json request: " + std::string(e.what()) ;
-        return sendApiResponse(sock,response, err);
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
     ConnectionRequest req = parseConnectionRequest(response);
@@ -414,6 +403,74 @@ json ApiHandler::removeConnection(int sock, const json& request){
     } else {
         return sendApiResponse(sock,response, "failed to make requested connection");
     }
+}
+
+json ApiHandler::getSequence( int sock, const json& request){
+    json response = request ;
+    ComponentId id ;
+
+    try {
+        id = response["componentId"];
+    } catch ( const std::exception& e ){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    MidiEventHandler* component = engine_->componentManager.getMidiHandler(id);
+    if ( !component || !component->hasSequence() ){
+        return sendApiResponse(sock, response, "No sequenceable component matching id" + std::to_string(id));
+    }
+
+    response["sequence"] = component->getSequence().get();
+    return response ;
+}
+
+json ApiHandler::addSequenceNote( int sock, const json& request){
+    json response = request ;
+    ComponentId id ;
+    SequenceNote n ;
+
+    try {
+        id = response["componentId"];
+        n = response["note"];
+    } catch ( const std::exception& e ){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    MidiEventHandler* component = engine_->componentManager.getMidiHandler(id);
+    if ( !component || !component->hasSequence() ){
+        return sendApiResponse(sock, response, "No sequenceable component matching id" + std::to_string(id));
+    }
+
+    if ( component->addSequenceNote(n) ){
+        return sendApiResponse(sock, response);
+    }
+
+    return sendApiResponse(sock, response, "failed to add sequence note.");
+
+}
+
+json ApiHandler::removeSequenceNote( int sock, const json& request){
+    json response = request ;
+    ComponentId id ;
+    SequenceNote n ;
+
+    try {
+        id = response["componentId"];
+        n = response["note"];
+    } catch ( const std::exception& e ){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    MidiEventHandler* component = engine_->componentManager.getMidiHandler(id);
+    if ( !component || !component->hasSequence() ){
+        return sendApiResponse(sock, response, "No sequenceable component matching id" + std::to_string(id));
+    }
+
+    if ( component->removeSequenceNote(n) ){
+        return sendApiResponse(sock, response);
+    }
+
+    return sendApiResponse(sock, response, "failed to add sequence note.");
 }
 
 ConnectionRequest ApiHandler::parseConnectionRequest(json request){

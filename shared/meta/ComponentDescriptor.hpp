@@ -18,10 +18,8 @@
 #ifndef __SHARED_COMPONENT_DESCRIPTOR_HPP_
 #define __SHARED_COMPONENT_DESCRIPTOR_HPP_
 
-#include <stdexcept>
 #include <string>
-#include <set>
-#include <cstdint>
+#include <vector>
 #include <nlohmann/json.hpp>
 
 #include "types/ParameterType.hpp"
@@ -39,7 +37,7 @@ struct ComponentDescriptor {
     size_t numMidiOutputs ;
 
     bool canModulate ;
-    bool isPolyphonic = false ;
+    bool sequenceable = false ;
 
     bool isModule() const { return numAudioOutputs > 0 ; }
     bool isModulator() const { return canModulate ; }

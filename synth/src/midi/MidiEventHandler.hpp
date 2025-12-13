@@ -22,7 +22,11 @@
 #include "midi/MidiNote.hpp"
 #include "midi/MidiEventListener.hpp"
 #include "midi/MidiEventQueue.hpp"
+#include "midi/Sequence.hpp"
+#include "types/SequenceData.hpp"
 
+#include <memory>
+#include <stdexcept>
 #include <vector>
 #include <algorithm>
 
@@ -34,6 +38,8 @@ protected:
 
     std::vector<MidiEventListener*> listeners_ ;
     MidiEventQueue queue_ ;
+
+    std::unique_ptr<Sequence> sequence_ ;
 
     /**
      * The below functions broadcast handler events to downstream objects
@@ -88,8 +94,44 @@ protected:
     }
 
 public:
-    MidiEventHandler(): BaseComponent() {}
+    MidiEventHandler():
+        BaseComponent(),
+        sequence_(nullptr)
+    {}
+    
     virtual ~MidiEventHandler() = default ;
+
+    bool hasSequence() const {
+        return sequence_.get() ;
+    }
+
+    SequenceData& getSequence() const {
+        if ( !sequence_ ){
+            throw std::runtime_error("MidiEventHandler: cannot get sequence for a non-sequenceable component.");
+        } ;
+        return sequence_.get()->getSequence();
+    }
+
+    void initializeSequence(){
+        if ( sequence_ ){
+            std::runtime_error("MidiEventHandler: sequence can only be initialized once.");
+        }
+
+        sequence_ = std::make_unique<Sequence>(this);
+    }
+
+    bool addSequenceNote(SequenceNote n){
+        if ( !sequence_ ) return false ;
+        if ( n.velocity )
+        sequence_->getSequence().addNote(n);
+        return true ;
+    }
+
+    bool removeSequenceNote(SequenceNote n){
+        if ( !sequence_ ) return false ;
+        sequence_->getSequence().removeNote(n);
+        return true ;
+    }
 
     void addListener(MidiEventListener* listener){
         if ( std::find(listeners_.begin(), listeners_.end(), listener) != listeners_.end() ) return ;
@@ -210,7 +252,8 @@ public:
     void tick(float dt){
         processEvents();
 
-        // check for any notes that need to be released
+        onTick(dt); // child class implementations
+
         for ( uint8_t i = 0; i < activeCount_ ; ++i ){
             ActiveNote& note = notes_[noteIndices_[i]];
             if ( shouldKillNote(note) ){
@@ -220,6 +263,9 @@ public:
                 note.updateTime(dt);
             }
         }
+    }
+
+    virtual void onTick([[maybe_unused]] float dt){
     }
 };
 

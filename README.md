@@ -101,7 +101,7 @@ The modular architecture makes it straightforward to add new components:
 2. Update the `synth/src/configs` directory with type traits and default parameters
 3. Update the `shared/meta/ComponentRegistry` with the component descriptor
 4. Implement your processing logic
-5. The detailed gui view will automatically be created based off the descriptor, but you can override specific parameters with something custom by updating `ModuleDetailWidget::createParameter`
+5. The detailed gui view will automatically be created based off the descriptor, but you can override specific parameters with something custom by updating `ComponentDetailWidget::createParameter`
 
 ## Acknowledgments
 

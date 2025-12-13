@@ -27,7 +27,7 @@
 
 #include "patch/ConnectionManager.hpp"
 #include "widgets/SocketContainerWidget.hpp"
-#include "widgets/ModuleDetailWidget.hpp"
+#include "widgets/ComponentDetailWidget.hpp"
 
 class ComponentWidget ; // forward declaration
 
@@ -43,7 +43,7 @@ private:
     QPointer<SocketWidget> lastHovered_ = nullptr ;
 
     std::vector<SocketContainerWidget*> widgets_ ;
-    std::vector<ModuleDetailWidget*> details_ ;
+    std::vector<ComponentDetailWidget*> details_ ;
 
     // context menu actions
     SocketWidget* clickedSocket_ ;

@@ -81,6 +81,9 @@ private:
     json setComponentParameter(int sock, const json& request);
     json createConnection(int sock, const json& request);
     json removeConnection(int sock, const json& request);
+    json getSequence(int sock, const json& request);
+    json addSequenceNote(int sock, const json& request);
+    json removeSequenceNote(int sock, const json& request);
 
     // load functions
     bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);

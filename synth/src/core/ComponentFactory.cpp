@@ -7,6 +7,7 @@
 #include "components/LinearFader.hpp"
 #include "components/MidiFilter.hpp" 
 #include "components/BiquadFilter.hpp"
+#include "components/Sequencer.hpp"
 
 #define HANDLE_CREATE_COMPONENT(Type) \
     case ComponentType::Type: \
@@ -24,6 +25,7 @@ ComponentId ComponentFactory::createFromJson(ComponentType type, const std::stri
         HANDLE_CREATE_COMPONENT(ADSREnvelope)
         HANDLE_CREATE_COMPONENT(MidiFilter)
         HANDLE_CREATE_COMPONENT(BiquadFilter)
+        HANDLE_CREATE_COMPONENT(Sequencer)
     default: 
         throw std::runtime_error("invalid component requested.");
     }
