@@ -31,29 +31,23 @@ Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
     initializeSequence();
 }
 
-
-bool Sequencer::shouldKillNote(const ActiveNote& anote) const {
-    return activeNotes_.find(anote.note.getMidiNote()) == activeNotes_.end() ;
-}
-
 void Sequencer::onTick(float dt){
     if ( !parameters_->getParameter<ParameterType::STATUS>()->getValue() ) return ;
 
     int bpm = sequence_->getBpm() ;
     float maxBeats = parameters_->getParameter<ParameterType::MAX_VALUE>()->getInstantaneousValue();
     float loopedBeat = std::fmod((currentTime_ * bpm ) / 60.0f , maxBeats);
-
-    activeNotes_ = sequence_->getActiveNotes(loopedBeat);
     uint8_t velocity = parameters_->getParameter<ParameterType::AMPLITUDE>()->getInstantaneousValue() * 127 ;
 
-    for ( uint8_t n : activeNotes_ ){
-        if ( !isNoteActive(n) ) {
-            MidiNote m = MidiNote(n, velocity, true);
-            ActiveNote anote = {m, 0};
-            MidiEvent e = {MidiEvent::Type::NotePressed, anote, false };
-            queue_.push(e);
+    getSequence().processEvents(loopedBeat, maxBeats, [this, velocity](bool isNoteOn, SequenceNote n){
+        MidiNote m = MidiNote(n.pitch, velocity, isNoteOn);
+        ActiveNote anote = {m, 0};
+        if ( isNoteOn ){
+            queue_.push({MidiEvent::Type::NotePressed, anote});
+        } else {
+            queue_.push({MidiEvent::Type::NoteReleased, anote});
         }
-    }    
+    });
 
     currentTime_ += dt ;
 }

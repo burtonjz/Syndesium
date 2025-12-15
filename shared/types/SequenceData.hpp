@@ -38,6 +38,7 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SequenceNote, pitch, velocity, startBeat, end
 class SequenceData {
 private:
     std::vector<SequenceNote> notes_ ;
+    float lastQueriedBeat_ ;
 
 public:
     SequenceData():
@@ -70,14 +71,38 @@ public:
         notes_.erase(it);
     }
 
-    std::set<uint8_t> getActiveNotes(float currentBeat){
-        std::set<uint8_t> active ;
-        for ( auto& n : notes_ ){
-            if ( n.startBeat >= currentBeat && n.endBeat >= currentBeat ){
-                active.insert(n.pitch);
+    template<typename Func>
+    void processEvents(float currentBeat, float loopLength, Func&& callback){
+        // handle loop around
+        if ( currentBeat < lastQueriedBeat_ ){
+            for ( const auto& n : notes_ ){
+                // Events from last query to loop end
+                if ( n.startBeat > lastQueriedBeat_ && n.startBeat <= loopLength ){
+                    callback(true, n);
+                }
+                if ( n.endBeat > lastQueriedBeat_ && n.endBeat <= loopLength ){
+                    callback(false, n);
+                }
+
+                // Events from loop start to current beat
+                if ( n.startBeat >= 0.0f && n.startBeat <= currentBeat ){
+                    callback(true, n);
+                }
+                if ( n.endBeat >= 0.0f && n.endBeat <= currentBeat ){
+                    callback(false, n);
+                }
+            }
+        } else {
+            for ( const auto& n : notes_ ){
+                if ( n.startBeat > lastQueriedBeat_ && n.startBeat <= currentBeat ){
+                    callback(true, n);
+                }
+                if ( n.endBeat > lastQueriedBeat_ && n.endBeat <= currentBeat ){
+                    callback(false, n);
+                }
             }
         }
-        return active ;
+        lastQueriedBeat_ = currentBeat ;
     }
 
 };

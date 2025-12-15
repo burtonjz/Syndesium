@@ -29,7 +29,6 @@ private:
 public:
     Sequencer(ComponentId id, SequencerConfig cfg);
 
-    bool shouldKillNote(const ActiveNote& anote) const override ;
     void onTick(float dt) override ;
 
 };

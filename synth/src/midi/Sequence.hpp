@@ -66,10 +66,6 @@ public:
     int getBpm() const {
         return bpm_->getInstantaneousValue();
     }
-
-    std::set<uint8_t> getActiveNotes(float currentBeat){
-        return sequence_.getActiveNotes(currentBeat);
-    }
 };
 
 #endif // SEQUENCE_HPP_
