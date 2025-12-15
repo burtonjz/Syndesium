@@ -644,7 +644,7 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
             componentRequest["name"] = ComponentRegistry::getComponentDescriptor(type).name ;
             componentRequest["type"] = static_cast<int>(type) ;
             componentResponse = addComponent(sock, componentRequest);
-            idMap[id] = componentResponse["component_id"];
+            idMap[id] = componentResponse["componentId"];
 
             for ( const auto& [p, data] : params.items() ){
                 if ( ! data.contains("currentValue") ){
@@ -658,7 +658,7 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
                 setComponentParameter(sock, parameterRequest);
             }
         } catch ( const std::exception& e ){
-            std::cout << "Error creating component: " << std::string(e.what()) << std::endl ;
+            std::cerr << "Error creating component: " << std::string(e.what()) << std::endl ;
             return false ;
         }
     }
@@ -671,7 +671,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     try {
         assert(config["AudioSinks"].is_array() && "'AudioSinks' json data is not in expected format");
     } catch (const std::exception& e){
-        std::cout << "Error processing json request: " << std::string(e.what()) ;
+        std::cerr << "Error processing json request: " << std::string(e.what()) ;
         return false ;
     }
 
@@ -703,7 +703,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     try {
         assert(config["rootMidiHandlers"].is_array() && "'rootMidiHandlers' json data is not in expected format");
     } catch (const std::exception& e){
-        std::cout << "Error processing json request: " << std::string(e.what()) ;
+        std::cerr << "Error processing json request: " << std::string(e.what()) ;
         return false ;
     }
 
@@ -731,7 +731,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     try {
         assert(config["components"].is_array() && "'components' json data is not in expected format");
     } catch (const std::exception& e){
-        std::cout << "Error processing json request: " << std::string(e.what()) ;
+        std::cerr << "Error processing json request: " << std::string(e.what()) ;
         return false ;
     }
 

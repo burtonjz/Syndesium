@@ -1,11 +1,9 @@
 TO DO
 
+SEQUENCER
+- Clean up sequence UX, note overlap, updating elegantly, any random bugs
 
 UI
-- Create Save/Load system
-  - Graph Panel json = zoom info, component widget positioning, component identifiers
-  - request all component and parameters from ComponentStore
-  - request all connections from ConnectionManager
 - Midi Control Mapping
   - Allow user to hit a button then touch the midi device knob to match that knob to that control
 - Modulation Enhancements:
@@ -19,17 +17,14 @@ UI
 ANALYSIS / VISUALS:
 - read system state and produce helpful visuals on detail widgets
 - report out modulation maxes/mins maybe?
-- fix the native file explorer gui to be in dark mode
-
-PERFORMANCE:
-- use of sets are slower than vectors, I should switch all sets to vector and manage pushes to vector to not include duplicates?
+- fix the native file explorer gui to be in dark mode (might just be my machine...)
 
 COMPONENT ENHANCEMENTS:
-- Detune on Polyphonic Oscillator
 - Support for ADSR envelope to be used monophonically (and thus used as a modulation source anywhere!)
 
 COMPONENTS TO ADD:
 - Sequencer (MidiEventHandler)
+- Arpeggiator
 - Pitchbend support
 - Panner
 - Phaser

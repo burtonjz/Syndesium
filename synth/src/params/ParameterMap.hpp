@@ -221,9 +221,9 @@ class ParameterMap {
                 
                 output[GET_PARAMETER_TRAIT_MEMBER(typ, name)] = { 
                     {"currentValue", ParameterValueToJson(getValueDispatch(typ))},
-                    {"defaultValue", ParameterValueToJson(getValueDispatch(typ))},
-                    {"minimumValue", ParameterValueToJson(getValueDispatch(typ))},
-                    {"maximumValue", ParameterValueToJson(getValueDispatch(typ))},
+                    {"defaultValue", ParameterValueToJson(getDefaultDispatch(typ))},
+                    {"minimumValue", ParameterValueToJson(getMinDispatch(typ))},
+                    {"maximumValue", ParameterValueToJson(getMaxDispatch(typ))},
                     {"modulatable", getParameter(typ)->isModulatable()}
                 };
             }
