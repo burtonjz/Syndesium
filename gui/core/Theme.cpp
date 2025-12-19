@@ -53,11 +53,11 @@ const QColor Theme::MODULATION_ACTIVE = QColor(255, 107, 107);
 
 // Piano Roll
 const QColor Theme::PIANO_ROLL_KEY_WHITE = QColor(240,240,240);
-const QColor Theme::PIANO_ROLL_KEY_BLACK = QColor(60,60,60);
+const QColor Theme::PIANO_ROLL_KEY_BLACK = QColor(20,20,20);
 const QColor Theme::PIANO_ROLL_KEY_BORDER = QColor(100,100,100);
 const QColor Theme::PIANO_ROLL_KEY_LABEL = QColor(30,30,30);   
 const QColor Theme::PIANO_ROLL_NOTE_COLOR = QColor(100,150,255,200);   
-const QColor Theme::PIANO_ROLL_NOTE_CREATION_COLOR = QColor(100,255,150,150);   
+const QColor Theme::PIANO_ROLL_NOTE_SELECTED_COLOR = QColor(100,255,150,150);   
 const QColor Theme::PIANO_ROLL_NOTE_BORDER = QColor(70, 200, 120);   
 
 void Theme::applyDarkTheme() {

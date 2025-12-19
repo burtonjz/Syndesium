@@ -33,7 +33,7 @@
 
 #include "types/ParameterType.hpp"
 #include "meta/ComponentDescriptor.hpp"
-#include "widgets/SequenceWidget.hpp"
+#include "widgets/PianoRollWidget.hpp"
 
 class ComponentDetailWidget : public QWidget {
     Q_OBJECT
@@ -42,7 +42,7 @@ private:
     int componentId_ ;
     ComponentDescriptor descriptor_ ;
 
-    SequenceWidget* sequenceWidget_ ;
+    PianoRollWidget* pianoRollWidget_ ;
 
     QPushButton* resetButton_ ;
     QPushButton* closeButton_ ;

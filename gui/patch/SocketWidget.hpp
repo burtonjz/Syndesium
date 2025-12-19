@@ -51,7 +51,7 @@ public:
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override ;
 
-    // Getters
+    // Getters/Setters
     SocketType getType() const { return spec_.type ; } 
     SocketContainerWidget* getParent() const { return parent_ ; }
     const QString& getName() const { return spec_.name ; }

@@ -15,48 +15,47 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef SEQUENCE_WIDGET_HPP_
-#define SEQUENCE_WIDGET_HPP_
+#ifndef PIANOROLL_WIDGET_HPP_
+#define PIANOROLL_WIDGET_HPP_
 
 #include "types/SequenceData.hpp"
+#include "widgets/NoteWidget.hpp"
 
 #include <QWidget>
 #include <QScrollArea>
 #include <QPainter>
 #include <QMouseEvent>
-#include <qtmetamacros.h>
+#include <QKeyEvent>
 #include <vector>
 #include <cstdint>
 
-class SequenceWidget : public QWidget {
+class PianoRollWidget : public QWidget {
     Q_OBJECT
 
 private:
-    std::vector<SequenceNote> notes_ ;
+    std::vector<NoteWidget*> notes_ ;
+    std::vector<NoteWidget*> selectedNotes_ ;
     int id_ ;
 
     float totalBeats_ ;
 
     bool isDragging_ = false ;
-    float dragStart_ = 0.0f ;
-    uint8_t dragPitch_ = 0 ;
+    NoteWidget* dragNote_ ;
 
-    static constexpr qreal SEQUENCE_NOTE_HEIGHT = 12 ;
-    static constexpr qreal SEQUENCE_PIXELS_PER_BEAT = 48 ;
-    static constexpr qreal SEQUENCE_KEY_WIDTH = 60 ;
-
-    static constexpr qreal SEQUENCE_MAIN_GRID_PEN_WIDTH = 1 ;
-    static constexpr qreal SEQUENCE_SUB_GRID_PEN_WIDTH = .75 ;
-
-    static constexpr qreal SEQUENCE_KEY_LABEL_X_PAD = 4 ;
+    static constexpr qreal NOTE_HEIGHT = 30 ;
+    static constexpr qreal PIXELS_PER_BEAT = 48 ;
+    static constexpr qreal KEY_WIDTH = 60 ;
+    static constexpr qreal MAIN_GRID_PEN_WIDTH = 1 ;
+    static constexpr qreal SUB_GRID_PEN_WIDTH = .75 ;
+    static constexpr qreal KEY_LABEL_X_PAD = 4 ;
 
 public:
-    explicit SequenceWidget(int id, QWidget* parent = nullptr);
+    explicit PianoRollWidget(int id, QWidget* parent = nullptr);
 
     void setTotalBeats(float beats);
 
     void setNotes(const std::vector<SequenceNote>& notes);
-    const std::vector<SequenceNote>& getNotes() const ;
+    const std::vector<SequenceNote> getNotes() const ;
 
     void removeNote(SequenceNote note);
 
@@ -65,12 +64,12 @@ protected:
     void mousePressEvent(QMouseEvent* e) override ;
     void mouseMoveEvent(QMouseEvent* e) override ;
     void mouseReleaseEvent(QMouseEvent* e) override ;
+    void keyPressEvent(QKeyEvent* e) override ;
 
 private:
     void updateSize();
     void drawGrid(QPainter& p);
     void drawPianoKeys(QPainter& p);
-    void drawNotes(QPainter& p);
 
     bool isWhiteNote(uint8_t pitch) const ;
     float xToBeat(int x) const ;
@@ -81,9 +80,11 @@ private:
     // functions for api responses
     void onNoteAdded(SequenceNote note);
     void onNoteRemoved(SequenceNote note);
+    void deleteSelectedNotes();
     
 public slots:
     void onApiDataReceived(const QJsonObject &json);
+    void onNoteClicked(NoteWidget* note, bool multiSelect);
 };
 
-#endif // SEQUENCE_WIDGET_HPP_
+#endif // PIANOROLL_WIDGET_HPP_

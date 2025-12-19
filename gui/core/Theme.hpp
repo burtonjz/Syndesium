@@ -62,7 +62,7 @@ public:
     static const QColor PIANO_ROLL_KEY_BORDER ;
     static const QColor PIANO_ROLL_KEY_LABEL ;
     static const QColor PIANO_ROLL_NOTE_COLOR ;
-    static const QColor PIANO_ROLL_NOTE_CREATION_COLOR ;
+    static const QColor PIANO_ROLL_NOTE_SELECTED_COLOR ;
     static const QColor PIANO_ROLL_NOTE_BORDER ;
 
     // Modulation indicator

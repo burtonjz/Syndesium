@@ -23,7 +23,7 @@
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
 #include "core/ApiClient.hpp"
-#include "widgets/SequenceWidget.hpp"
+#include "widgets/PianoRollWidget.hpp"
 
 #include <QJsonObject>
 #include <QEvent>
@@ -35,7 +35,7 @@ ComponentDetailWidget::ComponentDetailWidget(int id, ComponentType type, QWidget
     QWidget(parent),
     componentId_(id),
     descriptor_(ComponentRegistry::getComponentDescriptor(type)),
-    sequenceWidget_(nullptr)
+    pianoRollWidget_(nullptr)
 {
     setWindowTitle(QString::fromStdString(descriptor_.name));
 
@@ -144,11 +144,11 @@ void ComponentDetailWidget::setupLayout(){
     // sequence ( if applicable)
     if ( descriptor_.sequenceable ){
         auto* scroll = new QScrollArea() ;
-        QHBoxLayout* sequenceLayout = new QHBoxLayout();
-        sequenceWidget_ = new SequenceWidget(componentId_);
-        scroll->setWidget(sequenceWidget_);
-        sequenceLayout->addWidget(scroll);
-        mainLayout->addLayout(sequenceLayout);
+        QHBoxLayout* pianoLayout = new QHBoxLayout();
+        pianoRollWidget_ = new PianoRollWidget(componentId_);
+        scroll->setWidget(pianoRollWidget_);
+        pianoLayout->addWidget(scroll);
+        mainLayout->addLayout(pianoLayout);
     }
 
     // parameters
