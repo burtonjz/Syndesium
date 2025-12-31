@@ -15,25 +15,26 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MODULATOR_ADSR_ENVELOPE_HPP_
-#define __MODULATOR_ADSR_ENVELOPE_HPP_
+#ifndef MONOPHONIC_FILTER_HPP_
+#define MONOPHONIC_FILTER_HPP_
 
 #include "core/BaseComponent.hpp"
-#include "core/BaseModulator.hpp"
 #include "midi/MidiEventHandler.hpp"
-#include "params/ParameterMap.hpp"
-#include "configs/ADSREnvelopeConfig.hpp"
+#include "midi/MidiNote.hpp"
+#include "configs/MonophonicFilterConfig.hpp"
 
-class ADSREnvelope : public BaseModulator, public MidiEventHandler {      
-public:
-    ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);
+
+class MonophonicFilter : public MidiEventHandler {
+    private:
+        std::vector<uint8_t> noteStack_ ;
     
-    // MODULATOR OVERRIDES
-    double modulate(double value, ModulationData* mData) const override;
-    
-    // MIDI EVENT HANDLER OVERRIDES
-    virtual bool shouldKillNote(const ActiveNote& note) const override ;
+    public:
+        MonophonicFilter(ComponentId id, MonophonicFilterConfig cfg);
+
+        void onKeyPressed(const ActiveNote* note, bool rePressed) override ;
+        void onKeyReleased(ActiveNote anote) override ;
 
 };
 
-#endif // __MODULATOR_ADSR_ENVELOPE_HPP_
+
+#endif // MONOPHONIC_FILTER_HPP_

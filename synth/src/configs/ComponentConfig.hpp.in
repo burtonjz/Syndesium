@@ -15,25 +15,25 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MODULATOR_ADSR_ENVELOPE_HPP_
-#define __MODULATOR_ADSR_ENVELOPE_HPP_
+#ifndef __HPP_ALL_CONFIGS_
+#define __HPP_ALL_CONFIGS_
 
-#include "core/BaseComponent.hpp"
-#include "core/BaseModulator.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "params/ParameterMap.hpp"
-#include "configs/ADSREnvelopeConfig.hpp"
+#include "types/ComponentType.hpp"
 
-class ADSREnvelope : public BaseModulator, public MidiEventHandler {      
-public:
-    ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);
-    
-    // MODULATOR OVERRIDES
-    double modulate(double value, ModulationData* mData) const override;
-    
-    // MIDI EVENT HANDLER OVERRIDES
-    virtual bool shouldKillNote(const ActiveNote& note) const override ;
+@INCLUDES@
 
-};
+#include <nlohmann/json.hpp>
+using json = nlohmann::json ;
 
-#endif // __MODULATOR_ADSR_ENVELOPE_HPP_
+inline json getDefaultConfig(ComponentType type){
+    switch(type){
+        #define X(NAME) \
+            case ComponentType::NAME: return ComponentTypeTraits<ComponentType::NAME>::config{};
+        COMPONENT_TYPE_LIST
+        #undef X
+    default:
+        return json::object();
+    }
+}
+
+#endif // __HPP_ALL_CONFIGS_

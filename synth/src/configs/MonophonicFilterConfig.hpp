@@ -15,25 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MODULATOR_ADSR_ENVELOPE_HPP_
-#define __MODULATOR_ADSR_ENVELOPE_HPP_
+#ifndef __HPP_CONFIGS_MONOPHONICFILTER_
+#define __HPP_CONFIGS_MONOPHONICFILTER_
 
-#include "core/BaseComponent.hpp"
-#include "core/BaseModulator.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "params/ParameterMap.hpp"
-#include "configs/ADSREnvelopeConfig.hpp"
+#include "types/ComponentType.hpp"
+#include <nlohmann/detail/macro_scope.hpp>
+#include <nlohmann/json.hpp>
 
-class ADSREnvelope : public BaseModulator, public MidiEventHandler {      
-public:
-    ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);
-    
-    // MODULATOR OVERRIDES
-    double modulate(double value, ModulationData* mData) const override;
-    
-    // MIDI EVENT HANDLER OVERRIDES
-    virtual bool shouldKillNote(const ActiveNote& note) const override ;
+using json = nlohmann::json ;
 
+// forward declare class
+class MonophonicFilter ;
+
+// define default configuration
+struct MonophonicFilterConfig {
+    bool enabled = true ;
 };
 
-#endif // __MODULATOR_ADSR_ENVELOPE_HPP_
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MonophonicFilterConfig, enabled) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::MonophonicFilter>{ 
+    using type = MonophonicFilter ;
+    using config = MonophonicFilterConfig ;
+};
+
+#endif // __HPP_CONFIGS_MONOPHONICFILTER_

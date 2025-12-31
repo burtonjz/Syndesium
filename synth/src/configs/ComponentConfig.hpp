@@ -22,30 +22,22 @@
 
 #include "configs/OscillatorConfig.hpp"
 #include "configs/PolyOscillatorConfig.hpp"
+#include "configs/BiquadFilterConfig.hpp"
 #include "configs/LinearFaderConfig.hpp"
 #include "configs/ADSREnvelopeConfig.hpp"
 #include "configs/MidiFilterConfig.hpp"
-#include "configs/BiquadFilterConfig.hpp"
 #include "configs/SequencerConfig.hpp"
+#include "configs/MonophonicFilterConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;
 
-
-#define HANDLE_DEFAULT_CONFIG(Type) \
-    case ComponentType::Type: \
-        return  ComponentTypeTraits<ComponentType::Type>::config{};
-
 inline json getDefaultConfig(ComponentType type){
     switch(type){
-    HANDLE_DEFAULT_CONFIG(Oscillator)
-    HANDLE_DEFAULT_CONFIG(PolyOscillator)
-    HANDLE_DEFAULT_CONFIG(LinearFader) 
-    HANDLE_DEFAULT_CONFIG(ADSREnvelope)
-    HANDLE_DEFAULT_CONFIG(MidiFilter)
-    HANDLE_DEFAULT_CONFIG(BiquadFilter)
-    HANDLE_DEFAULT_CONFIG(Sequencer)
-
+        #define X(NAME) \
+            case ComponentType::NAME: return ComponentTypeTraits<ComponentType::NAME>::config{};
+        COMPONENT_TYPE_LIST
+        #undef X
     default:
         return json::object();
     }

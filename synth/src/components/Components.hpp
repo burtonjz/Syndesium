@@ -15,25 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __MODULATOR_ADSR_ENVELOPE_HPP_
-#define __MODULATOR_ADSR_ENVELOPE_HPP_
+#ifndef __HPP_ALL_COMPONENTS_
+#define __HPP_ALL_COMPONENTS_
 
-#include "core/BaseComponent.hpp"
-#include "core/BaseModulator.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "params/ParameterMap.hpp"
-#include "configs/ADSREnvelopeConfig.hpp"
+#include "components/PolyOscillator.hpp"
+#include "components/LinearFader.hpp"
+#include "components/Oscillator.hpp"
+#include "components/ADSREnvelope.hpp"
+#include "components/MonophonicFilter.hpp"
+#include "components/MidiFilter.hpp"
+#include "components/Sequencer.hpp"
+#include "components/Components.hpp"
+#include "components/BiquadFilter.hpp"
 
-class ADSREnvelope : public BaseModulator, public MidiEventHandler {      
-public:
-    ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);
-    
-    // MODULATOR OVERRIDES
-    double modulate(double value, ModulationData* mData) const override;
-    
-    // MIDI EVENT HANDLER OVERRIDES
-    virtual bool shouldKillNote(const ActiveNote& note) const override ;
-
-};
-
-#endif // __MODULATOR_ADSR_ENVELOPE_HPP_
+#endif // __HPP_ALL_COMPONENTS_

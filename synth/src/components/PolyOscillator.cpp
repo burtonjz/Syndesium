@@ -76,9 +76,11 @@ void PolyOscillator::clearBuffer(){
 void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
     if ( rePress && children_.find(anote->note.getMidiNote())){
         Oscillator* osc = children_[anote->note.getMidiNote()] ;
-        osc->setFrequency(anote->note.getFrequency());
-        osc->setAmplitude(anote->note.getMidiVelocity() / 127.0 );
-        updateModulationInitialValue(osc);
+        if ( osc ){
+            osc->setFrequency(anote->note.getFrequency());
+            osc->setAmplitude(anote->note.getMidiVelocity() / 127.0 );
+            updateModulationInitialValue(osc);
+        }
         return ;
     }
 

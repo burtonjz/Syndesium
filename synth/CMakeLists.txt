@@ -3,27 +3,68 @@ project(synth)
 
 # set variables
 set(SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
-
-set(CMAKE_EXPORT_COMPILE_COMMANDS ON) # create compile commands json for vsCode
-
-# debug
-# set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Compiler flags
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3 -DNDEBUG -march=native -Wall -Wextra -Wpedantic -ffast-math")
-# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0 -DDEBUG -Wall -Wextra -Wpedantic -ffast-math") # for debugging
-# Find and include libraries
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
 find_package(PkgConfig REQUIRED)
 
 pkg_check_modules(RTAUDIO REQUIRED rtaudio)
 pkg_check_modules(RTMIDI REQUIRED rtmidi)
 pkg_check_modules(KISSFFT REQUIRED kissfft-float)
 
+# Generate configs/ComponentConfig.hpp
+file(GLOB CONFIG_FILES "${SRC_DIR}/configs/*Config.hpp")
+list(FILTER CONFIG_FILES EXCLUDE REGEX "ComponentConfig\\.hpp$")
+
+add_custom_command(
+    OUTPUT ${SRC_DIR}/configs/ComponentConfig.hpp
+    COMMAND ${Python3_EXECUTABLE} ${SRC_DIR}/configs/generate_configs.py
+    DEPENDS 
+        ${SRC_DIR}/configs/generate_configs.py
+        ${SRC_DIR}/configs/ComponentConfig.hpp.in
+        ${CMAKE_CURRENT_SOURCE_DIR}/../shared/types/ComponentType.hpp
+        ${CONFIG_FILES}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Generating ComponentConfig.hpp from template"
+    VERBATIM
+)
+
+add_custom_target(generate_configs
+    DEPENDS ${SRC_DIR}/configs/ComponentConfig.hpp
+)
+
+# Generate components/Components.hpp
+file(GLOB COMPONENT_FILES "${SRC_DIR}/components/*.hpp")
+list(FILTER COMPONENT_FILES EXCLUDE REGEX "Components\\.hpp$")
+
+add_custom_command(
+    OUTPUT ${SRC_DIR}/components/Components.hpp
+    COMMAND ${Python3_EXECUTABLE} ${SRC_DIR}/components/generate_components.py
+    DEPENDS 
+        ${SRC_DIR}/components/generate_components.py
+        ${SRC_DIR}/components/Components.hpp.in
+        ${COMPONENT_FILES}
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+    COMMENT "Generating Components.hpp from template"
+    VERBATIM
+)
+
+add_custom_target(generate_components
+    DEPENDS ${SRC_DIR}/components/Components.hpp
+)
+
 file(GLOB SRC "${SRC_DIR}/*.cpp" "${SRC_DIR}/*/*.cpp")
 
-add_executable(synth ${SRC})
+add_executable(synth ${SRC} ${SRC_DIR}/configs/ComponentConfig.hpp ${SRC_DIR}/components/Components.hpp)
+
+# Make sure the config is generated before building
+add_dependencies(synth generate_configs)
+add_dependencies(synth generate_components)
 
 target_include_directories(synth PRIVATE
     ${SRC_DIR}
@@ -39,13 +80,9 @@ target_link_libraries(synth PRIVATE
     m
 )
 
-# Linker Flags
 target_link_options(synth PRIVATE
     -Wl,-Bstatic
     -Wl,-Bdynamic
     -Wl,--as-needed
     -pthread
 )
-
-message(STATUS "SRC_DIR: ${SRC_DIR}")
-message(STATUS "SHARED_DIR: ${SHARED_DIR}")

@@ -30,9 +30,21 @@ enum class ComponentType {
     ADSREnvelope,
     MidiFilter,
     Sequencer,
+    MonophonicFilter,
     Unknown,
     N_COMPONENTS
 };
+
+// X-Macro for components
+#define COMPONENT_TYPE_LIST \
+    X(Oscillator) \
+    X(PolyOscillator) \
+    X(BiquadFilter) \
+    X(LinearFader) \
+    X(ADSREnvelope) \
+    X(MidiFilter) \
+    X(Sequencer) \
+    X(MonophonicFilter) \
 
 constexpr int N_COMPONENT_TYPES = static_cast<int>(ComponentType::N_COMPONENTS) - 1 ;
 

@@ -58,7 +58,7 @@ protected:
     */
 
     // notify downstream listeners of a key press event
-    void notifyKeyPressed(ActiveNote* note, bool rePressed = false) {
+    void notifyKeyPressed(const ActiveNote* note, bool rePressed = false) {
         for ( auto* li : listeners_ ){
             if (auto h = dynamic_cast<MidiEventHandler*>(li)){
                 h->handleKeyPressed(note->note);
@@ -122,8 +122,7 @@ public:
 
     bool addSequenceNote(SequenceNote n){
         if ( !sequence_ ) return false ;
-        if ( n.velocity )
-        sequence_->getSequence().addNote(n);
+        if ( n.velocity ) sequence_->getSequence().addNote(n);
         return true ;
     }
 

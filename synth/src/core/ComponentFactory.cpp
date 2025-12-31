@@ -1,13 +1,7 @@
 #include "core/ComponentFactory.hpp"
-#include "configs/ComponentConfig.hpp"
 
-#include "components/Oscillator.hpp"
-#include "components/PolyOscillator.hpp" 
-#include "components/ADSREnvelope.hpp" 
-#include "components/LinearFader.hpp"
-#include "components/MidiFilter.hpp" 
-#include "components/BiquadFilter.hpp"
-#include "components/Sequencer.hpp"
+#include "configs/ComponentConfig.hpp"
+#include "components/Components.hpp"
 
 #define HANDLE_CREATE_COMPONENT(Type) \
     case ComponentType::Type: \
@@ -19,13 +13,10 @@ ComponentFactory::ComponentFactory(ComponentManager* store):
 
 ComponentId ComponentFactory::createFromJson(ComponentType type, const std::string& name, const json& j ){
     switch(type){
-        HANDLE_CREATE_COMPONENT(Oscillator)
-        HANDLE_CREATE_COMPONENT(PolyOscillator)
-        HANDLE_CREATE_COMPONENT(LinearFader)
-        HANDLE_CREATE_COMPONENT(ADSREnvelope)
-        HANDLE_CREATE_COMPONENT(MidiFilter)
-        HANDLE_CREATE_COMPONENT(BiquadFilter)
-        HANDLE_CREATE_COMPONENT(Sequencer)
+        #define X(NAME) \
+            case ComponentType::NAME: return store_->create<ComponentType::NAME>(name, j.get<NAME##Config>());
+            COMPONENT_TYPE_LIST
+        #undef X
     default: 
         throw std::runtime_error("invalid component requested.");
     }

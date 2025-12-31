@@ -9,6 +9,7 @@
 ## Step 1: Specify Component Type
 **Location:** `shared/types/ComponentType.hpp`
 
+make sure to update the X Macro in that file as well!
 
 ## Step 2: Create Component Files
 **Location:** `synth/src/components/`
@@ -137,22 +138,9 @@ template <> struct ComponentTypeTraits<ComponentType::MyComponent>{
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MyComponentConfig, waveform, frequency) // macro to serialize/deserialize json <-> structs
 ```
 
-Update `ComponentConfig.hpp`:
-
-1. Include your config header: `#include "configs/MyComponentConfig.hpp"`
-2. Add macro to switch statement
-
 ---
 
-## Step 7: Register with Factory System
-**Location:** `synth/src/core/ComponentFactory.cpp`
-
-1. Include your component header: `#include "components/MyComponent.hpp"`
-2. Add to the macro in `ComponentFactory::createFromJson()`:
-
----
-
-## Step 8: Register Component Metadata
+## Step 7: Register Component Metadata
 **Location:** `shared/meta/ComponentRegistry.cpp`
 
 Add an entry containing:

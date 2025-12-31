@@ -1,4 +1,4 @@
-/*
+"""
  * Copyright (C) 2025 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
@@ -13,27 +13,26 @@
  *
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
- */
+"""
 
-#ifndef __MODULATOR_ADSR_ENVELOPE_HPP_
-#define __MODULATOR_ADSR_ENVELOPE_HPP_
-
-#include "core/BaseComponent.hpp"
-#include "core/BaseModulator.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "params/ParameterMap.hpp"
-#include "configs/ADSREnvelopeConfig.hpp"
-
-class ADSREnvelope : public BaseModulator, public MidiEventHandler {      
-public:
-    ADSREnvelope(ComponentId id, ADSREnvelopeConfig cfg);
+import os
+import re
+from pathlib import Path
     
-    // MODULATOR OVERRIDES
-    double modulate(double value, ModulationData* mData) const override;
+def generate_component_include_file():
+    componentDir = Path(__file__).parent 
+    components = os.listdir(componentDir)
+    includes = "\n".join(f'#include "components/{c}"' for c in components if c.endswith(".hpp"))
+
+    templatePath = componentDir / "Components.hpp.in"
+    with open(templatePath, "r") as f:
+        template = f.read()
     
-    // MIDI EVENT HANDLER OVERRIDES
-    virtual bool shouldKillNote(const ActiveNote& note) const override ;
+    output = template.replace("@INCLUDES@", includes)
+    
+    # Write output
+    output_path = componentDir / "Components.hpp"
+    with open(output_path, "w") as f:
+        f.write(output)
 
-};
-
-#endif // __MODULATOR_ADSR_ENVELOPE_HPP_
+generate_component_include_file()
