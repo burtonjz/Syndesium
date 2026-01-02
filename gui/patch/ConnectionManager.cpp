@@ -262,8 +262,9 @@ void ConnectionManager::onApiDataReceived(const QJsonObject &json){
     if ( action == "remove_connection" && success ){
         ConnectionID id = json["connectionId"].toInt(-1);
         ConnectionCable* cable = connections_[id];
+
         if ( !cable ){
-            qDebug() << "connectionID value " << id << "is not present in map. Cannot remove connection." ;
+            qWarning() << "connectionID value " << id << "is not present in map. Cannot remove connection." ;
             return ;
         }
 
@@ -278,7 +279,7 @@ void ConnectionManager::onApiDataReceived(const QJsonObject &json){
                 .arg(cable->getToSocket()->getParent()->getName())
                 .arg(cable->getToSocket()->getName())
             : "null" ;
-        qDebug() << "removing cable connection: " << fromText << " -> " << toText ;
+        qInfo() << "removing cable connection: " << fromText << " -> " << toText ;
         
         cancelConnection(id);
     }

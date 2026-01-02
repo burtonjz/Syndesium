@@ -165,8 +165,8 @@ void GraphPanel::deleteSelectedModules(){
     QList<QGraphicsItem*> selectedItems = scene_->selectedItems() ;
 
     for ( QGraphicsItem* item: selectedItems ){
-        // if it's a socket, we need to start a drag
-        if ( ComponentWidget* module = qgraphicsitem_cast<ComponentWidget*>(item) ){
+        ComponentWidget* module = dynamic_cast<ComponentWidget*>(item);
+        if ( module ){
             connectionManager_->removeAllConnections(module);
             auto it = std::find(widgets_.begin(), widgets_.end(), module);
             if ( it != widgets_.end() ) widgets_.erase(it) ;
@@ -174,7 +174,7 @@ void GraphPanel::deleteSelectedModules(){
             scene_->removeItem(module);
             module->deleteLater();
 
-            qDebug() << "Deleted module:" << module->getComponentDescriptor().name ;
+            qInfo() << "Deleted module:" << module->getComponentDescriptor().name ;
             emit wasModified();
         }
     }

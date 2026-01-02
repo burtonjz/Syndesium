@@ -26,7 +26,6 @@
 int main() {
     spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
     spdlog::set_level(spdlog::level::debug);
-    SPDLOG_DEBUG("test");
     SPDLOG_INFO("RtAudio version: " + RtAudio::getVersion());
     SPDLOG_INFO("RtMidi version: " + RtMidi::getVersion());
     Config::load();
