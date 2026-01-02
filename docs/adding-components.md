@@ -45,13 +45,22 @@ Check each base class for necessary overrides.
 ---
 
 ## Step 5: Handle Child Components (If Applicable)
-If your component will manage any child components, it is responsible for doing so through overrides -- there is no centralized pattern for managing child components.
+If your component will manage any child components, it is responsible for doing so through overrides -- there is currently no centralized pattern for managing child components.
 
-See `PolyphonicOscillator` for an appropriate example example of implementing a component with children. However, the following is likely necessary: 
+See `PolyphonicOscillator` for an appropriate example example of implementing a component with children. However, at a high level we need to make sure:
+
+1. Child components properly inherit parameters that are synced with the parent (reference parameters)
+2. The parent passes down parameter and modulation actions that it receives from the API
+3. The parent instructs children to perform real time behaviors (tick)
+
+The following patterns may be helpful for implementing parent/child components:
 ```cpp
 
 void getParameterModulator(ParameterType p) override {
-    // if children are modulatable, we need to be able to 
+    /**
+    If children are modulatable, we need to be able to retrieve
+    the modulator associated with child parameters if the function parameter is not one stored into the parent's map.
+    **/
 }
 
 // from BaseComponent
@@ -71,6 +80,8 @@ void updateParameters() override {
     });
 }
 
+// when parameter modulation is set, we need to pass it down to
+// children if it is not a parent's referenced parameter
 void onSetParameterModulation(ParameterType p, BaseModulator* m) override {
     if ( d.empty() && m ){
         auto required = m->getRequiredModulationParameters();
@@ -88,8 +99,9 @@ void onSetParameterModulation(ParameterType p, BaseModulator* m) override {
 }
 
 void onRemoveParameterModulation(ParameterType param) override {
-    BaseComponent::onRemoveParameterModulation(param);
-    // Remove modulation from children if needed
+    // default behavior removes from the parent modulation map
+    parameters_->getParameter(p)->removeModulation();
+    // Or, remove modulation from children if needed
 }
 
 // from BaseModule
@@ -120,7 +132,7 @@ If NO children, you can skip this step.
 ## Step 6: Create Component Config
 **Location:** `synth/src/configs/`
 
-Create `MyComponentConfig.hpp`:
+Component Config files are used to create a standard system for our component factory to produce components with all necessary input variables/defaults:
 ```cpp
 class MyComponent ; // forward declaration
 

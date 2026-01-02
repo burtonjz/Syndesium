@@ -39,7 +39,6 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
 
     // check required data
     if ( !mData ) return output ; 
-    if ( !mData->has(ModulationParameter::MIDI_NOTE) ) return output ;
 
     if ( !mData->has(ModulationParameter::INITIAL_VALUE) ){
         mData->set(ModulationParameter::INITIAL_VALUE, 0.0f);
@@ -47,8 +46,17 @@ double ADSREnvelope::modulate([[maybe_unused]] double value, ModulationData* mDa
     if ( !mData->has(ModulationParameter::OUTPUT_1) ){ 
         mData->set(ModulationParameter::OUTPUT_1, 0.0f) ;    
     }
-
-    uint8_t midiNote = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
+    
+    uint8_t midiNote ;
+    if ( mData->has(ModulationParameter::MIDI_NOTE) ){ 
+        // polyphonic mode
+        midiNote = static_cast<uint8_t>(mData->get(ModulationParameter::MIDI_NOTE)) ;
+    } else { 
+        // global mode
+        midiNote = activeCount_ > 0 ? lastPressedNote_ : lastReleasedNote_ ;
+        if ( midiNote == 255 ) return output ; // no notes ever played!
+    }
+    
     auto anote = notes_[midiNote] ;
     if ( !isNoteActive(midiNote) ) return output ;
 

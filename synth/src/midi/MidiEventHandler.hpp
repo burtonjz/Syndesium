@@ -33,7 +33,10 @@ protected:
     std::array<ActiveNote,128> notes_ ;
     std::array<uint8_t,128> noteIndices_ ;
     uint8_t activeCount_ = 0 ;
-
+    
+    uint8_t lastPressedNote_ = 255 ;
+    uint8_t lastReleasedNote_ = 255 ;
+    
     std::vector<MidiEventListener*> listeners_ ;
     MidiEventQueue queue_ ;
 

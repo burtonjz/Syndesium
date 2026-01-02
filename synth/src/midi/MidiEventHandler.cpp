@@ -116,6 +116,7 @@ bool MidiEventHandler::isNoteActive(uint8_t n) const {
 void MidiEventHandler::activateNote(const ActiveNote& anote){
     uint8_t midiNote = anote.note.getMidiNote() ;
     notes_[midiNote] = anote ;
+    lastPressedNote_ = midiNote ;
 
     if ( isNoteActive(midiNote) ){
         return ;
@@ -124,6 +125,7 @@ void MidiEventHandler::activateNote(const ActiveNote& anote){
 }
 
 void MidiEventHandler::deactivateNote(uint8_t n){
+    lastReleasedNote_ = n ;
     for ( uint8_t i = 0 ; i < activeCount_; ++i ){
         if ( noteIndices_[i] == n ){
             noteIndices_[i] = noteIndices_[--activeCount_];

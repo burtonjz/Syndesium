@@ -7,23 +7,25 @@ UI
 - Midi Control Mapping
   - Allow user to hit a button then touch the midi device knob to match that knob to that control
 - Modulation Enhancements:
-  - Implement right click on socket to expand a menu to delete specific connections
-  - UI support modulation depth socket parameters ( left click on socket to manage modulation chains as well as depth parameters )
+  - Right click context menu to delete specific connections
+  - UI support modulation depth, setting modulation strategy, and configuring a modulation chain.
 - Misc
   - Improve module add logic so they do not spawn on top of each other.
+  - allow naming of components
+  - allow grouping of components -- hide internal connections and expose unused, or specified connections.
+  - Make save/load functions save/update hardware socket container widget positions.
+  - Move component additions to the file bar to make more room for the graph panel, and then create shortcut context menus to quickly add modules
+  - remember previous setup selections (save in config), and move setup to menu bar with a shortcut.
+  - implement module delete + module duplicate
+  - create a dock and popout system for detail widgets for easier management.
   - Create max zoom for gui graph panel?
-  - Improve UI workflow (e.g., setup must be done before play, we need to get these safegaurds in place )
+  - add sync socket to oscillator (orange?) 
 
 ANALYSIS / VISUALS:
-- read system state and produce helpful visuals on detail widgets
-- report out modulation maxes/mins maybe?
-- fix the native file explorer gui to be in dark mode (might just be my machine...)
-
-COMPONENT ENHANCEMENTS:
-- Support for ADSR envelope to be used monophonically (and thus used as a modulation source anywhere!)
+- find optimizations for the spectrum analyzer (seems to run pretty hot)
+- create mechanism to send the output of a specific module to the spectrum analyzer (e.g., output of oscillator vs output of filter)
 
 COMPONENTS TO ADD:
-- Sequencer (MidiEventHandler)
 - Arpeggiator
 - Pitchbend support
 - Panner
@@ -34,9 +36,9 @@ COMPONENTS TO ADD:
 - Bitcrusher
 
 IMPROVEMENTS:
+- Hard Sync secondary oscillator to primary oscillator.
 - Phase syncing to minimize wave interference?
 - Tempo Utility? (support multiple independent sequencers staying in sync)
-- Support multiple modulation sources connecting to a single parameter (reorderable modulation chain? Or does modulation depth / second order modulation capture this?)
 
 ONE DAY...:
 - Envelope that supports drawing curve
