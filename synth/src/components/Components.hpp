@@ -19,12 +19,13 @@
 #define __HPP_ALL_COMPONENTS_
 
 #include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
 #include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
 #include "components/BiquadFilter.hpp"
+#include "components/ADSREnvelope.hpp"
+#include "components/Sequencer.hpp"
+#include "components/MonophonicFilter.hpp"
+#include "components/LinearFader.hpp"
+#include "components/MidiFilter.hpp"
+#include "components/Components.hpp"
 
 #endif // __HPP_ALL_COMPONENTS_

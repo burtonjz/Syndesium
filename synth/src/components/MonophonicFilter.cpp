@@ -19,6 +19,7 @@
 #include "midi/MidiEventHandler.hpp"
 #include <spdlog/spdlog.h>
 #include <fmt/ranges.h>
+#include <ranges>
 
 MonophonicFilter::MonophonicFilter(ComponentId id, [[maybe_unused]] MonophonicFilterConfig cfg):
     BaseComponent(id, ComponentType::MonophonicFilter)
