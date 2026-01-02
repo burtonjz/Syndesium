@@ -1,0 +1,223 @@
+/*
+ * Copyright (C) 2026 Jared Burton
+ *
+ * This program is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Lesser General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+ * GNU Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public License
+ * along with this program. If not, see <https://www.gnu.org/licenses/>.
+ */
+
+#include "MidiEventHandler.hpp"
+#include <stdexcept>
+#include <algorithm>
+
+void MidiEventHandler::notifyKeyPressed(const ActiveNote* note, bool rePressed) {
+    for ( auto* li : listeners_ ){
+        if (auto h = dynamic_cast<MidiEventHandler*>(li)){
+            h->handleKeyPressed(note->note);
+        } else {
+            li->onKeyPressed(note, rePressed);
+        }
+    }
+}
+
+// notify downstream listeners of a key release event (only if not handler)
+void MidiEventHandler::notifyKeyReleased(const ActiveNote& note) {
+    for ( auto* li : listeners_ ){
+        // only notify end node listeners of release events
+        if ( !dynamic_cast<MidiEventHandler*>(li) ){
+            li->onKeyReleased(note);
+        }
+    } 
+}
+
+// notify downstream listeners of a key off event (release if handler)
+void MidiEventHandler::notifyKeyOff(const ActiveNote& note) {
+    for ( auto* li : listeners_ ){
+        if ( auto h = dynamic_cast<MidiEventHandler*>(li) ){
+            h->handleKeyReleased(note.note);
+        } else {
+            li->onKeyOff(note);
+        }
+    } 
+}
+
+void MidiEventHandler::notifyPitchbend(uint16_t pitchbend) {
+    for ( auto* li : listeners_ ) li->onPitchbend(pitchbend);
+}
+
+MidiEventHandler::MidiEventHandler():
+    BaseComponent(),
+    sequence_(nullptr)
+{}
+
+bool MidiEventHandler::hasSequence() const {
+    return sequence_.get() ;
+}
+
+SequenceData& MidiEventHandler::getSequence() const {
+    if ( !sequence_ ){
+        throw std::runtime_error("MidiEventHandler: cannot get sequence for a non-sequenceable component.");
+    } ;
+    return sequence_.get()->getSequence();
+}
+
+void MidiEventHandler::initializeSequence(){
+    if ( sequence_ ){
+        std::runtime_error("MidiEventHandler: sequence can only be initialized once.");
+    }
+
+    sequence_ = std::make_unique<Sequence>(this);
+}
+
+bool MidiEventHandler::addSequenceNote(SequenceNote n){
+    if ( !sequence_ ) return false ;
+    if ( n.velocity ) sequence_->getSequence().addNote(n);
+    return true ;
+}
+
+bool MidiEventHandler::removeSequenceNote(SequenceNote n){
+    if ( !sequence_ ) return false ;
+    sequence_->getSequence().removeNote(n);
+    return true ;
+}
+
+void MidiEventHandler::addListener(MidiEventListener* listener){
+    if ( std::find(listeners_.begin(), listeners_.end(), listener) != listeners_.end() ) return ;
+    listeners_.push_back(listener);
+}
+
+void MidiEventHandler::removeListener(MidiEventListener* listener){
+    auto it = std::find(listeners_.begin(), listeners_.end(), listener);
+    if ( it != listeners_.end() ){
+        listeners_.erase(it);
+    }
+}
+
+std::vector<MidiEventListener*>& MidiEventHandler::getListeners(){
+    return listeners_ ;
+}
+
+bool MidiEventHandler::isNoteActive(uint8_t n) const {
+    for ( uint8_t i = 0 ; i < activeCount_; ++i ){
+        if (noteIndices_[i] == n ) return true ;
+    }
+    return false ;
+}
+
+void MidiEventHandler::activateNote(const ActiveNote& anote){
+    uint8_t midiNote = anote.note.getMidiNote() ;
+    notes_[midiNote] = anote ;
+
+    if ( isNoteActive(midiNote) ){
+        return ;
+    }
+    noteIndices_[activeCount_++] = midiNote ;
+}
+
+void MidiEventHandler::deactivateNote(uint8_t n){
+    for ( uint8_t i = 0 ; i < activeCount_; ++i ){
+        if ( noteIndices_[i] == n ){
+            noteIndices_[i] = noteIndices_[--activeCount_];
+            break ;
+        }
+    }
+}
+
+void MidiEventHandler::onKeyPressed(const ActiveNote* note, bool rePressed ){
+    MidiEvent e = { MidiEvent::Type::NotePressed, *note, rePressed };
+    queue_.push(e);
+}
+
+void MidiEventHandler::onKeyReleased(ActiveNote anote){
+    anote.resetTime();
+    MidiEvent e = { MidiEvent::Type::NoteReleased, anote };
+    queue_.push(e);
+}
+
+void MidiEventHandler::onKeyOff(ActiveNote anote){
+    MidiEvent e = { MidiEvent::Type::NoteOff, anote };
+    queue_.push(e);
+}
+
+void MidiEventHandler::onPitchbend(uint16_t pitchbend){
+    notifyPitchbend(pitchbend);
+}
+
+// handler functions for root-level midi input from midi state
+void MidiEventHandler::handleKeyPressed(const MidiNote note){
+    ActiveNote n{note};
+
+    bool rePress = false ;
+    if ( isNoteActive(note.getMidiNote()) ){
+        rePress = true ;
+    }
+    onKeyPressed(&n, rePress);
+};
+
+void MidiEventHandler::handleKeyReleased(const MidiNote note){
+    auto anote = notes_[note.getMidiNote()] ;
+    if ( ! isNoteActive(note.getMidiNote()) ){
+        SPDLOG_WARN("Received release event for midi note {}, but that note is not currently active."
+            "This may be intentionally caused by a child class implementation.", note.getMidiNote());
+    }
+    anote.note = note ;
+    onKeyReleased(anote);
+};
+
+void MidiEventHandler::handlePitchbend(uint16_t pitchbend){
+    onPitchbend(pitchbend);
+};
+
+bool MidiEventHandler::shouldKillNote(const ActiveNote& anote) const {
+    return !anote.note.getStatus() ;
+}
+
+void MidiEventHandler::processEvents(){
+    MidiEvent e ;
+    while (queue_.pop(e)){    
+        ActiveNote anote = e.anote ;
+        uint8_t midiNote = anote.note.getMidiNote() ;
+        switch (e.type){
+        case MidiEvent::Type::NotePressed:
+            activateNote(anote);
+            notifyKeyPressed(&notes_[midiNote], e.rePressed);
+            break ;
+        case MidiEvent::Type::NoteReleased:
+            notes_[e.anote.note.getMidiNote()] = anote ;
+            notifyKeyReleased(anote);
+            break ;
+        case MidiEvent::Type::NoteOff:
+            notifyKeyOff(anote);
+            deactivateNote(midiNote);
+            break ;
+        }
+    }
+}
+
+void MidiEventHandler::tick(float dt){
+    processEvents();
+
+    onTick(dt); // child class implementations
+
+    for ( uint8_t i = 0; i < activeCount_ ; ++i ){
+        ActiveNote& note = notes_[noteIndices_[i]];
+        if ( shouldKillNote(note) ){
+            MidiEvent e = {MidiEvent::Type::NoteOff, note};
+            queue_.push(e);
+        } else {
+            note.updateTime(dt);
+        }
+    }
+}
+
+void MidiEventHandler::onTick([[maybe_unused]] float dt){
+}
