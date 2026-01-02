@@ -44,4 +44,5 @@ constexpr std::array<std::string_view, N_SOCKET_TYPES> socketStrings({
 
 const std::string socketType2String(SocketType s);
 SocketType socketTypeFromString(std::string str);
+
 #endif // __SHARED_SOCKET_TYPE_HPP_

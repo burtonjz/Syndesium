@@ -27,7 +27,7 @@
 #include <variant>
 #include <set>
 #include <stdexcept>
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 
 // forward declarations
@@ -70,7 +70,7 @@ class ParameterMap {
             BaseModulator* modulator = nullptr, ModulationData modData = {}
         ){
             if ( getParameter(typ) ){
-                std::cerr << "ERROR: parameter already in map. Exiting..." << std::endl ;
+                SPDLOG_WARN("Parameter already in map.");
                 return ;
             }
                 

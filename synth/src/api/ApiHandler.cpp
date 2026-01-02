@@ -24,7 +24,6 @@
 #include "types/ParameterType.hpp"
 #include "types/SocketType.hpp"
 
-#include <iostream>
 #include <netinet/in.h>
 #include <string>
 #include <sys/socket.h>
@@ -32,6 +31,7 @@
 #include <thread>
 #include <optional>
 #include <unordered_map>
+#include <spdlog/spdlog.h>
 
 ApiHandler::ApiHandler()
 {}
@@ -73,12 +73,12 @@ void ApiHandler::start(){
     // Create socket
     int serverSock = socket(AF_INET, SOCK_STREAM, 0);
     if (serverSock == -1) {
-        std::cerr << "Socket creation failed" << std::endl ;
+        SPDLOG_WARN("Socket creation failed");
         exit(1);
     }
     int opt = 1 ;
     if (setsockopt(serverSock, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) < 0){
-        std::cerr << "setsockopt(SO_REUSEADDR) failed" << std::endl ;
+        SPDLOG_WARN("setsockopt(SO_REUSEADDR) failed");
         exit(1);
     }
 
@@ -92,17 +92,17 @@ void ApiHandler::start(){
 
     // Bind socket to address
     if (bind(serverSock, (struct sockaddr*)&serverAddr, sizeof(serverAddr)) < 0) {
-        std::cerr << "Bind failed" << std::endl ;
+        SPDLOG_WARN("Bind failed");
         exit(1);
     }
 
     // Listen for incoming connections
     if (listen(serverSock, 3) < 0) {
-        std::cerr << "Listen failed" << std::endl;
+        SPDLOG_WARN("Listen failed");
         return;
     }
 
-    std::cout << "Server listening on port " << serverPort << "..." << std::endl;
+    SPDLOG_INFO("Server listening on port {}... ",serverPort);
 
     // Accept incoming client connections in a loop
     while (!Engine::stop_flag) {
@@ -179,7 +179,7 @@ json ApiHandler::sendApiResponse(int sock, json& response, const std::string& er
         response["error"] = err ;
     }
     std::string r = response.dump() + '\n' ;
-    std::cout << "sending API response: " << r.c_str() << std::endl  ;
+    SPDLOG_INFO("sending API response: {}", r.c_str());
     send(sock, r.c_str(), r.size(), 0);
     return response ;
 }
@@ -189,7 +189,7 @@ void ApiHandler::handleClientMessage(int sock, std::string jsonStr){
     json request;
     std::string action ;
 
-    std::cout << "received request: " << jsonStr << std::endl ;
+    SPDLOG_INFO("received request: {}", jsonStr);
 
     try {
         request = json::parse(jsonStr);
@@ -495,7 +495,7 @@ bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
     if ( request.inboundSocket == SocketType::ModulationInput && request.outboundSocket == SocketType::ModulationOutput )
         return handleModulationConnection(request);
 
-    std::cerr << "WARN: socket types are incompatible. No connection will be made" << std::endl ;
+    SPDLOG_WARN("WARN: socket types are incompatible. No connection will be made");
     return false ;
 }
 
@@ -508,7 +508,7 @@ bool ApiHandler::handleSignalConnection(ConnectionRequest request){
 
     // if the source is an external endpoint
     if ( ! request.outboundID.has_value() ){
-        std::cerr << "receiving audio from an input device is not yet supported." << std::endl ;
+        SPDLOG_WARN("receiving audio from an input device is not yet supported.");
         return false ;
     }
 
@@ -533,7 +533,7 @@ bool ApiHandler::handleSignalConnection(ConnectionRequest request){
 
 bool ApiHandler::handleMidiConnection(ConnectionRequest request){
     if ( ! request.outboundID.has_value() && ! request.inboundID.has_value() ){
-        std::cerr << "WARN: midi connection was requested with an invalid object (no id supplied for inbound or outbound objects)." << std::endl ;
+        SPDLOG_WARN("WARN: midi connection was requested with an invalid object (no id supplied for inbound or outbound objects).");
         return false ;
     }
 
@@ -543,12 +543,12 @@ bool ApiHandler::handleMidiConnection(ConnectionRequest request){
         MidiEventListener* listener = engine_->componentManager.getMidiListener(request.inboundID.value());
 
         if ( !listener ){
-            std::cerr << "WARN: No valid MidiEventListener found from connection request configuration" << std::endl ;
+            SPDLOG_WARN("WARN: No valid MidiEventListener found from connection request configuration");
             return false ;
         }
         
         if ( !handler ){
-            std::cerr << "WARN: No valid MidiEventHandler found from connection request configuration" << std::endl ;
+            SPDLOG_WARN("WARN: No valid MidiEventHandler found from connection request configuration");
             return false ;
         }
 
@@ -583,17 +583,17 @@ bool ApiHandler::handleMidiConnection(ConnectionRequest request){
             return true ;
         }
 
-        std::cerr << "WARN: midi connection was requested with an invalid object." << std::endl ;
+        SPDLOG_WARN("WARN: midi connection was requested with an invalid object.");
         return false ;
     }
 
-    std::cerr << "WARN: only setting an outbound midi connection is not yet supported. " << std::endl ;
+    SPDLOG_WARN("WARN: only setting an outbound midi connection is not yet supported. ");
     return false ;
 }
 
 bool ApiHandler::handleModulationConnection(ConnectionRequest request){
     if ( ! request.outboundID.has_value() || ! request.inboundID.has_value() ){
-        std::cerr << "WARN: modulation connections must have valid IDs for both inbound and outbound objects." << std::endl ;
+        SPDLOG_WARN("WARN: modulation connections must have valid IDs for both inbound and outbound objects.");
         return false ;
     }
 
@@ -601,12 +601,12 @@ bool ApiHandler::handleModulationConnection(ConnectionRequest request){
     BaseComponent* component = engine_->componentManager.getRaw(request.inboundID.value());
 
     if (!modulator ){
-        std::cerr << "valid modulator not found.\n";
+        SPDLOG_WARN("valid modulator not found.");;
         return false ;
     }
 
     if (!component){
-        std::cerr << "valid component not found.\n";
+        SPDLOG_WARN("valid component not found.");
         return false ;
     }
 
@@ -658,7 +658,7 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
                 setComponentParameter(sock, parameterRequest);
             }
         } catch ( const std::exception& e ){
-            std::cerr << "Error creating component: " << std::string(e.what()) << std::endl ;
+            SPDLOG_WARN("Error creating component: {}", std::string(e.what()));
             return false ;
         }
     }
@@ -671,7 +671,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     try {
         assert(config["AudioSinks"].is_array() && "'AudioSinks' json data is not in expected format");
     } catch (const std::exception& e){
-        std::cerr << "Error processing json request: " << std::string(e.what()) ;
+        SPDLOG_WARN("Error processing json request: {}", std::string(e.what()));
         return false ;
     }
 
@@ -689,7 +689,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
         request["outbound"] = outbound ;
         connectionResponse = createConnection(sock, request);
         if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
-            std::cerr << "error requesting connection: " << connectionResponse.dump() << std::endl ;
+            SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
             return false ;
         }
 
@@ -703,7 +703,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     try {
         assert(config["rootMidiHandlers"].is_array() && "'rootMidiHandlers' json data is not in expected format");
     } catch (const std::exception& e){
-        std::cerr << "Error processing json request: " << std::string(e.what()) ;
+        SPDLOG_WARN("Error processing json request: {}", std::string(e.what()));
         return false ;
     }
 
@@ -718,7 +718,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
 
         connectionResponse = createConnection(sock, request);
         if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
-            std::cerr << "error requestion connection: " << connectionResponse.dump() << std::endl ;
+            SPDLOG_WARN("error requestion connection: {}", connectionResponse.dump());
             return false ;
         }
 
@@ -731,7 +731,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     try {
         assert(config["components"].is_array() && "'components' json data is not in expected format");
     } catch (const std::exception& e){
-        std::cerr << "Error processing json request: " << std::string(e.what()) ;
+        SPDLOG_WARN("Error processing json request: {}", std::string(e.what())) ;
         return false ;
     }
 
@@ -743,7 +743,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     
     for ( const auto& component : config["components"] ){
         if ( ! component.is_object() ){
-            std::cerr << "component is not in expected format: " << component.dump() ;
+            SPDLOG_WARN("component is not in expected format: {}", component.dump()) ;
             return false ;
         }
 
@@ -752,7 +752,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
             params = component["parameters"];
             assert(params.is_object() && "parameters is not in the correct format.");
         } catch (const std::exception& e){
-            std::cout << "Error processing json components object: " << std::string(e.what()) ;
+            SPDLOG_ERROR("Error processing json components object: {}", std::string(e.what()));
             return false ;
         } 
 
@@ -772,7 +772,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
 
                 connectionResponse = createConnection(sock, request);
                 if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
-                    std::cerr << "error requesting connection: " << connectionResponse.dump() << std::endl ;
+                    SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
                     return false ;
                 }
 
@@ -798,7 +798,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
 
                 connectionResponse = createConnection(sock, request);
                 if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
-                    std::cerr << "error requesting connection: " << connectionResponse.dump() << std::endl ;
+                    SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
                     return false ;
                 }
 
@@ -825,7 +825,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
 
                 connectionResponse = createConnection(sock, request);
                 if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
-                    std::cerr << "error requesting connection: " << connectionResponse.dump() << std::endl ;
+                    SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
                     return false ;
                 }
 

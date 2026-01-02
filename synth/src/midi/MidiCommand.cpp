@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,22 +15,17 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef MIDI_COMMAND_HPP_
-#define MIDI_COMMAND_HPP_
+#include "midi/MidiCommand.hpp"
 
-#include <string>
-#include <array>
-
-enum class MidiCommand {
-    MIDI_CMD_NOTE_OFF         = 0x80,
-    MIDI_CMD_NOTE_ON          = 0x90,
-    MIDI_CMD_NOTE_PRESSURE    = 0xA0,
-    MIDI_CMD_CONTROL          = 0xB0,
-    MIDI_CMD_PROGRAM          = 0xC0,
-    MIDI_CMD_CHANNEL_PRESSURE = 0xD0,
-    MIDI_CMD_PITCHBEND        = 0xE0,
-};
-
-const std::string midiCommand2String(MidiCommand c);
-
-#endif // MIDI_COMMAND_HPP_
+const std::string midiCommand2String(MidiCommand c){
+    switch(c){
+    case MidiCommand::MIDI_CMD_NOTE_OFF: return "MIDI_CMD_NOTE_OFF";
+    case MidiCommand::MIDI_CMD_NOTE_ON: return "MIDI_CMD_NOTE_ON";
+    case MidiCommand::MIDI_CMD_NOTE_PRESSURE: return "MIDI_CMD_NOTE_PRESSURE";
+    case MidiCommand::MIDI_CMD_CONTROL: return "MIDI_CMD_CONTROL";
+    case MidiCommand::MIDI_CMD_PROGRAM: return "MIDI_CMD_PROGRAM";
+    case MidiCommand::MIDI_CMD_CHANNEL_PRESSURE: return "MIDI_CMD_CHANNEL_PRESSURE";
+    case MidiCommand::MIDI_CMD_PITCHBEND: return "MIDI_CMD_PITCHBEND";
+    default: return "";
+    }
+}

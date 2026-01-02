@@ -18,11 +18,10 @@
 #ifndef SEQUENCE_DATA_HPP_
 #define SEQUENCE_DATA_HPP_
 
-#include <set>
 #include <vector>
 #include <cstdint>
 #include <algorithm>
-#include <iostream>
+#include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
 
 struct SequenceNote {
@@ -56,7 +55,7 @@ public:
     void addNote(const SequenceNote& n){
         auto it = std::find(notes_.begin(), notes_.end(), n);
         if ( it != notes_.end() ){
-            std::cerr << "Sequence Note was not added to sequence because it is a duplicate." << std::endl ;
+            SPDLOG_WARN("Sequence Note was not added to sequence because it is a duplicate.");
             return ;
         }
         notes_.push_back(n);
@@ -65,7 +64,7 @@ public:
     void removeNote(const SequenceNote& n){
         auto it = std::find(notes_.begin(), notes_.end(), n);
         if ( it == notes_.end() ){
-            std::cerr << "Sequence Note not found in sequence and not removed." << std::endl ;
+            SPDLOG_WARN("Sequence Note not found in sequence and not removed.");
             return ;
         }
         notes_.erase(it);

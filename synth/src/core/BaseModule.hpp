@@ -21,9 +21,7 @@
 #include <cmath>
 #include <cstddef>
 #include <cstring>
-#include <iostream>
 #include <memory>
-#include <vector>
 #include <algorithm>
 
 #include "core/BaseComponent.hpp"

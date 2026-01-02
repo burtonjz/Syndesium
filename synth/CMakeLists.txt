@@ -16,6 +16,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(RTAUDIO REQUIRED rtaudio)
 pkg_check_modules(RTMIDI REQUIRED rtmidi)
 pkg_check_modules(KISSFFT REQUIRED kissfft-float)
+pkg_check_modules(SPDLOG REQUIRED spdlog)
 
 # Generate configs/ComponentConfig.hpp
 file(GLOB CONFIG_FILES "${SRC_DIR}/configs/*Config.hpp")
@@ -70,6 +71,7 @@ target_include_directories(synth PRIVATE
     ${SRC_DIR}
     ${RTAUDIO_INCLUDE_DIRS}
     ${RTMIDI_INCLUDE_DIRS}
+    ${SPDLOG_INCLUDE_DIRS}
 )
 
 target_link_libraries(synth PRIVATE 
@@ -77,6 +79,7 @@ target_link_libraries(synth PRIVATE
     ${RTAUDIO_LIBRARIES}
     ${RTMIDI_LIBRARIES}
     ${KISSFFT_LIBRARIES}
+    ${SPDLOG_LIBRARIES}
     m
 )
 

@@ -18,7 +18,7 @@
 #include "midi/MidiController.hpp"
 #include "midi/MidiCommand.hpp"
                   
-#include <iostream>
+#include <spdlog/spdlog.h>
 #include <cmath>
 
 // static functions
@@ -63,13 +63,10 @@ void MidiController::onMidiEvent(double deltaTime, std::vector<unsigned char> *m
 }
 
 void MidiController::processMessage([[maybe_unused]] double deltaTime, std::vector<unsigned char> *message){    
-    std::cout << "MIDI Message: " << std::endl ;
     MidiCommand command = static_cast<MidiCommand>((*message)[0] & 0xF0) ;
     int channel         = static_cast<int>((*message)[0] & 0x0F) ;
 
-    std::cout << "\tcommand = " << static_cast<int>(command) 
-        << "; channel = " << channel 
-        << std::endl ;
+    SPDLOG_INFO("MIDI Message received by midi controller: command={}, channel={}", midiCommand2String(command), channel) ;
 
     switch(command){
         case MidiCommand::MIDI_CMD_NOTE_OFF:

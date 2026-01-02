@@ -20,11 +20,13 @@
 
 #include <rtaudio/RtAudio.h>
 #include <rtmidi/RtMidi.h>
+#include <spdlog/spdlog.h>
 
 // Program Entry Point
 int main() {
-    std::cout << "RtAudio version: " << RtAudio::getVersion() << std::endl ;
-    std::cout << "RtMidi version: " << RtMidi::getVersion() << std::endl ;
+    spdlog::set_pattern("[%Y-%m-%d %H:%M:%S.%e] [%^%l%$] [%s:%#] %v");
+    SPDLOG_INFO("RtAudio version: " + RtAudio::getVersion());
+    SPDLOG_INFO("RtMidi version: " + RtMidi::getVersion());
     Config::load();
     Engine engine ;
     engine.initialize();

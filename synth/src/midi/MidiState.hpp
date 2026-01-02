@@ -23,7 +23,7 @@
 #include "midi/MidiNote.hpp"
 
 #include <algorithm>
-#include <iostream>
+#include <spdlog/spdlog.h>
 
 class MidiState {
 private:
@@ -63,7 +63,7 @@ public:
 
     // processing messages
     void processMsgNoteOn(int midiNote, int velocity){
-        std::cout << "\tMSG_ON [" << midiNote << " " << velocity << "]" << std::endl ;
+        SPDLOG_INFO("Processing NOTE_ON event. MidiNote={}, Velocity={}", midiNote, velocity);
         notes_[midiNote].setMidiNote(midiNote);
         notes_[midiNote].setMidiVelocity(velocity);
         notes_[midiNote].setStatus(true);
@@ -73,7 +73,7 @@ public:
     }
 
     void processMsgNoteOff(int midiNote, int velocity){
-        std::cout << "\tMSG_OFF [" << midiNote << " " << velocity << "]" << std::endl ;
+        SPDLOG_INFO("Processing NOTE_OFF event. MidiNote={}, Velocity={}", midiNote, velocity);
         notes_[midiNote].setStatus(false);
         for ( auto* h : handlers_ ){
             h->handleKeyReleased(notes_[midiNote]);
@@ -82,6 +82,7 @@ public:
     }
 
     void processMsgPitchbend(float pitchbend){
+        SPDLOG_INFO("Processing PITCHBEND event. pitchbend={}", pitchbend);
         pitchbend_ = pitchbend ;
         for ( auto* h : handlers_ ){
             h->handlePitchbend(pitchbend_);

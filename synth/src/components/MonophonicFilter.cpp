@@ -17,7 +17,7 @@
 
 #include "components/MonophonicFilter.hpp"
 #include "midi/MidiEventHandler.hpp"
-
+#include <spdlog/spdlog.h>
 
 MonophonicFilter::MonophonicFilter(ComponentId id, [[maybe_unused]] MonophonicFilterConfig cfg):
     BaseComponent(id, ComponentType::MonophonicFilter)
@@ -38,15 +38,19 @@ void MonophonicFilter::onKeyPressed(const ActiveNote* note, bool rePressed){
 
 void MonophonicFilter::onKeyReleased(ActiveNote anote){
     uint8_t midiNote = anote.note.getMidiNote();
+    SPDLOG_DEBUG("received release event for midiNote {}.");
     
     auto it = std::find(noteStack_.begin(), noteStack_.end(), midiNote);
     
     if ( it == noteStack_.end() ){
+        SPDLOG_DEBUG("midiNote was not in the noteStack_. Ignoring.");
         return ;
-    }
+    } 
 
     bool isActiveNote = ( it == noteStack_.end() - 1 );
+    SPDLOG_DEBUG("Erasing midiNote {} from stack. isActiveNote={}.", (int)midiNote,  isActiveNote);
     noteStack_.erase(it);
+    SPDLOG_DEBUG("current noteStack_: {}", noteStack_);
 
     if ( isActiveNote ){
         // release and trigger last
@@ -57,7 +61,10 @@ void MonophonicFilter::onKeyReleased(ActiveNote anote){
             ActiveNote* nextANote = &notes_[nextNote];
             nextANote->note.setStatus(true);
             MidiEventHandler::onKeyPressed(nextANote, false);
-        }
-    } 
-    
+        } else {
+            SPDLOG_DEBUG("noteStack_ is emnpty, will not trigger any note in response to release.");
+        } 
+    } else {
+        SPDLOG_DEBUG("pressed note was not activeNote, not triggering new key press or release.");
+    }   
 }

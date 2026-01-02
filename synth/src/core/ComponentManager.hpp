@@ -145,7 +145,7 @@ public:
     bool setComponentParameter(ComponentId id, ParameterType t, const json& value){
         auto component = getRaw(id);
         if (!component){
-            std::cerr << "WARN: component with id " << id << " not found in component store.\n" ;
+            SPDLOG_WARN("component with id {} not found in component store.", id);
             return false ;
         }
 

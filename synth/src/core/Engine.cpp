@@ -15,19 +15,19 @@
 
 #include <chrono>
 #include <csignal>
-#include <iostream>
 #include <mutex>
 #include <netinet/in.h>
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <thread>
 #include <unistd.h>
+#include <spdlog/spdlog.h>
 
 // Static members
 std::atomic<bool> Engine::stop_flag{false};
 
 void Engine::signalHandler(int signum){
-    std::cout << "Caught signal " << signum << ", stopping threads...\n";
+    SPDLOG_INFO("Caught signal {}, stopping threads...", signum);
     stop_flag = true;
 }
 
@@ -97,7 +97,7 @@ void Engine::initialize(){
         ApiHandler::instance()->start();
     });
 
-    std::cout << "Engine initialized. API server running." << std::endl;
+    SPDLOG_INFO("Engine initialized. API server running.");
 
     while ( !stop_flag && apiServerRunning_ ){
         std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -108,11 +108,11 @@ void Engine::run(){
     std::lock_guard<std::mutex> lock(stateMutex_);
     
     if (engineRunning_){
-        std::cout << "Engine already running!" << std::endl;
+        SPDLOG_WARN("Engine already running!");
         return;
     }
 
-    std::cout << "Starting engine..." << std::endl;
+    SPDLOG_INFO("Starting engine...");
     
     setup();
     
@@ -128,18 +128,18 @@ void Engine::run(){
     analysisRunning_ = true;
     analysisThread_ = std::thread(&Engine::analysisLoop, this);
     
-    std::cout << "Engine running with 3 worker threads" << std::endl;
+    SPDLOG_INFO("Engine running with 3 worker threads.");
 }
 
 void Engine::stop(){
     std::unique_lock<std::mutex> lock(stateMutex_);
     
     if (!engineRunning_){
-        std::cout << "Engine not running!" << std::endl;
+        SPDLOG_WARN("Engine not running!");
         return;
     }
     
-    std::cout << "Stopping engine..." << std::endl;
+    SPDLOG_INFO("Stopping engine...");
     
     // Signal all threads to stop
     engineRunning_ = false;
@@ -153,27 +153,27 @@ void Engine::stop(){
     stopAudio();
     
     if (audioThread_.joinable()){
-        std::cout << "Waiting for audio thread..." << std::endl;
+        SPDLOG_INFO("Waiting for audio thread...");
         audioThread_.join();
     }
     
     if (midiThread_.joinable()){
-        std::cout << "Waiting for MIDI thread..." << std::endl;
+        SPDLOG_INFO("Waiting for MIDI thread...");
         midiThread_.join();
     }
     
     if (analysisThread_.joinable()){
-        std::cout << "Waiting for analysis thread..." << std::endl;
+        SPDLOG_INFO("Waiting for analysis thread...");
         analysisThread_.join();
     }
     
     stopMidi();
     
-    std::cout << "Engine stopped" << std::endl;
+    SPDLOG_INFO("Engine stopped");
 }
 
 void Engine::shutdown(){
-    std::cout << "Shutting down engine..." << std::endl;
+    SPDLOG_INFO("Shutting down engine...");
     
     // Stop engine if running
     if (engineRunning_){
@@ -185,11 +185,11 @@ void Engine::shutdown(){
     apiServerRunning_ = false;
     
     if (apiServerThread_.joinable()){
-        std::cout << "Waiting for API server thread..." << std::endl;
+        SPDLOG_INFO("Waiting for API server thread...");
         apiServerThread_.join();
     }
     
-    std::cout << "Engine shutdown complete" << std::endl;
+    SPDLOG_INFO("Engine shutdown complete");
 }
 
 // ============================================================================
@@ -197,7 +197,7 @@ void Engine::shutdown(){
 // ============================================================================
 
 void Engine::midiLoop(){
-    std::cout << "MIDI thread started" << std::endl;
+    SPDLOG_INFO("MIDI thread started");
     
     // Open MIDI port
     int deviceId = getMidiDeviceId();
@@ -205,7 +205,7 @@ void Engine::midiLoop(){
         midiIn_.openPort(deviceId);
         midiIn_.setCallback(&MidiController::onMidiEvent, static_cast<void*>(&midiController));
         midiIn_.ignoreTypes(false, false, false);
-        std::cout << "Listening for MIDI input on port " << deviceId << std::endl;
+        SPDLOG_INFO("Listening for MIDI input on device id {}", deviceId);
     }
     
     // Keep thread alive while running
@@ -213,11 +213,11 @@ void Engine::midiLoop(){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     
-    std::cout << "MIDI thread stopping" << std::endl;
+    SPDLOG_INFO("MIDI thread stopping");
 }
 
 void Engine::audioLoop(){
-    std::cout << "Audio thread started" << std::endl;
+    SPDLOG_INFO("Audio thread started");
     
     // Initialize audio
     unsigned int buffer = Config::get<unsigned int>("audio.buffer_size").value();
@@ -247,10 +247,8 @@ void Engine::audioLoop(){
     // Validate sample rate
     auto &sampleRates = deviceInfo.sampleRates;
     if (std::count(sampleRates.begin(), sampleRates.end(), sampleRate) == 0){
-        std::cout << "Configured sample rate of " << sampleRate 
-                  << " is not supported by device " << deviceInfo.name 
-                  << ". Setting to device preferred sample rate of " 
-                  << deviceInfo.preferredSampleRate << "." << std::endl;
+        SPDLOG_WARN("Configured sample rate of {} is not supported by device {}.", sampleRate, deviceInfo.name);
+        SPDLOG_INFO("Setting to device preferred sample rate of {}.", deviceInfo.preferredSampleRate);
         sampleRate = deviceInfo.preferredSampleRate;
         Config::set("audio.sample_rate", sampleRate);
     }
@@ -268,14 +266,14 @@ void Engine::audioLoop(){
         userData,
         &options
     )){
-        std::cerr << "Error initializing audio: " << dac_.getErrorText() << std::endl;
+        SPDLOG_ERROR("Error initializing audio: {}",  dac_.getErrorText());
         audioRunning_ = false;
         return;
     }
     
     // Start the stream
     if (dac_.startStream()){
-        std::cerr << "Error starting audio stream: " << dac_.getErrorText() << std::endl;
+        SPDLOG_ERROR("Error starting audio stream: {}",  dac_.getErrorText());
         if (dac_.isStreamOpen()){
             dac_.closeStream();
         }
@@ -283,7 +281,7 @@ void Engine::audioLoop(){
         return;
     }
     
-    std::cout << "Audio stream started" << std::endl;
+    SPDLOG_INFO("Audio stream started");
     
     // Keep thread alive while running
     // The actual audio processing happens in the callback
@@ -291,11 +289,11 @@ void Engine::audioLoop(){
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     
-    std::cout << "Audio thread stopping" << std::endl;
+    SPDLOG_INFO("Audio thread stopping");
 }
 
 void Engine::analysisLoop(){
-    std::cout << "Analysis thread started" << std::endl;
+    SPDLOG_INFO("Analysis thread started");
     
     Config::load();
 
@@ -315,7 +313,7 @@ void Engine::analysisLoop(){
     }
     
     AnalyticsEngine::instance()->stop();
-    std::cout << "Analysis thread stopping" << std::endl;
+    SPDLOG_INFO("Analysis thread stopping");
 }
 
 // ============================================================================
@@ -356,7 +354,7 @@ int Engine::audioCallback(
 // ============================================================================
 
 void Engine::stopAudio(){
-    std::cout << "Stopping audio stream..." << std::endl;
+    SPDLOG_INFO("Stopping audio stream...");
     if (dac_.isStreamRunning()){
         dac_.stopStream();
     }
@@ -366,7 +364,7 @@ void Engine::stopAudio(){
 }
 
 void Engine::stopMidi(){
-    std::cout << "Stopping MIDI..." << std::endl;
+    SPDLOG_INFO("Stopping MIDI...");
     if (midiIn_.isPortOpen()){
         midiIn_.cancelCallback();
         midiIn_.closePort();
@@ -374,7 +372,7 @@ void Engine::stopMidi(){
 }
 
 void Engine::audioCleanup(RtAudio* dac, RtAudioErrorType error){
-    if (error) std::cout << '\n' << dac->getErrorText() << '\n' << std::endl;
+    if (error) SPDLOG_ERROR(dac->getErrorText());
     if (dac->isStreamOpen()){
         dac->closeStream();
     }
@@ -429,11 +427,11 @@ int Engine::getAudioDeviceId() const {
 bool Engine::setAudioDeviceId(int deviceId){
     auto it = availableAudioDevices_.find(deviceId);
     if ( it == availableAudioDevices_.end() ){
-        std::cerr << "Cannot set audio device id to " << deviceId << ". Invalid Id." << std::endl ;
+        SPDLOG_ERROR("Cannot set audio device ID to {}. Invalid ID",  deviceId);
         return false ;
     }
 
-    std::cout << "audio device id set to " << deviceId << std::endl ;
+    SPDLOG_INFO("audio device id set to {}.", deviceId);
     selectedAudioOutput_ = deviceId ;
     return true ;
 }
@@ -445,11 +443,11 @@ int Engine::getMidiDeviceId() const {
 bool Engine::setMidiDeviceId(int deviceId){
     auto it = availableMidiPorts_.find(deviceId);
     if ( it == availableMidiPorts_.end() ){
-        std::cerr << "Cannot set midi device id to " << deviceId << ". Invalid Id." << std::endl ;
+        SPDLOG_ERROR("Cannot set midi device ID to {}. Invalid ID.", deviceId);
         return false ;
     }
 
-    std::cout << "midi device id set to " << deviceId << std::endl ;
+    SPDLOG_INFO("midi device id set to {}.", deviceId);
     selectedMidiPort_ = deviceId ;
     return true ;
 }
@@ -468,14 +466,12 @@ const std::map<int, std::string> Engine::getAvailableAudioDevices() const {
 
 bool Engine::setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener){
     if (!outputMidi){
-        std::cerr << "WARN: specified midi handler is not a valid object. "
-                  << "Unable to successfully set a midi connection" << std::endl;
+        SPDLOG_WARN("Specified midi handler is not a valid object. Unable to successfully set a midi connection.");
         return false;
     }
 
     if (!listener){
-        std::cerr << "WARN: listener is a null pointer. "
-                  << "Unable to successfully set a midi connection" << std::endl;
+        SPDLOG_WARN("Specified midi listener is a null pointer. Unable to successfully set a midi connection");
         return false;
     }
 
@@ -485,14 +481,12 @@ bool Engine::setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* 
 
 bool Engine::removeMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener){
     if (!outputMidi){
-        std::cerr << "WARN: specified midi handler is not a valid object. "
-                  << "Unable to successfully remove a midi connection" << std::endl;
+        SPDLOG_WARN("Specified midi handler is not a valid object. Unable to successfully remove a midi connection");
         return false;
     }
 
     if (!listener){
-        std::cerr << "WARN: listener is a null pointer. "
-                  << "Unable to successfully remove a midi connection" << std::endl;
+        SPDLOG_WARN("WARN: listener is a null pointer. Unable to successfully remove a midi connection");
         return false;
     }
 
@@ -502,7 +496,7 @@ bool Engine::removeMidiConnection(MidiEventHandler* outputMidi, MidiEventListene
 
 bool Engine::registerBaseMidiHandler(MidiEventHandler* handler){
     if (!handler){
-        std::cerr << "WARN: handler is a null pointer. Unable to register." << std::endl;
+        SPDLOG_WARN("specified midi handler is a null pointer. Unable to register.");
         return false;
     }
     midiState_.addHandler(handler);
@@ -511,7 +505,7 @@ bool Engine::registerBaseMidiHandler(MidiEventHandler* handler){
 
 bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
     if (!handler){
-        std::cerr << "WARN: handler is a null pointer. Unable to unregister." << std::endl;
+        SPDLOG_WARN("Specified midi handler is a null pointer. Unable to unregister.");
         return false;
     }
     midiState_.removeHandler(handler);

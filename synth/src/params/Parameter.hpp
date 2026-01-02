@@ -20,7 +20,7 @@
 
 #include "types/ParameterType.hpp"
 #include "core/BaseModulator.hpp"
-#include <iostream>
+#include <spdlog/spdlog.h>
 #include <variant>
 
 // forward declaration
@@ -67,7 +67,7 @@ public:
             modData_ = modData ;
             modulator_ = modulator ;
         } else {
-            std::cerr << "WARN: attempted to set modulator, but the pointer is null." << std::endl;
+            SPDLOG_WARN("Modulation was not set because the modulator was a null pointer.");
         }
     }
 

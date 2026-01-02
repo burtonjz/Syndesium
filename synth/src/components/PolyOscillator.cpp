@@ -27,8 +27,7 @@
 
 #include <cmath>
 #include <utility>
-#include <iostream>
-
+#include <spdlog/spdlog.h>
 
 PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
     BaseComponent(id, ComponentType::PolyOscillator),
@@ -153,7 +152,7 @@ void PolyOscillator::updateGain(){
     auto s = std::string(Waveform::getWaveforms()[parameters_->getParameter<ParameterType::WAVEFORM>()->getValue()]) ;
     float gain = Config::get<float>("oscillator." + s + ".auto_gain").value() / 
         std::sqrt(Config::get<int>("oscillator.expected_voices").value()) ;
-    std::cout << "setting gain to " << gain << std::endl ;
+    SPDLOG_DEBUG("setting gain to {}", gain);
     parameters_->getParameter<ParameterType::GAIN>()->setValue(gain);
 }
 

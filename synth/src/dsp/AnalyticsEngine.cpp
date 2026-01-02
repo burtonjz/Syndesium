@@ -16,12 +16,11 @@
  */
 
 #include "dsp/AnalyticsEngine.hpp"
-#include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include <cmath>
-#include <iostream>
 #include <cstring>
 #include "kissfft/kiss_fft.h"
+#include <spdlog/spdlog.h>
 
 AnalyticsEngine* AnalyticsEngine::instance(){
     static AnalyticsEngine* s_instance = nullptr ;
@@ -46,7 +45,7 @@ AnalyticsEngine::AnalyticsEngine():
 
     fftConfig_ = kiss_fft_alloc(fftSize_, 0, nullptr, nullptr);
     if ( !fftConfig_ ){
-        std::cerr << "Failed to allocate KissFFT config" << std::endl ;
+        SPDLOG_ERROR("Failed to allocate KissFFT config");
     }
 }
 
@@ -63,7 +62,7 @@ void AnalyticsEngine::start(){
     initSocket();
     bufferPosition_ = 0 ;
 
-    std::cout << "AnalyticsEngine started on UDP port " << udpSocket_ << std::endl ;
+    SPDLOG_INFO("AnalyticsEngine started on UDP port {}", udpSocket_);
 }
 
 void AnalyticsEngine::stop(){
@@ -75,7 +74,7 @@ void AnalyticsEngine::initSocket() {
     if ( !wsaInitialized_ ) {
         WSADATA wsaData;
         if ( WSAStartup(MAKEWORD(2, 2), &wsaData ) != 0 ) {
-            std::cerr << "WSAStartup failed" << std::endl ;
+            SPDLOG_ERROR("WSAStartup failed");
             return ;
         }
         wsaInitialized_ = true ;
@@ -84,7 +83,7 @@ void AnalyticsEngine::initSocket() {
     
     udpSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
     if ( udpSocket_ == INVALID_SOCKET ) {
-        std::cerr << "UDP socket creation failed" << std::endl ;
+        SPDLOG_ERROR("UDP socket creation failed");
         return ;
     }
     

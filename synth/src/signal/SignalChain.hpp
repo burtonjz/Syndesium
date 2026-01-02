@@ -22,6 +22,7 @@
 
 #include <unordered_set>
 #include <vector>
+#include <spdlog/spdlog.h>
 
 // This class will store information regarding tracing a signal back to it's source
 // (either a generator module or eventually an audio input), and handle order of  operations of ticking
@@ -50,7 +51,7 @@ public:
 
     void addSink(BaseModule* output){
         if (!output){
-            std::cerr << "WARN: attempted to add nullptr as a sink. " << std::endl ;
+            SPDLOG_WARN("Not adding a nullptr as a sink.");
             return ;
         }
         outputNodes_.insert(output);
