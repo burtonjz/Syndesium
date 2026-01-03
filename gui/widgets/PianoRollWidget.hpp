@@ -75,8 +75,6 @@ private:
     float xToBeat(int x) const ;
     int yToPitch(int y) const ;
 
-    QJsonObject nlohmannToQJsonObject(SequenceNote note) const ;
-
     // functions for api responses
     void onNoteAdded(SequenceNote note);
     void onNoteRemoved(SequenceNote note);

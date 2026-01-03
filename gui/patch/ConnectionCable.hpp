@@ -21,6 +21,7 @@
 #include <QGraphicsPathItem>
 
 #include "patch/SocketWidget.hpp"
+#include "types/ConnectionRequest.hpp"
 
 class ConnectionCable : public QGraphicsPathItem {
 private:
@@ -30,6 +31,9 @@ private:
 
 public:
     ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocket = nullptr);
+
+    bool operator==(const ConnectionCable& other) const ;
+    bool operator==(const ConnectionRequest& req) const ;
 
     SocketWidget* getFromSocket() const { return fromSocket_ ; }
     SocketWidget* getToSocket() const { return toSocket_ ; }
@@ -49,6 +53,9 @@ public:
     bool involvesSocket(SocketWidget* socket) const ;
 
     void updatePath();
+
+    ConnectionRequest toConnectionRequest() const ;
+    QString toText() const ;
 
 protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget *widget ) override ;

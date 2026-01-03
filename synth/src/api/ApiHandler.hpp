@@ -21,7 +21,7 @@
 #include <nlohmann/json.hpp>
 #include <functional>
 
-#include "api/ConnectionRequest.hpp"
+#include "types/ConnectionRequest.hpp"
 #include "params/ParameterMap.hpp"
 
 

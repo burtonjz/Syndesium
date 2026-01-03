@@ -68,7 +68,9 @@ void BaseComponent::removeParameterModulation(ParameterType p){
     }
 
     // update reciprocol tracking
-    modulator->removeModulationTarget({this,p});
+    if ( modulator ){
+        modulator->removeModulationTarget({this,p});
+    }
     
     onRemoveParameterModulation(p);
 }

@@ -17,6 +17,7 @@
 
 #include "patch/ConnectionCable.hpp"
 #include "patch/SocketWidget.hpp"
+#include "widgets/ComponentWidget.hpp"
 #include "core/Theme.hpp"
 
 #include <QPainter>
@@ -33,6 +34,13 @@ ConnectionCable::ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocke
     setPen(QPen(getCableColor(), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
     if (!toSocket) endpoint_ = fromSocket_->getConnectionPoint() + QPoint(5,5); // set initial endpoint on creation, offset slightly so visible
     updatePath();
+}
+
+bool ConnectionCable::operator==(const ConnectionCable& other) const {
+    return toConnectionRequest() == other.toConnectionRequest();
+}
+bool ConnectionCable::operator==(const ConnectionRequest& req) const {
+    return toConnectionRequest() == req ;
 }
 
 SocketWidget* ConnectionCable::getInboundSocket() const {
@@ -120,6 +128,41 @@ void ConnectionCable::updatePath(){
     
     // Update pen color
     setPen(QPen(getCableColor(), 3, Qt::SolidLine, Qt::RoundCap, Qt::RoundJoin));
+}
+
+ConnectionRequest ConnectionCable::toConnectionRequest() const {
+    ConnectionRequest r ;
+    
+    auto outboundSocket = getOutboundSocket();
+    auto inboundSocket = getInboundSocket();
+
+    auto outboundComponent = dynamic_cast<ComponentWidget*>(outboundSocket->getParent());
+    auto inboundComponent = dynamic_cast<ComponentWidget*>(inboundSocket->getParent());
+
+    if ( inboundComponent ) r.inboundID = inboundComponent->getID() ;
+    if ( outboundComponent ) r.outboundID = outboundComponent->getID() ;
+    r.inboundSocket = inboundSocket->getType();
+    r.outboundSocket = outboundSocket->getType();
+    if ( inboundSocket->getType() == SocketType::ModulationInbound ){
+        r.inboundParameter = parameterFromString(inboundSocket->getName().toStdString()) ;
+    }
+    
+    return r ;
+};
+
+QString ConnectionCable::toText() const {
+    QString fromText = getFromSocket()
+        ? QString("%1 %2")
+            .arg(getFromSocket()->getParent()->getName())
+            .arg(getFromSocket()->getName())
+        : "null" ;
+
+    QString toText = getToSocket()
+        ? QString("%1 %2")
+            .arg(getToSocket()->getParent()->getName())
+            .arg(getToSocket()->getName())
+        : "null" ;
+    return fromText + "->" + toText ;
 }
 
 QPainterPath ConnectionCable::createBezierPath(const QPointF& start, const QPointF& end){

@@ -33,6 +33,14 @@ struct ConnectionRequest {
     std::optional<int> outboundID ;
     std::optional<ParameterType> inboundParameter ;
     bool remove = false ;
+
+    bool operator==(const ConnectionRequest& other) const {
+        return inboundSocket == other.inboundSocket &&
+               outboundSocket == other.outboundSocket &&
+               inboundID == other.inboundID &&
+               outboundID == other.outboundID &&
+               inboundParameter == other.inboundParameter ;
+    }
 };
 
 inline void to_json(json& j, const ConnectionRequest& req){

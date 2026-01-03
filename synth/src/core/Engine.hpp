@@ -27,7 +27,7 @@
 #include "containers/LockFreeRingBuffer.hpp"
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
-#include "api/ConnectionRequest.hpp"
+#include "types/ConnectionRequest.hpp"
 #include "midi/MidiState.hpp"
 #include "signal/SignalController.hpp"
 #include "core/ComponentManager.hpp"

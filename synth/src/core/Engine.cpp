@@ -538,10 +538,9 @@ std::vector<ConnectionRequest> Engine::getComponentMidiConnections(ComponentId i
 
     MidiEventHandler* h = componentManager.getMidiHandler(id);
     if ( h ){
-        // check if it is a base handler
+        // if it is a base handler, check if it is registered to midiState
         auto handlers = midiState_.getHandlers();
-        auto it = std::find(handlers.begin(), handlers.end(), h);
-        if ( it != handlers.end() ){
+        if ( std::find(handlers.begin(), handlers.end(), h) != handlers.end() ){
             ConnectionRequest req ;
             req.inboundID = id ;
             req.inboundSocket = SocketType::MidiInbound ;
@@ -549,6 +548,7 @@ std::vector<ConnectionRequest> Engine::getComponentMidiConnections(ComponentId i
             v.push_back(req);
         }
 
+        // also create a connection request for all listeners
         for ( auto listener : h->getListeners() ){
             if ( listener ){
                 ConnectionRequest req ;
@@ -561,6 +561,7 @@ std::vector<ConnectionRequest> Engine::getComponentMidiConnections(ComponentId i
         }
     }
 
+    // if it's a listener, create a connection request for all handlers
     MidiEventListener* listener = componentManager.getMidiListener(id);
     if ( listener ){
         for ( auto handler : listener->getHandlers() ){
@@ -568,7 +569,10 @@ std::vector<ConnectionRequest> Engine::getComponentMidiConnections(ComponentId i
                 ConnectionRequest req ;
                 req.inboundID = id ;
                 req.inboundSocket = SocketType::MidiInbound ;
-                req.outboundID = handler->getId() ;
+                ComponentId handlerId = handler->getId();
+                if ( handlerId != -1 ){
+                    req.outboundID =  handlerId ;
+                }
                 req.outboundSocket = SocketType::MidiOutbound ;
                 v.push_back(req);
             }
@@ -632,6 +636,8 @@ std::vector<ConnectionRequest> Engine::getComponentSignalConnections(ComponentId
     SPDLOG_DEBUG("getting signal connections for component id = {}", id);
     BaseModule* module = componentManager.getModule(id);
     std::vector<ConnectionRequest> v ;
+
+    if ( !module ) return v ;
     
     // check if module is a sink
     for ( auto s : signalController.getSinks()){
@@ -647,9 +653,9 @@ std::vector<ConnectionRequest> Engine::getComponentSignalConnections(ComponentId
     for ( auto m : module->getInputs() ){
         if ( m ){
             ConnectionRequest req ;
-            req.inboundID = m->getId() ;
+            req.inboundID = id ;
             req.inboundSocket = SocketType::SignalInbound ;
-            req.outboundID = id ;
+            req.outboundID = m->getId() ;
             req.outboundSocket = SocketType::SignalOutbound ;
             v.push_back(req);
         }
@@ -658,9 +664,9 @@ std::vector<ConnectionRequest> Engine::getComponentSignalConnections(ComponentId
     for ( auto m : module->getOutputs() ){
         if ( m ){
             ConnectionRequest req ;
-            req.inboundID = id ;
+            req.inboundID = m->getId() ;
             req.inboundSocket = SocketType::SignalInbound ;
-            req.outboundID = m->getId() ;
+            req.outboundID = id ;
             req.outboundSocket = SocketType::SignalOutbound ;
             v.push_back(req);
         }

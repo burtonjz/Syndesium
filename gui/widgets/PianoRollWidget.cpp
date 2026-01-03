@@ -18,6 +18,7 @@
 #include "widgets/PianoRollWidget.hpp"
 #include "core/Theme.hpp"
 #include "core/ApiClient.hpp"
+#include "util/util.hpp"
 #include "widgets/NoteWidget.hpp"
 
 #include <nlohmann/json.hpp>
@@ -130,7 +131,7 @@ void PianoRollWidget::mouseReleaseEvent(QMouseEvent* e){
         QJsonObject obj ;
         obj["action"] = "add_sequence_note" ;
         obj["componentId"] = id_ ;
-        obj["note"] = nlohmannToQJsonObject(dragNote_->getNote());
+        obj["note"] = Util::nlohmannToQJsonObject(dragNote_->getNote());
         ApiClient::instance()->sendMessage(obj); 
 
         isDragging_ = false ;
@@ -221,13 +222,6 @@ int PianoRollWidget::yToPitch(int y) const {
     return 127 - (y / NOTE_HEIGHT);
 }
 
-QJsonObject PianoRollWidget::nlohmannToQJsonObject(SequenceNote note) const {
-    nlohmann::json nj = note ;
-    QString jsonStr = QString::fromStdString(nj.dump());
-    QJsonDocument doc = QJsonDocument::fromJson(jsonStr.toUtf8());
-    return doc.object() ;
-}
-
 void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
     QString action = json["action"].toString();
 
@@ -287,7 +281,7 @@ void PianoRollWidget::deleteSelectedNotes(){
         QJsonObject obj ;
         obj["action"] = "remove_sequence_note" ;
         obj["componentId"] = id_ ;
-        obj["note"] = nlohmannToQJsonObject(note->getNote());
+        obj["note"] = Util::nlohmannToQJsonObject(note->getNote());
         ApiClient::instance()->sendMessage(obj);
     }
 }

@@ -20,20 +20,17 @@
 
 #include <QObject>
 #include <QGraphicsScene>
-#include <qevent.h>
+#include <vector>
 
 #include "patch/ConnectionCable.hpp"
 #include "patch/SocketWidget.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 
-using ConnectionID = int ;
-
 class ConnectionManager: public QObject {
     Q_OBJECT
 private:
     QGraphicsScene* scene_ ;
-    ConnectionID currentConnectionID_ ;
-    std::map<ConnectionID, ConnectionCable*> connections_ ;
+    std::vector<ConnectionCable*> connections_ ;
 
     ConnectionCable* dragConnection_ ;
     SocketWidget* dragFromSocket_ ;
@@ -44,14 +41,13 @@ public:
     void startConnection(SocketWidget* fromSocket);
     void updateDragConnection(const QPointF& scenePos);
     void finishConnection(const QPointF& scenePos);
-    ConnectionID finishConnection(SocketWidget* toWidget);
+    ConnectionRequest finishConnection(SocketWidget* toWidget);
 
     void cancelConnection();
-    void cancelConnection(ConnectionID connection);
 
     bool hasConnection(SocketWidget* socket) const ;
     
-    void removeConnection(ConnectionID connection);
+    void requestRemoveConnection(ConnectionRequest req);
     void removeSocketConnections(SocketWidget* socket);
     void removeAllConnections(SocketContainerWidget* widget);
 
@@ -61,8 +57,10 @@ public:
 
 private:
     bool canConnect(SocketWidget* from, SocketWidget* to) const ;
-    void sendConnectionApiRequest(ConnectionID connection, bool remove = false);
-    ConnectionCable* getConnectionFromJson(const QJsonObject &json);
+    void sendConnectionApiRequest(ConnectionRequest req);
+
+    ConnectionCable* getCable(ConnectionRequest req) const ;
+    void removeCable(ConnectionCable* request);
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
