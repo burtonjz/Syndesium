@@ -18,11 +18,25 @@
 #ifndef __MIDI_OBSERVER_HPP_
 #define __MIDI_OBSERVER_HPP_
 
+#include "core/BaseComponent.hpp"
 #include "midi/MidiNote.hpp"
+#include <vector>
 
-class MidiEventListener {
+//forward declaration
+class MidiEventHandler ;
+
+class MidiEventListener : public virtual BaseComponent {
+    friend class MidiEventHandler ;
+private:
+    std::vector<MidiEventHandler*> handlers_ ;
+
+    void addHandler(MidiEventHandler* handler);
+    void removeHandler(MidiEventHandler* handler);
+
 public:
     virtual ~MidiEventListener() = default ;
+
+    std::vector<MidiEventHandler*> getHandlers() const ;
 
     virtual void onKeyPressed(const ActiveNote* note, bool rePress = false) ;
     virtual void onKeyReleased(ActiveNote anote) ; 

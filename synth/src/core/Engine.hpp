@@ -27,6 +27,7 @@
 #include "containers/LockFreeRingBuffer.hpp"
 #include "midi/MidiController.hpp"
 #include "midi/MidiEventHandler.hpp"
+#include "api/ConnectionRequest.hpp"
 #include "midi/MidiState.hpp"
 #include "signal/SignalController.hpp"
 #include "core/ComponentManager.hpp"
@@ -77,11 +78,17 @@ public:
     bool setAudioDeviceId(int deviceId);
     bool setMidiDeviceId(int deviceId);
     
-    // MIDI connection management
-    bool setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener);
-    bool removeMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener);
+    // Connection Management
+    bool handleMidiConnection(ConnectionRequest connection);
     bool registerBaseMidiHandler(MidiEventHandler* handler);
     bool unregisterBaseMidiHandler(MidiEventHandler* handler);
+    std::vector<ConnectionRequest> getComponentMidiConnections(ComponentId id) const ;
+
+    bool handleSignalConnection(ConnectionRequest request);
+    std::vector<ConnectionRequest> getComponentSignalConnections(ComponentId id) const ;
+
+    bool handleModulationConnection(ConnectionRequest request);
+    std::vector<ConnectionRequest> getComponentModulationConnections(ComponentId id) const ;
 
     json serialize() const ;
 

@@ -6,8 +6,10 @@
 #include "dsp/AnalyticsEngine.hpp"
 #include "config/Config.hpp"
 #include "api/ApiHandler.hpp"
+#include "meta/ComponentRegistry.hpp"
 #include "midi/MidiEventHandler.hpp"
 #include "midi/MidiEventListener.hpp"
+#include "types/SocketType.hpp"
 #include "types/Waveform.hpp"
 #include "midi/MidiController.hpp"
 #include "dsp/detune.hpp"
@@ -464,34 +466,116 @@ const std::map<int, std::string> Engine::getAvailableAudioDevices() const {
 // MIDI CONNECTION MANAGEMENT
 // ============================================================================
 
-bool Engine::setMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener){
-    if (!outputMidi){
-        SPDLOG_WARN("Specified midi handler is not a valid object. Unable to successfully set a midi connection.");
-        return false;
+bool Engine::handleMidiConnection(ConnectionRequest request){
+    BaseComponent* inbound = nullptr ;
+    BaseComponent* outbound = nullptr ;
+
+    if ( request.inboundID.has_value() ){
+        inbound = componentManager.getRaw(request.inboundID.value());
     }
 
-    if (!listener){
-        SPDLOG_WARN("Specified midi listener is a null pointer. Unable to successfully set a midi connection");
-        return false;
+    if ( request.outboundID.has_value() ){
+        outbound = componentManager.getMidiHandler(request.outboundID.value());
+    }
+    
+    // Case 1: inbound and outbound components both exist
+    if ( inbound && outbound ){
+        auto inboundDescriptor = ComponentRegistry::getComponentDescriptor(inbound->getType());
+        auto outboundDescriptor = ComponentRegistry::getComponentDescriptor(outbound->getType());
+
+        if ( inboundDescriptor.isMidiListener() && outboundDescriptor.isMidiHandler() ){
+            auto handler = dynamic_cast<MidiEventHandler*>(outbound);
+            auto listener = dynamic_cast<MidiEventListener*>(inbound);
+
+            if ( request.remove ){
+                handler->removeListener(listener);   
+            } else {
+                handler->addListener(listener);
+            }
+            return true ;
+        }
+    }
+    
+    // case 2: outbound is undefined
+    if ( ! outbound && inbound ){
+        auto inboundDescriptor = ComponentRegistry::getComponentDescriptor(inbound->getType());
+
+        // A: inbound is a handler, so we need to register this handler against the MidiState (receive raw midi events)
+        if ( inboundDescriptor.isMidiHandler() ){
+            auto handler = dynamic_cast<MidiEventHandler*>(inbound);
+            if ( request.remove ){
+                unregisterBaseMidiHandler(handler);
+                return true ;
+            }
+            registerBaseMidiHandler(handler);
+            return true ;
+        }
+
+        // B: inbound is only a listener (so we register to the default handler)
+        if ( inboundDescriptor.isMidiListener() ){
+            auto listener = dynamic_cast<MidiEventListener*>(inbound);
+            if ( request.remove ){
+                getDefaultMidiHandler()->removeListener(listener);
+                return true ;
+            }
+            getDefaultMidiHandler()->addListener(listener);
+            return true ;
+        }
     }
 
-    outputMidi->addListener(listener);
-    return true;
+    // case 3: only outbound specified
+    json j = request ;
+    SPDLOG_ERROR("Invalid connection request. {}", j.dump());
+    return false ;
 }
 
-bool Engine::removeMidiConnection(MidiEventHandler* outputMidi, MidiEventListener* listener){
-    if (!outputMidi){
-        SPDLOG_WARN("Specified midi handler is not a valid object. Unable to successfully remove a midi connection");
-        return false;
+std::vector<ConnectionRequest> Engine::getComponentMidiConnections(ComponentId id) const {
+    SPDLOG_DEBUG("getting midi connections for component id = {}", id);
+    BaseComponent* c = componentManager.getRaw(id);
+    std::vector<ConnectionRequest> v ;
+    
+    if ( !c ) return v ;
+
+    MidiEventHandler* h = componentManager.getMidiHandler(id);
+    if ( h ){
+        // check if it is a base handler
+        auto handlers = midiState_.getHandlers();
+        auto it = std::find(handlers.begin(), handlers.end(), h);
+        if ( it != handlers.end() ){
+            ConnectionRequest req ;
+            req.inboundID = id ;
+            req.inboundSocket = SocketType::MidiInbound ;
+            req.outboundSocket = SocketType::MidiOutbound ;
+            v.push_back(req);
+        }
+
+        for ( auto listener : h->getListeners() ){
+            if ( listener ){
+                ConnectionRequest req ;
+                req.inboundID = listener->getId();
+                req.inboundSocket = SocketType::MidiInbound ;
+                req.outboundID = id ;
+                req.outboundSocket = SocketType::MidiOutbound ;
+                v.push_back(req);
+            }
+        }
     }
 
-    if (!listener){
-        SPDLOG_WARN("WARN: listener is a null pointer. Unable to successfully remove a midi connection");
-        return false;
+    MidiEventListener* listener = componentManager.getMidiListener(id);
+    if ( listener ){
+        for ( auto handler : listener->getHandlers() ){
+            if ( handler ){
+                ConnectionRequest req ;
+                req.inboundID = id ;
+                req.inboundSocket = SocketType::MidiInbound ;
+                req.outboundID = handler->getId() ;
+                req.outboundSocket = SocketType::MidiOutbound ;
+                v.push_back(req);
+            }
+        }
     }
 
-    outputMidi->removeListener(listener);    
-    return true;
+    return v ;
 }
 
 bool Engine::registerBaseMidiHandler(MidiEventHandler* handler){
@@ -510,6 +594,148 @@ bool Engine::unregisterBaseMidiHandler(MidiEventHandler* handler){
     }
     midiState_.removeHandler(handler);
     return true;
+}
+
+bool Engine::handleSignalConnection(ConnectionRequest request){
+    BaseModule* inbound = nullptr ;
+    BaseModule* outbound = nullptr ;
+
+    inbound = componentManager.getModule(request.inboundID.value_or(-1));
+    outbound = componentManager.getModule(request.outboundID.value_or(-1));
+
+    // if the source is an external endpoint
+    if ( ! request.outboundID.has_value() ){
+        SPDLOG_WARN("receiving audio from an input device is not yet supported.");
+        return false ;
+    }
+
+    // if the destination is an external endpoint
+    if ( ! request.inboundID.has_value() ){
+        if ( request.remove ){
+            signalController.unregisterSink(outbound);
+            return true ;
+        }
+        signalController.registerSink(outbound);
+        return true ;
+    }
+    
+    if ( request.remove ){
+        signalController.disconnect(outbound, inbound);
+        return true ;
+    }
+
+    signalController.connect(outbound, inbound);
+    return true ;
+}
+
+std::vector<ConnectionRequest> Engine::getComponentSignalConnections(ComponentId id) const {
+    SPDLOG_DEBUG("getting signal connections for component id = {}", id);
+    BaseModule* module = componentManager.getModule(id);
+    std::vector<ConnectionRequest> v ;
+    
+    // check if module is a sink
+    for ( auto s : signalController.getSinks()){
+        if ( s == module ){
+            ConnectionRequest req ;
+            req.outboundID = id ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+            v.push_back(req);
+        }
+    }
+
+    for ( auto m : module->getInputs() ){
+        if ( m ){
+            ConnectionRequest req ;
+            req.inboundID = m->getId() ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            req.outboundID = id ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+            v.push_back(req);
+        }
+    }
+
+    for ( auto m : module->getOutputs() ){
+        if ( m ){
+            ConnectionRequest req ;
+            req.inboundID = id ;
+            req.inboundSocket = SocketType::SignalInbound ;
+            req.outboundID = m->getId() ;
+            req.outboundSocket = SocketType::SignalOutbound ;
+            v.push_back(req);
+        }
+    }
+
+    return v ;
+}
+
+bool Engine::handleModulationConnection(ConnectionRequest request){
+    if ( ! request.outboundID.has_value() || ! request.inboundID.has_value() ){
+        SPDLOG_ERROR("modulation connections must have valid IDs for both inbound and outbound objects.");
+        return false ;
+    }
+
+    BaseModulator* modulator = componentManager.getModulator(request.outboundID.value());
+    BaseComponent* component = componentManager.getRaw(request.inboundID.value());
+
+    if (!modulator || !component ){
+        SPDLOG_ERROR("valid modulator or component not found.");;
+        return false ;
+    }
+
+    if ( request.remove ){
+        component->removeParameterModulation(request.inboundParameter.value());
+    } else {
+        component->setParameterModulation(request.inboundParameter.value(), modulator);
+    }
+    
+    // stateful modulators need to be in the signal processing graph
+    if ( dynamic_cast<BaseModule*>(modulator) ){
+        signalController.updateProcessingGraph();
+    }
+
+    return true ;
+}
+
+std::vector<ConnectionRequest> Engine::getComponentModulationConnections(ComponentId id) const {
+    SPDLOG_DEBUG("getting modulation connections for component id = {}", id);
+    std::vector<ConnectionRequest> v ;
+    BaseComponent* module = componentManager.getModule(id);
+    BaseModulator* modulator = componentManager.getModulator(id);
+
+    // get all inbound parameter modulators
+    if ( module ){
+        auto d = ComponentRegistry::getComponentDescriptor(module->getType());
+        for ( auto p : d.modulatableParameters ){
+            BaseModulator* paramModulator = module->getParameterModulator(p);
+            if ( paramModulator ){
+                ConnectionRequest req ;
+                req.inboundID = id ;
+                req.inboundSocket = SocketType::ModulationInbound ;
+                req.inboundParameter = p ;
+                req.outboundID = paramModulator->getId() ;
+                req.outboundSocket = SocketType::ModulationOutbound ;
+                v.push_back(req);
+            }
+        }
+    }
+
+    // if this component is also a modulator, add in what it is modulating
+    if ( modulator ){
+        for ( auto [c, p] : modulator->getModulationTargets() ){
+            if ( c ){
+                ConnectionRequest req ;
+                req.inboundID = c->getId() ;
+                req.inboundSocket = SocketType::ModulationInbound ;
+                req.inboundParameter = p ;
+                req.outboundID = id ;
+                req.outboundSocket = SocketType::ModulationOutbound ;
+                v.push_back(req);
+            }
+        }
+    }
+
+    return v ;
 }
 
 // ============================================================================

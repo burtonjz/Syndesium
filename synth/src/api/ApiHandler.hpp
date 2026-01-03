@@ -21,8 +21,7 @@
 #include <nlohmann/json.hpp>
 #include <functional>
 
-#include "types/SocketType.hpp"
-#include "types/ParameterType.hpp"
+#include "api/ConnectionRequest.hpp"
 #include "params/ParameterMap.hpp"
 
 
@@ -30,18 +29,6 @@ using json = nlohmann::json ;
 
 // forward declarations
 class Engine ;
-
-// useful structs for API JSON parsing
-struct ConnectionRequest {
-    SocketType inboundSocket ;
-    SocketType outboundSocket ;
-    std::optional<int> inboundID ;
-    std::optional<int> outboundID ;
-    std::optional<bool> inboundIsModule ;
-    std::optional<bool> outboundIsModule ;
-    std::optional<ParameterType> inboundParameter ;
-    bool remove = false ;
-};
 
 class ApiHandler {
 private:
@@ -91,11 +78,7 @@ private:
     void loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap);
 
     // cable connection functions
-    ConnectionRequest parseConnectionRequest(json request);
     bool routeConnectionRequest(ConnectionRequest request);
-    bool handleSignalConnection(ConnectionRequest request);
-    bool handleMidiConnection(ConnectionRequest request);
-    bool handleModulationConnection(ConnectionRequest request);
 
 };
 

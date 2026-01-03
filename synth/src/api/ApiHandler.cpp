@@ -16,13 +16,14 @@
  */
 
 #include "api/ApiHandler.hpp"
-#include "core/BaseModule.hpp"
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "configs/ComponentConfig.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "types/ParameterType.hpp"
 #include "types/SocketType.hpp"
+#include "midi/MidiEventHandler.hpp"
+#include "midi/MidiEventListener.hpp"
 
 #include <netinet/in.h>
 #include <string>
@@ -338,7 +339,59 @@ json ApiHandler::addComponent(int sock, const json& request){
 
 json ApiHandler::removeComponent(int sock, const json& request){
     json response = request ;
-    return sendApiResponse(sock, response, "remove component not yet implemented");
+    ComponentId id ;
+
+    try {
+        id = response["componentId"];
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+    
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "component not found.");
+    }
+
+    // query each subsystem and remove connections, if exist
+    bool allRemoved = true ;
+
+    auto connections = engine_->getComponentMidiConnections(id);
+    SPDLOG_DEBUG("removing midi connections from component with id {}", id);
+    for ( auto c : connections ){
+        c.remove = true ;
+        json j = c ;
+        SPDLOG_DEBUG("removing midi connection: {}", j.dump());
+        auto cresponse = removeConnection(sock, j);
+        allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
+    }
+
+    connections = engine_->getComponentSignalConnections(id);
+    SPDLOG_DEBUG("removing audio connections from component with id {}", id);
+    for ( auto c : connections ){
+        c.remove = true ;
+        json j = c ;
+        SPDLOG_DEBUG("removing audio connection: {}", j.dump());
+        auto cresponse = removeConnection(sock, j);
+        allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
+    }
+
+    
+    connections = engine_->getComponentModulationConnections(id);
+    SPDLOG_DEBUG("removing modulation connections from component with id {}", id);
+    for ( auto c : connections ){
+        c.remove = true ;
+        json j = c ;
+        SPDLOG_DEBUG("removing modulation connection: {}", j.dump());
+        auto cresponse = removeConnection(sock, j);
+        allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
+    }
+
+    if ( !allRemoved ){
+        return sendApiResponse(sock, response, "at least one component connection could not be removed.");
+    }
+
+    engine_->componentManager.remove(id);
+    return sendApiResponse(sock, response);    
 }
 
 json ApiHandler::getComponentParameter(int sock, const json& request){
@@ -377,7 +430,7 @@ json ApiHandler::createConnection(int sock, const json& request){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
-    ConnectionRequest req = parseConnectionRequest(response);
+    ConnectionRequest req = response.get<ConnectionRequest>() ;
     if ( routeConnectionRequest(req)){
         return sendApiResponse(sock,response);
     } else {
@@ -395,7 +448,7 @@ json ApiHandler::removeConnection(int sock, const json& request){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
-    ConnectionRequest req = parseConnectionRequest(response);
+    ConnectionRequest req = response.get<ConnectionRequest>() ;
     req.remove = true ;
 
     if ( routeConnectionRequest(req)){
@@ -473,158 +526,17 @@ json ApiHandler::removeSequenceNote( int sock, const json& request){
     return sendApiResponse(sock, response, "failed to add sequence note.");
 }
 
-ConnectionRequest ApiHandler::parseConnectionRequest(json request){
-    ConnectionRequest req ;
-    // define API variables
-    req.inboundSocket = static_cast<SocketType>(request["inbound"]["socketType"]);
-    req.outboundSocket = static_cast<SocketType>(request["outbound"]["socketType"]);
-    if ( request["inbound"].contains("id")) req.inboundID = request["inbound"]["id"];
-    if ( request["outbound"].contains("id")) req.outboundID = request["outbound"]["id"];
-    if ( request["inbound"].contains("parameter")) req.inboundParameter = static_cast<ParameterType>(request["inbound"]["parameter"]);
-
-    return req ;
-}
-
 bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
-    if ( request.inboundSocket == SocketType::MidiInput && request.outboundSocket == SocketType::MidiOutput )
-        return handleMidiConnection(request);
-    
-    if ( request.inboundSocket == SocketType::SignalInput && request.outboundSocket == SocketType::SignalOutput )
-        return handleSignalConnection(request);
+    if ( request.inboundSocket == SocketType::MidiInbound && request.outboundSocket == SocketType::MidiOutbound )
+        return engine_->handleMidiConnection(request);
+    if ( request.inboundSocket == SocketType::SignalInbound && request.outboundSocket == SocketType::SignalOutbound )
+        return engine_->handleSignalConnection(request);
 
-    if ( request.inboundSocket == SocketType::ModulationInput && request.outboundSocket == SocketType::ModulationOutput )
-        return handleModulationConnection(request);
+    if ( request.inboundSocket == SocketType::ModulationInbound && request.outboundSocket == SocketType::ModulationOutbound )
+        return engine_->handleModulationConnection(request);
 
     SPDLOG_WARN("WARN: socket types are incompatible. No connection will be made");
     return false ;
-}
-
-bool ApiHandler::handleSignalConnection(ConnectionRequest request){
-    BaseModule* inbound = nullptr ;
-    BaseModule* outbound = nullptr ;
-
-    inbound = engine_->componentManager.getModule(request.inboundID.value_or(-1));
-    outbound = engine_->componentManager.getModule(request.outboundID.value_or(-1));
-
-    // if the source is an external endpoint
-    if ( ! request.outboundID.has_value() ){
-        SPDLOG_WARN("receiving audio from an input device is not yet supported.");
-        return false ;
-    }
-
-    // if the destination is an external endpoint
-    if ( ! request.inboundID.has_value() ){
-        if ( request.remove ){
-            engine_->signalController.unregisterSink(outbound);
-            return true ;
-        }
-        engine_->signalController.registerSink(outbound);
-        return true ;
-    }
-    
-    if ( request.remove ){
-        engine_->signalController.disconnect(outbound, inbound);
-        return true ;
-    }
-
-    engine_->signalController.connect(outbound, inbound);
-    return true ;
-}
-
-bool ApiHandler::handleMidiConnection(ConnectionRequest request){
-    if ( ! request.outboundID.has_value() && ! request.inboundID.has_value() ){
-        SPDLOG_WARN("WARN: midi connection was requested with an invalid object (no id supplied for inbound or outbound objects).");
-        return false ;
-    }
-
-    if ( request.outboundID.has_value() && request.inboundID.has_value() ){
-        // this is a standard connection between a handler and a listener
-        MidiEventHandler* handler = engine_->componentManager.getMidiHandler(request.outboundID.value());
-        MidiEventListener* listener = engine_->componentManager.getMidiListener(request.inboundID.value());
-
-        if ( !listener ){
-            SPDLOG_WARN("WARN: No valid MidiEventListener found from connection request configuration");
-            return false ;
-        }
-        
-        if ( !handler ){
-            SPDLOG_WARN("WARN: No valid MidiEventHandler found from connection request configuration");
-            return false ;
-        }
-
-        if ( request.remove ){
-            return engine_->removeMidiConnection(handler, listener);
-        }
-
-        return engine_->setMidiConnection(handler, listener);    
-    }
-
-    if ( ! request.outboundID.has_value() && request.inboundID.has_value() ){
-        MidiEventHandler* inboundHandler = engine_->componentManager.getMidiHandler(request.inboundID.value());
-        MidiEventListener* inboundListener = engine_->componentManager.getMidiListener(request.inboundID.value());
-
-        // case 1: inbound is a handler, so we need to register this handler against the MidiState (receive raw midi events)
-        if ( inboundHandler ){
-            if ( request.remove ){
-                engine_->unregisterBaseMidiHandler(inboundHandler);
-                return true ;
-            }
-            engine_->registerBaseMidiHandler(inboundHandler);
-            return true ;
-        }
-
-        // case 2: inbound is only a listener (so we register to the default handler)
-        if ( inboundListener ){
-            if ( request.remove ){
-                engine_->removeMidiConnection(engine_->getDefaultMidiHandler(), inboundListener);
-                return true ;
-            }
-            engine_->setMidiConnection(engine_->getDefaultMidiHandler(), inboundListener);
-            return true ;
-        }
-
-        SPDLOG_WARN("WARN: midi connection was requested with an invalid object.");
-        return false ;
-    }
-
-    SPDLOG_WARN("WARN: only setting an outbound midi connection is not yet supported. ");
-    return false ;
-}
-
-bool ApiHandler::handleModulationConnection(ConnectionRequest request){
-    if ( ! request.outboundID.has_value() || ! request.inboundID.has_value() ){
-        SPDLOG_WARN("WARN: modulation connections must have valid IDs for both inbound and outbound objects.");
-        return false ;
-    }
-
-    BaseModulator* modulator = engine_->componentManager.getModulator(request.outboundID.value());
-    BaseComponent* component = engine_->componentManager.getRaw(request.inboundID.value());
-
-    if (!modulator ){
-        SPDLOG_WARN("valid modulator not found.");;
-        return false ;
-    }
-
-    if (!component){
-        SPDLOG_WARN("valid component not found.");
-        return false ;
-    }
-
-    if ( request.remove ){
-        component->removeParameterModulation(request.inboundParameter.value());
-        // stateful modulators need to be in the signal processing graph
-        if ( dynamic_cast<BaseModule*>(modulator) ){
-            engine_->signalController.updateProcessingGraph();
-        }
-        return true ;
-    }
-    
-    component->setParameterModulation(request.inboundParameter.value(), modulator);
-    // stateful modulators need to be in the signal processing graph
-    if ( dynamic_cast<BaseModule*>(modulator) ){
-        engine_->signalController.updateProcessingGraph();
-    }
-    return true ;
 }
 
 bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap){
@@ -681,8 +593,8 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     json outbound ;
     for ( const auto& id : config["AudioSinks"] ){
         request["action"] = "create_connection" ;
-        inbound["socketType"] = SocketType::SignalInput ;
-        outbound["socketType"] = SocketType::SignalOutput ;
+        inbound["socketType"] = SocketType::SignalInbound ;
+        outbound["socketType"] = SocketType::SignalOutbound ;
         outbound["id"] = id ;
         
         request["inbound"] = inbound ;
@@ -709,8 +621,8 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
 
     for ( const auto& id : config["rootMidiHandlers"] ){
         request["action"] = "create_connection" ;
-        inbound["socketType"] = SocketType::MidiInput ;
-        outbound["socketType"] = SocketType::MidiOutput ;
+        inbound["socketType"] = SocketType::MidiInbound ;
+        outbound["socketType"] = SocketType::MidiOutbound ;
         inbound["id"] = id ;
 
         request["inbound"] = inbound ;
@@ -762,10 +674,10 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
                 request["action"] = "create_connection" ;
 
                 inbound["id"] = id ;
-                inbound["socketType"] = SocketType::SignalInput ;
+                inbound["socketType"] = SocketType::SignalInbound ;
 
                 outbound["id"] = outboundId ;
-                outbound["socketType"] = SocketType::SignalOutput ;
+                outbound["socketType"] = SocketType::SignalOutbound ;
 
                 request["inbound"] = inbound ;
                 request["outbound"] = outbound ;
@@ -788,10 +700,10 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
                 request["action"] = "create_connection" ;
 
                 inbound["id"] = inboundId ;
-                inbound["socketType"] = SocketType::MidiInput ;
+                inbound["socketType"] = SocketType::MidiInbound ;
                 
                 outbound["id"] = id ;
-                outbound["socketType"] = SocketType::MidiOutput ;
+                outbound["socketType"] = SocketType::MidiOutbound ;
 
                 request["inbound"] = inbound ;
                 request["outbound"] = outbound ;
@@ -814,11 +726,11 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
                 request["action"] = "create_connection" ;
 
                 inbound["id"] = id ;
-                inbound["socketType"] = SocketType::ModulationInput ;
+                inbound["socketType"] = SocketType::ModulationInbound ;
                 inbound["parameter"] = parameterFromString(p);
 
                 outbound["id"] = data["modulatorId"];
-                outbound["socketType"] = SocketType::ModulationOutput ;
+                outbound["socketType"] = SocketType::ModulationOutbound ;
                 
                 request["inbound"] = inbound ;
                 request["outbound"] = outbound ;

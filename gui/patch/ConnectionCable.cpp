@@ -76,18 +76,18 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
     SocketType toType = socket->getType();
 
     switch ( fromType ){
-    case SocketType::MidiInput:
-        return toType == SocketType::MidiOutput ;
-    case SocketType::MidiOutput:
-        return toType == SocketType::MidiInput ;
-    case SocketType::ModulationInput:
-        return toType == SocketType::ModulationOutput ;
-    case SocketType::ModulationOutput:
-        return toType == SocketType::ModulationInput ;
-    case SocketType::SignalInput:
-        return toType == SocketType::SignalOutput ;
-    case SocketType::SignalOutput:
-        return toType == SocketType::SignalInput ;
+    case SocketType::MidiInbound:
+        return toType == SocketType::MidiOutbound ;
+    case SocketType::MidiOutbound:
+        return toType == SocketType::MidiInbound ;
+    case SocketType::ModulationInbound:
+        return toType == SocketType::ModulationOutbound ;
+    case SocketType::ModulationOutbound:
+        return toType == SocketType::ModulationInbound ;
+    case SocketType::SignalInbound:
+        return toType == SocketType::SignalOutbound ;
+    case SocketType::SignalOutbound:
+        return toType == SocketType::SignalInbound ;
     default:
         return false ;
     }
@@ -152,14 +152,14 @@ QColor ConnectionCable::getCableColor() const
     if (!fromSocket_) return Qt::gray;
     
     switch (fromSocket_->getType()) {
-        case SocketType::ModulationInput:
-        case SocketType::ModulationOutput:
+        case SocketType::ModulationInbound:
+        case SocketType::ModulationOutbound:
             return Theme::CABLE_MODULATION ;
-        case SocketType::SignalInput:
-        case SocketType::SignalOutput:
+        case SocketType::SignalInbound:
+        case SocketType::SignalOutbound:
             return Theme::CABLE_AUDIO ;
-        case SocketType::MidiInput:
-        case SocketType::MidiOutput:
+        case SocketType::MidiInbound:
+        case SocketType::MidiOutbound:
             return Theme::CABLE_MIDI ;
         default:
             return Qt::gray ;

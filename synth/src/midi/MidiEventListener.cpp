@@ -16,6 +16,23 @@
  */
 
 #include "midi/MidiEventListener.hpp"
+#include <algorithm>
+
+void MidiEventListener::addHandler(MidiEventHandler* handler){
+    if ( std::find(handlers_.begin(), handlers_.end(), handler) != handlers_.end() ) return ;
+    handlers_.push_back(handler);
+}
+
+void MidiEventListener::removeHandler(MidiEventHandler* handler){
+    auto it = std::find(handlers_.begin(), handlers_.end(), handler);
+    if ( it != handlers_.end() ){
+        handlers_.erase(it);
+    }
+}
+
+std::vector<MidiEventHandler*> MidiEventListener::getHandlers() const {
+    return handlers_ ;
+}
 
 void MidiEventListener::onKeyPressed([[maybe_unused]] const ActiveNote* note, [[maybe_unused]] bool repress){
 } 

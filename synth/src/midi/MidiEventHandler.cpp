@@ -93,11 +93,13 @@ bool MidiEventHandler::removeSequenceNote(SequenceNote n){
 void MidiEventHandler::addListener(MidiEventListener* listener){
     if ( std::find(listeners_.begin(), listeners_.end(), listener) != listeners_.end() ) return ;
     listeners_.push_back(listener);
+    listener->addHandler(this);
 }
 
 void MidiEventHandler::removeListener(MidiEventListener* listener){
     auto it = std::find(listeners_.begin(), listeners_.end(), listener);
     if ( it != listeners_.end() ){
+        listener->removeHandler(this);
         listeners_.erase(it);
     }
 }

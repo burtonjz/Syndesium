@@ -32,6 +32,7 @@ protected:
     double  sampleRate_ ;
     std::size_t size_ ;
     std::unordered_set<BaseModule*> signalInputs_ ;
+    std::unordered_set<BaseModule*> signalOutputs_ ;
     std::unique_ptr<double[]> buffer_ ;
     size_t bufferIndex_ ;
     
@@ -75,14 +76,20 @@ public:
 
     void connectInput(BaseModule* source){
         signalInputs_.insert(source);
+        source->signalOutputs_.insert(this);
     }
 
     void disconnectInput(BaseModule* source){
         signalInputs_.erase(source);
+        source->signalInputs_.erase(this);
     }
 
     const std::unordered_set<BaseModule*>& getInputs() const {    
         return signalInputs_ ;
+    }
+
+    const std::unordered_set<BaseModule*>& getOutputs() const {
+        return signalOutputs_ ;
     }
 
     virtual void tick(){

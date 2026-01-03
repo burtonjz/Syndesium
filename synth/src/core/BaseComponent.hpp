@@ -27,6 +27,7 @@
 
 // forward declarations (needed to support modulation derived classes)
 class ParameterMap ; 
+class BaseComponent ;
 class BaseModulator ;
 class BaseModule ;
 

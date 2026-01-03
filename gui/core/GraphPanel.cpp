@@ -122,9 +122,29 @@ void GraphPanel::addComponent(int id, ComponentType type){
     emit wasModified() ;
 }
 
+void GraphPanel::removeComponent(int id){
+    auto w = getWidget(id);
+    if ( !w ){
+        qWarning() << "requested removal of component id which does not exist. id:" << id ;
+        return ;
+    }
+
+    // remove the container widget
+    auto itWidget = std::find(widgets_.begin(), widgets_.end(), w);
+    if ( itWidget != widgets_.end() ) widgets_.erase(itWidget) ;
+    scene_->removeItem(w);
+    w->deleteLater();
+
+    // remove the detail widget
+    auto d = getDetailWidget(id);
+    if ( !d ) return ;
+    auto itDetails = std::find(details_.begin(), details_.end(), d);
+    if ( itDetails != details_.end() ) details_.erase(itDetails);
+    d->deleteLater();
+}
 void GraphPanel::addAudioOutput(){
     audioOut_ = new SocketContainerWidget("Audio Output Device");
-    audioOut_->createSockets({{SocketType::SignalInput, "Audio In"}});
+    audioOut_->createSockets({{SocketType::SignalInbound, "Audio In"}});
     scene_->addItem(audioOut_);
 
     widgets_.push_back(audioOut_);
@@ -139,7 +159,7 @@ void GraphPanel::addAudioOutput(){
 
 void GraphPanel::addMidiInput(){
     midiIn_ = new SocketContainerWidget("MIDI Input Device");
-    midiIn_->createSockets({{SocketType::MidiOutput, "MIDI Out"}});
+    midiIn_->createSockets({{SocketType::MidiOutbound, "MIDI Out"}});
     scene_->addItem(midiIn_);
 
     widgets_.push_back(midiIn_);
@@ -151,7 +171,7 @@ void GraphPanel::addMidiInput(){
     qDebug() << "Created Midi Input Device Widget:" << midiIn_->getName() << "at position:" << midiIn_->pos() ;
 }
 
-SocketContainerWidget* GraphPanel::getWidget(int componentId){
+SocketContainerWidget* GraphPanel::getWidget(int componentId) const {
     for ( auto widget : widgets_ ){
         auto component = dynamic_cast<ComponentWidget*>(widget);
         if ( component && component->getID() == componentId){
@@ -161,21 +181,22 @@ SocketContainerWidget* GraphPanel::getWidget(int componentId){
     return nullptr ;
 }
 
-void GraphPanel::deleteSelectedModules(){
+ComponentDetailWidget* GraphPanel::getDetailWidget(int componentId) const {
+    for ( auto d : details_ ){
+        if( d->getID() == componentId ){
+            return d ;
+        }
+    }
+    return nullptr ;
+}
+
+void GraphPanel::deleteSelectedComponents(){
     QList<QGraphicsItem*> selectedItems = scene_->selectedItems() ;
 
     for ( QGraphicsItem* item: selectedItems ){
         ComponentWidget* module = dynamic_cast<ComponentWidget*>(item);
         if ( module ){
-            connectionManager_->removeAllConnections(module);
-            auto it = std::find(widgets_.begin(), widgets_.end(), module);
-            if ( it != widgets_.end() ) widgets_.erase(it) ;
-
-            scene_->removeItem(module);
-            module->deleteLater();
-
-            qInfo() << "Deleted module:" << module->getComponentDescriptor().name ;
-            emit wasModified();
+            onComponentRemoved(module);
         }
     }
 }
@@ -205,13 +226,13 @@ void GraphPanel::loadConnection(const QJsonObject& request){
     SocketContainerWidget* inboundWidget = nullptr ;
     SocketContainerWidget* outboundWidget = nullptr ;
 
-    if ( inboundId == -1 && inboundType == SocketType::SignalInput ){
+    if ( inboundId == -1 && inboundType == SocketType::SignalInbound ){
         inboundWidget = audioOut_ ;
     } else {
         inboundWidget = getWidget(inboundId);
     }
 
-    if ( outboundId == -1 && outboundType == SocketType::MidiOutput){
+    if ( outboundId == -1 && outboundType == SocketType::MidiOutbound){
         outboundWidget = midiIn_ ;
     } else {
         outboundWidget = getWidget(outboundId);
@@ -226,7 +247,7 @@ void GraphPanel::loadConnection(const QJsonObject& request){
     SocketWidget* inboundSocket ;
     SocketWidget* outboundSocket ;
 
-    if ( inboundType == SocketType::ModulationInput ){
+    if ( inboundType == SocketType::ModulationInbound ){
         ParameterType modulatedParam = static_cast<ParameterType>(request["inbound"]["parameter"].toInt());
         inboundSocket = getWidgetSocket(inboundWidget, inboundType, modulatedParam);
         outboundSocket = getWidgetSocket(outboundWidget, outboundType);
@@ -270,7 +291,7 @@ SocketWidget* GraphPanel::getWidgetSocket(SocketContainerWidget* w, SocketType t
 
     for ( auto s : w->getSockets() ){
         if ( s->getType() == t ){
-            if ( t == SocketType::ModulationInput ){
+            if ( t == SocketType::ModulationInbound ){
                 if ( p == parameterFromString(s->getName().toStdString())){
                     return s ;
                 }
@@ -287,7 +308,7 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
     switch (event->key()){
         case Qt::Key_Delete:
         case Qt::Key_Backspace:
-            deleteSelectedModules();
+            deleteSelectedComponents();
             break ;
         case Qt::Key_Escape:
             connectionManager_->cancelConnection();
@@ -431,6 +452,15 @@ void GraphPanel::onComponentAdded(ComponentType type){
     ApiClient::instance()->sendMessage(obj); 
 }
 
+void GraphPanel::onComponentRemoved(ComponentWidget* component){
+    if ( !component ) return ;
+    
+    QJsonObject obj ;
+    obj["action"] = "remove_component" ;
+    obj["componentId"] = component->getID() ;
+    ApiClient::instance()->sendMessage(obj);
+}
+
 void GraphPanel::onApiDataReceived(const QJsonObject& json){
     QString action = json["action"].toString();
 
@@ -443,6 +473,16 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
         int id = json["componentId"].toInt();
         ComponentType type = static_cast<ComponentType>(json["type"].toInt());
         addComponent(id, type);
+    }
+
+    if ( action == "remove_component" ){
+        if ( json["status"] != "success" ){
+            qDebug() << "module was not successfully removed." ;
+            return ;
+        }
+
+        int id = json["componentId"].toInt();
+        removeComponent(id);
     }
 
     // if the load api creates a connection, we need to draw it here
@@ -463,19 +503,18 @@ void GraphPanel::componentDoubleClicked(ComponentWidget* widget){
     int id = widget->getID();
     ComponentType type = widget->getComponentDescriptor().type ;
 
-    for ( auto d : details_ ){
-        if( d->getID() == id ){
-            if ( d->isVisible() ){
-                d->hide();
-            } else {
-                d->show();
-                d->raise();
-            }
-            return ;
-        }
-    }
+    auto d = getDetailWidget(id);
+    if ( !d ){
+        qDebug() << "No detail component found for id" << id ;
+        return ;
+    } 
 
-    qDebug() << "No detail component found.";
+    if ( d->isVisible() ){
+        d->hide();
+    } else {
+        d->show();
+        d->raise();
+    }
 }
 
 void GraphPanel::onWidgetZUpdate(){

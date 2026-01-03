@@ -22,24 +22,24 @@
 #include <string_view>
 
 enum class SocketType {
-    ModulationInput,
-    ModulationOutput,
-    SignalInput,
-    SignalOutput,
-    MidiInput,
-    MidiOutput,
+    ModulationInbound,
+    ModulationOutbound,
+    SignalInbound,
+    SignalOutbound,
+    MidiInbound,
+    MidiOutbound,
     N_SOCKET_TYPES
 };
 
 constexpr int N_SOCKET_TYPES = static_cast<int>(SocketType::N_SOCKET_TYPES) ;
 
 constexpr std::array<std::string_view, N_SOCKET_TYPES> socketStrings({
-    "Modulation Input",
-    "Modulation Output",
-    "Signal Input",
-    "Signal Output",
-    "MIDI Input",
-    "MIDI Output"
+    "Modulation Inbound",
+    "Modulation Outbound",
+    "Signal Inbound",
+    "Signal Outbound",
+    "MIDI Inbound",
+    "MIDI Outbound"
 });
 
 const std::string socketType2String(SocketType s);

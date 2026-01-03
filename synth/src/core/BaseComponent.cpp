@@ -17,6 +17,7 @@
 
 #include "core/BaseComponent.hpp"
 #include "core/BaseModule.hpp"
+#include "core/BaseModulator.hpp" 
 #include "params/ParameterMap.hpp"
 #include <unordered_set>
 
@@ -47,6 +48,9 @@ void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, Mo
         modulationModules_.insert(module);
     }
     
+    // update reciprocol tracking
+    m->addModulationTarget({this, p});
+
     onSetParameterModulation(p,m,d);
 }
 
@@ -63,6 +67,9 @@ void BaseComponent::removeParameterModulation(ParameterType p){
         modulationModules_.erase(module);
     }
 
+    // update reciprocol tracking
+    modulator->removeModulationTarget({this,p});
+    
     onRemoveParameterModulation(p);
 }
 

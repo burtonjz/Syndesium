@@ -102,18 +102,18 @@ void SocketContainerWidget::layoutSockets(){
 
     for (SocketWidget* socket : sockets_){
         switch(socket->getType()){
-        case SocketType::MidiInput:
-        case SocketType::SignalInput:
+        case SocketType::MidiInbound:
+        case SocketType::SignalInbound:
             leftSockets_.push_back(socket);
             break ;
-        case SocketType::MidiOutput:
-        case SocketType::SignalOutput:
+        case SocketType::MidiOutbound:
+        case SocketType::SignalOutbound:
             rightSockets_.push_back(socket);
             break ;
-        case SocketType::ModulationInput:
+        case SocketType::ModulationInbound:
             bottomSockets_.push_back(socket);
             break ;
-        case SocketType::ModulationOutput:
+        case SocketType::ModulationOutbound:
             topSockets_.push_back(socket);
             break ;
         default:

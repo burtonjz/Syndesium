@@ -26,6 +26,5 @@
 #include "components/MonophonicFilter.hpp"
 #include "components/LinearFader.hpp"
 #include "components/MidiFilter.hpp"
-#include "components/Components.hpp"
 
 #endif // __HPP_ALL_COMPONENTS_

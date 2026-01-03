@@ -58,10 +58,11 @@ public:
     ~GraphPanel();
 
     void addComponent(int id, ComponentType type);
+    void removeComponent(int id);
     void addAudioOutput();
     void addMidiInput();
     
-    void deleteSelectedModules();
+    void deleteSelectedComponents();
 
     QJsonArray getComponentPositions() const ;
 
@@ -77,7 +78,8 @@ public:
     void loadConnection(const QJsonObject& request); 
     void loadPositions(const QJsonObject& request);
 
-    SocketContainerWidget* getWidget(int ComponentId);
+    SocketContainerWidget* getWidget(int ComponentId) const ;
+    ComponentDetailWidget* getDetailWidget(int componentId) const ;
     SocketWidget* getWidgetSocket(SocketContainerWidget* w, SocketType t, ParameterType p = ParameterType::N_PARAMETERS );
 
 protected:
@@ -106,6 +108,7 @@ private slots:
     
 public  slots:
     void onComponentAdded(ComponentType type);
+    void onComponentRemoved(ComponentWidget* component);
     void onWidgetZUpdate();
 
 signals:

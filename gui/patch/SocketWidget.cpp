@@ -65,14 +65,14 @@ void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
 
 QColor SocketWidget::getSocketColor(bool isHovered) const {
     switch(spec_.type){
-        case SocketType::ModulationInput:
-        case SocketType::ModulationOutput:
+        case SocketType::ModulationInbound:
+        case SocketType::ModulationOutbound:
             return isHovered ? Theme::SOCKET_MODULATION_LIGHT : Theme::SOCKET_MODULATION ;
-        case SocketType::SignalInput:
-        case SocketType::SignalOutput:
+        case SocketType::SignalInbound:
+        case SocketType::SignalOutbound:
             return isHovered ? Theme::SOCKET_AUDIO_LIGHT : Theme::SOCKET_AUDIO ;
-        case SocketType::MidiInput:
-        case SocketType::MidiOutput:
+        case SocketType::MidiInbound:
+        case SocketType::MidiOutbound:
             return isHovered ? Theme::SOCKET_MIDI_LIGHT : Theme::SOCKET_MIDI ;
         default: 
             return Qt::gray ;
@@ -89,9 +89,9 @@ void SocketWidget::setHovered(bool hovered){
 }
 
 bool SocketWidget::isOutput() const {
-    return spec_.type == SocketType::ModulationOutput || 
-           spec_.type == SocketType::SignalOutput ||
-           spec_.type == SocketType::MidiOutput
+    return spec_.type == SocketType::ModulationOutbound || 
+           spec_.type == SocketType::SignalOutbound ||
+           spec_.type == SocketType::MidiOutbound
     ;
 }
 

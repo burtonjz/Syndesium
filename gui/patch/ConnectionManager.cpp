@@ -233,7 +233,7 @@ void ConnectionManager::sendConnectionApiRequest(ConnectionID connection, bool r
     if ( outboundComponent ) output["id"] = outboundComponent->getID();
 
     // if it's modulation, we need to capture the parameter to be modulated
-    if ( inboundSocket->getType() == SocketType::ModulationInput ){
+    if ( inboundSocket->getType() == SocketType::ModulationInbound ){
         input["parameter"] = static_cast<int>(parameterFromString(inboundSocket->getName().toStdString()));
     }
     

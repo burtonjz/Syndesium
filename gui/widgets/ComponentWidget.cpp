@@ -33,27 +33,27 @@ ComponentWidget::ComponentWidget(int id, ComponentType type, QGraphicsItem* pare
     // create sockets from descriptor
     for ( const ParameterType& p : descriptor_.modulatableParameters){
         std::string name = GET_PARAMETER_TRAIT_MEMBER(p,name);
-        specs.push_back({SocketType::ModulationInput, QString::fromStdString(name)});
+        specs.push_back({SocketType::ModulationInbound, QString::fromStdString(name)});
     }
 
     for (int i = 0; i < descriptor_.numAudioInputs; ++i){
-        specs.push_back({SocketType::SignalInput, QString("Audio Input %1").arg(i+1)});
+        specs.push_back({SocketType::SignalInbound, QString("Audio Input %1").arg(i+1)});
     }
 
     for (int i = 0; i < descriptor_.numMidiInputs; ++i){
-        specs.push_back({SocketType::MidiInput, QString("MIDI Input %1").arg(i+1)});
+        specs.push_back({SocketType::MidiInbound, QString("MIDI Input %1").arg(i+1)});
     }
 
     for (int i = 0; i < descriptor_.numAudioOutputs; ++i){
-        specs.push_back({SocketType::SignalOutput, QString("Audio Output %1").arg(i+1)});
+        specs.push_back({SocketType::SignalOutbound, QString("Audio Output %1").arg(i+1)});
     }
 
     for (int i = 0; i < descriptor_.numMidiOutputs; ++i){
-        specs.push_back({SocketType::MidiOutput, QString("MIDI Output %1").arg(i+1)});
+        specs.push_back({SocketType::MidiOutbound, QString("MIDI Output %1").arg(i+1)});
     }
 
     if ( descriptor_.isModulator()){
-        specs.push_back({SocketType::ModulationOutput, QString("Modulation Output")});
+        specs.push_back({SocketType::ModulationOutbound, QString("Modulation Output")});
     }
 
     createSockets(specs);

@@ -22,7 +22,10 @@
 #include "midi/MidiNote.hpp"
 #include "params/ModulationParameter.hpp"
 
+using ModulationTarget = std::pair<BaseComponent*, ParameterType> ;
+
 #include <set>
+#include <utility>
 
 struct ModulationContext {
     const MidiNote* note = nullptr ;
@@ -34,6 +37,15 @@ struct ModulationContext {
 class BaseModulator : public virtual BaseComponent {
 protected:
     std::set<ModulationParameter> requiredParams_ ; 
+    std::set<ModulationTarget> modulated_ ; 
+
+    void addModulationTarget(ModulationTarget t){
+        modulated_.insert(t);
+    }
+
+    void removeModulationTarget(ModulationTarget t){
+        modulated_.erase(t);
+    }
 
 public:
     BaseModulator(){};
@@ -45,6 +57,14 @@ public:
     virtual const std::set<ModulationParameter>& getRequiredModulationParameters() const {
         return requiredParams_ ;
     }
+
+    std::set<ModulationTarget>& getModulationTargets(){
+        return modulated_ ;
+    }
+
+    // allows recipricol tracking of modulation targets
+    friend void BaseComponent::removeParameterModulation(ParameterType p);
+    friend void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d);
 };
 
 #endif // __MODULATOR_HPP_
