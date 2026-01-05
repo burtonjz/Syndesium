@@ -49,6 +49,9 @@ void ApiHandler::initialize(Engine* engine){
     engine_ = engine ;
 
     // register api handler functions
+
+
+
     handlers_["get_audio_devices"] = [this](int sock, const json& request){ return getAudioDevices(sock, request); };
     handlers_["get_midi_devices"] = [this](int sock, const json& request){ return getMidiDevices(sock, request); };
     handlers_["set_audio_device"] = [this](int sock, const json& request){ return setAudioDevice(sock, request); };
@@ -56,16 +59,26 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["set_state"] = [this](int sock, const json& request){ return setState(sock, request); };
     handlers_["get_configuration"] = [this](int sock, const json& request){ return getConfiguration(sock, request); };
     handlers_["load_configuration"] = [this](int sock, const json& request){ return loadConfiguration(sock, request); };
-    handlers_["get_waveforms"] = [this](int sock, const json& request){ return getWaveforms(sock, request); };
     handlers_["add_component"] = [this](int sock, const json& request){ return addComponent(sock, request); };
     handlers_["remove_component"] = [this](int sock, const json& request){ return removeComponent(sock, request); };
-    handlers_["get_component_parameter"] = [this](int sock, const json& request){ return getComponentParameter(sock, request); };
-    handlers_["set_component_parameter"] = [this](int sock, const json& request){ return setComponentParameter(sock, request); };
     handlers_["create_connection"] = [this](int sock, const json& request){ return createConnection(sock, request); };
     handlers_["remove_connection"] = [this](int sock, const json& request){ return removeConnection(sock, request); };
-    handlers_["get_sequence"] = [this](int sock, const json& request){ return getSequence(sock, request); };
-    handlers_["add_sequence_note"] = [this](int sock, const json& request){ return addSequenceNote(sock, request); };
-    handlers_["remove_sequence_note"] = [this](int sock, const json& request){ return removeSequenceNote(sock, request); };
+    handlers_["get_parameter"] = [this](int sock, const json& request){ return getParameter(sock, request); };
+    handlers_["set_parameter"] = [this](int sock, const json& request){ return setParameter(sock, request); };
+    handlers_["get_parameter_default"] = [this](int sock, const json& request){ return getParameterDefault(sock, request); };
+    handlers_["set_parameter_default"] = [this](int sock, const json& request){ return setParameterDefault(sock, request); };
+    handlers_["get_parameter_value_range"] = [this](int sock, const json& request){ return getParameterValueRange(sock, request); };
+    handlers_["set_parameter_value_range"] = [this](int sock, const json& request){ return setParameterValueRange(sock, request); };
+    handlers_["reset_parameter"] = [this](int sock, const json& request){ return resetParameter(sock, request); };
+    handlers_["add_collection_values"] = [this](int sock, const json& request){ return addCollectionValues(sock, request); };
+    handlers_["remove_collection_values"] = [this](int sock, const json& request){ return removeCollectionValues(sock, request); };
+    handlers_["get_collection_values"] = [this](int sock, const json& request){ return getCollectionValues(sock, request); };
+    handlers_["set_collection_values"] = [this](int sock, const json& request){ return setCollectionValues(sock, request); };
+    handlers_["get_collection_defaults"] = [this](int sock, const json& request){ return getCollectionDefaults(sock, request); };
+    handlers_["set_collection_defaults"] = [this](int sock, const json& request){ return setCollectionDefaults(sock, request); };
+    handlers_["get_collection_value_range"] = [this](int sock, const json& request){ return getCollectionValueRange(sock, request); };
+    handlers_["set_collection_value_range"] = [this](int sock, const json& request){ return setCollectionValueRange(sock, request); };
+    handlers_["reset_collection"] = [this](int sock, const json& request){ return resetCollection(sock, request); };
 }
 
 void ApiHandler::start(){
@@ -314,12 +327,6 @@ json ApiHandler::loadConfiguration(int sock, const json& request){
     return sendApiResponse(sock, response);
 }
 
-json ApiHandler::getWaveforms(int sock, const json& request){
-    json response = request ;
-    response["data"] = Waveform::getWaveforms() ;
-    return sendApiResponse(sock,response);
-}
-
 json ApiHandler::addComponent(int sock, const json& request){
     json response = request ;
     ComponentType type ;
@@ -394,31 +401,6 @@ json ApiHandler::removeComponent(int sock, const json& request){
     return sendApiResponse(sock, response);    
 }
 
-json ApiHandler::getComponentParameter(int sock, const json& request){
-    json response = request ;
-    return sendApiResponse(sock, response, "get component parameter not yet implemented");
-}
-
-json ApiHandler::setComponentParameter(int sock, const json& request){
-    json response = request ;
-    ComponentId id ;
-    ParameterType param ;
-
-    try {
-        id = response["componentId"];
-        param = static_cast<ParameterType>(response["parameter"]);
-        response.at("value"); // verify present
-    } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
-    }
-
-
-    if ( engine_->componentManager.setComponentParameter(id, param, response["value"]) ){
-        return sendApiResponse(sock,response);
-    } else {
-        return sendApiResponse(sock,response, "Error setting component parameter." );
-    }
-}
 
 json ApiHandler::createConnection(int sock, const json& request){
     json response = request ;
@@ -458,72 +440,100 @@ json ApiHandler::removeConnection(int sock, const json& request){
     }
 }
 
-json ApiHandler::getSequence( int sock, const json& request){
+json ApiHandler::getParameter(int sock, const json& request){
     json response = request ;
-    ComponentId id ;
-
-    try {
-        id = response["componentId"];
-    } catch ( const std::exception& e ){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
-    }
-
-    MidiEventHandler* component = engine_->componentManager.getMidiHandler(id);
-    if ( !component || !component->hasSequence() ){
-        return sendApiResponse(sock, response, "No sequenceable component matching id" + std::to_string(id));
-    }
-
-    response["sequence"] = component->getSequence().get();
-    return response ;
+    return sendApiResponse(sock, response, "get component parameter not yet implemented");
 }
 
-json ApiHandler::addSequenceNote( int sock, const json& request){
+json ApiHandler::setParameter(int sock, const json& request){
     json response = request ;
     ComponentId id ;
-    SequenceNote n ;
+    ParameterType param ;
 
     try {
         id = response["componentId"];
-        n = response["note"];
-    } catch ( const std::exception& e ){
+        param = static_cast<ParameterType>(response["parameter"]);
+        response.at("value"); // verify present
+    } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
-    MidiEventHandler* component = engine_->componentManager.getMidiHandler(id);
-    if ( !component || !component->hasSequence() ){
-        return sendApiResponse(sock, response, "No sequenceable component matching id" + std::to_string(id));
+
+    if ( engine_->componentManager.setComponentParameter(id, param, response["value"]) ){
+        return sendApiResponse(sock,response);
+    } else {
+        return sendApiResponse(sock,response, "Error setting component parameter." );
     }
-
-    if ( component->addSequenceNote(n) ){
-        return sendApiResponse(sock, response);
-    }
-
-    return sendApiResponse(sock, response, "failed to add sequence note.");
-
 }
 
-json ApiHandler::removeSequenceNote( int sock, const json& request){
+json ApiHandler::getParameterDefault(int sock, const json& request){
     json response = request ;
-    ComponentId id ;
-    SequenceNote n ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
 
-    try {
-        id = response["componentId"];
-        n = response["note"];
-    } catch ( const std::exception& e ){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
-    }
+json ApiHandler::setParameterDefault(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
 
-    MidiEventHandler* component = engine_->componentManager.getMidiHandler(id);
-    if ( !component || !component->hasSequence() ){
-        return sendApiResponse(sock, response, "No sequenceable component matching id" + std::to_string(id));
-    }
+json ApiHandler::getParameterValueRange(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
 
-    if ( component->removeSequenceNote(n) ){
-        return sendApiResponse(sock, response);
-    }
+json ApiHandler::setParameterValueRange(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
 
-    return sendApiResponse(sock, response, "failed to add sequence note.");
+json ApiHandler::resetParameter(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::addCollectionValues(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::removeCollectionValues(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::getCollectionValues(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::setCollectionValues(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::getCollectionDefaults(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::setCollectionDefaults(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::getCollectionValueRange(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::setCollectionValueRange(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
+}
+
+json ApiHandler::resetCollection(int sock, const json& request){
+    json response = request ;
+    return sendApiResponse(sock, response, "method is not yet implemented");
 }
 
 bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
@@ -567,7 +577,7 @@ bool ApiHandler::loadCreateComponent(int sock, const json& components, std::unor
                 parameterRequest["componentId"] = idMap[id] ;
                 parameterRequest["parameter"] = static_cast<int>(parameterType);
                 parameterRequest["value"] = data["currentValue"] ;
-                setComponentParameter(sock, parameterRequest);
+                setParameter(sock, parameterRequest);
             }
         } catch ( const std::exception& e ){
             SPDLOG_WARN("Error creating component: {}", std::string(e.what()));

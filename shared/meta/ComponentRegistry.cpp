@@ -16,6 +16,7 @@
  */
 
 #include "meta/ComponentRegistry.hpp"
+#include "meta/CollectionStructure.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
@@ -30,12 +31,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 ComponentType::Oscillator,
                 {ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, // modulatable params
                 {ParameterType::WAVEFORM, ParameterType::AMPLITUDE, ParameterType::FREQUENCY}, //control params
+                {},
                 0,
                 1,
                 0, 
                 0,
-                true,
-                false
+                true
             }
         },
         {
@@ -45,12 +46,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 ComponentType::PolyOscillator,
                 {ParameterType::AMPLITUDE, ParameterType::FREQUENCY, ParameterType::PHASE}, // modulatable params
                 {ParameterType::WAVEFORM, ParameterType::DETUNE}, //control params
+                {},
                 0, 
                 1, 
                 1,
                 0, 
-                false,
-                false  
+                false
             }
         },
         {
@@ -60,12 +61,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 ComponentType::LinearFader,
                 {ParameterType::ATTACK, ParameterType::RELEASE},
                 {ParameterType::ATTACK, ParameterType::RELEASE},
+                {},
                 0,
                 0,
                 1,
                 1,
-                true,
-                false
+                true
             }
         },
         {
@@ -75,12 +76,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 ComponentType::ADSREnvelope,
                 {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
                 {ParameterType::ATTACK, ParameterType::DECAY, ParameterType::SUSTAIN, ParameterType::RELEASE},
+                {},
                 0,
                 0,
                 1,
                 1,
-                true,
-                false
+                true
             }
         },
         {
@@ -89,12 +90,14 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 "Midi Filter",
                 ComponentType::MidiFilter,
                 {},
-                {ParameterType::MIN_VALUE, ParameterType::MAX_VALUE},
+                {},
+                {
+                    CollectionDescriptor::Grouped(ParameterType::MIDI_VALUE,"midi range", 2)
+                },
                 0,
                 0,
                 1,
                 1,
-                false,
                 false
             }
         },
@@ -105,12 +108,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 ComponentType::BiquadFilter,
                 {ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
                 {ParameterType::FILTER_TYPE, ParameterType::FREQUENCY,ParameterType::BANDWIDTH, ParameterType::Q_FACTOR, ParameterType::SHELF, ParameterType::DBGAIN},
+                {},
                 1,
                 1,
                 0,
                 0,
-                true,
-                false
+                true
             }
         },
         {
@@ -119,13 +122,18 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 "Sequencer",
                 ComponentType::Sequencer,
                 {ParameterType::AMPLITUDE},
-                {ParameterType::STATUS, ParameterType::AMPLITUDE, ParameterType::BPM, ParameterType::MAX_VALUE},
+                {ParameterType::STATUS, ParameterType::BPM, ParameterType::DURATION},
+                {
+                    CollectionDescriptor::Synchronized(
+                        {ParameterType::MIDI_VALUE, ParameterType::VELOCITY, ParameterType::START_POSITION, ParameterType::DURATION}, 
+                        "Sequence Note"
+                    )
+                },
                 0,
                 0,
                 0,
                 1,
-                false,
-                true
+                false
             }
         },
         {
@@ -135,11 +143,11 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 ComponentType::MonophonicFilter,
                 {},
                 {},
+                {},
                 0,
                 0,
                 1,
                 1,
-                false,
                 false
             }
             

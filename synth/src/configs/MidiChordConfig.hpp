@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -24,19 +24,19 @@
 using json = nlohmann::json ;
 
 // forward declare class
-class MidiFilter ;
+class MidiChord ;
 
 // define default configuration
-struct MidiFilterConfig {
-    uint8_t max = 127 ;
-    uint8_t min = 0 ;
+struct MidiChordConfig {
+    uint8_t max_value = 127 ;
+    uint8_t min_value = 0 ;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MidiFilterConfig, max, min) // macro to serialize/deserialize json <-> structs
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MidiChordConfig, max_value, min_value) // macro to serialize/deserialize json <-> structs
 
-template <> struct ComponentTypeTraits<ComponentType::MidiFilter>{ 
-    using type = MidiFilter ;
-    using config = MidiFilterConfig ;
+template <> struct ComponentTypeTraits<ComponentType::MidiChord>{ 
+    using type = MidiChord ;
+    using config = MidiChordConfig ;
 };
 
 #endif // __HPP_CONFIGS_MIDIFILTER_

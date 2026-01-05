@@ -16,7 +16,8 @@ UI
   - Make save/load functions save/update hardware socket container widget positions.
   - Move component additions to the file bar to make more room for the graph panel, and then create shortcut context menus to quickly add modules
   - remember previous setup selections (save in config), and move setup to menu bar with a shortcut.
-  - implement module delete + module duplicate
+  - implement module duplicate
+  - no deleting modules in run mode.
   - create a dock and popout system for detail widgets for easier management.
   - Create max zoom for gui graph panel?
   - add sync socket to oscillator (orange?) 

@@ -141,15 +141,15 @@ void ComponentDetailWidget::setupLayout(){
     QHBoxLayout* parameterLayout = new QHBoxLayout();
 
 
-    // sequence ( if applicable)
-    if ( descriptor_.sequenceable ){
-        auto* scroll = new QScrollArea() ;
-        QHBoxLayout* pianoLayout = new QHBoxLayout();
-        pianoRollWidget_ = new PianoRollWidget(componentId_);
-        scroll->setWidget(pianoRollWidget_);
-        pianoLayout->addWidget(scroll);
-        mainLayout->addLayout(pianoLayout);
-    }
+    // // sequence ( if applicable)
+    // if ( descriptor_.sequenceable ){
+    //     auto* scroll = new QScrollArea() ;
+    //     QHBoxLayout* pianoLayout = new QHBoxLayout();
+    //     pianoRollWidget_ = new PianoRollWidget(componentId_);
+    //     scroll->setWidget(pianoRollWidget_);
+    //     pianoLayout->addWidget(scroll);
+    //     mainLayout->addLayout(pianoLayout);
+    // }
 
     // parameters
     parameterLayout->setSpacing(PARAMETER_WIDGET_SPACING);

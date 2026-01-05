@@ -40,8 +40,6 @@ protected:
     std::vector<MidiEventListener*> listeners_ ;
     MidiEventQueue queue_ ;
 
-    std::unique_ptr<Sequence> sequence_ ;
-
     /**
      * The below functions broadcast handler events to downstream objects
      * Note: MidiEventHandlers will broadcast to chained handlers such that 
@@ -65,12 +63,6 @@ protected:
 public:
     MidiEventHandler();
     virtual ~MidiEventHandler() = default ;
-
-    void initializeSequence();
-    bool hasSequence() const ;
-    SequenceData& getSequence() const ;
-    bool addSequenceNote(SequenceNote n);
-    bool removeSequenceNote(SequenceNote n);
 
     void addListener(MidiEventListener* listener);
     void removeListener(MidiEventListener* listener);

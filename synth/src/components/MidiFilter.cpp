@@ -6,25 +6,30 @@
 MidiFilter::MidiFilter(ComponentId id, MidiFilterConfig cfg):
     BaseComponent(id, ComponentType::MidiFilter)
 {
-    parameters_->add<ParameterType::MIN_VALUE>(cfg.min_value,false);
-    parameters_->add<ParameterType::MAX_VALUE>(cfg.max_value,false);
+    parameters_->addCollection<ParameterType::MIDI_VALUE>({cfg.min, cfg.max});
 }
 
 void MidiFilter::onKeyPressed(const ActiveNote* note, bool rePressed){
-    if ( 
-        note &&
-        note->note.getMidiNote() >= parameters_->getParameter<ParameterType::MIN_VALUE>()->getValue() &&
-        note->note.getMidiNote() <= parameters_->getParameter<ParameterType::MAX_VALUE>()->getValue()
-    ){
+    if ( !note ) return ;
+    
+    if ( passNote(note->note.getMidiNote()) ){
         MidiEventHandler::onKeyPressed(note, rePressed);
-    }
+    } 
 }
 
 void MidiFilter::onKeyReleased(ActiveNote anote){
-    if ( 
-        anote.note.getMidiNote() >= parameters_->getParameter<ParameterType::MIN_VALUE>()->getValue() &&
-        anote.note.getMidiNote() <= parameters_->getParameter<ParameterType::MAX_VALUE>()->getValue()
-    ){
+    if ( passNote(anote.note.getMidiNote()) ){
         MidiEventHandler::onKeyReleased(anote);
+    }
+}
+
+bool MidiFilter::passNote(uint8_t midi) const {
+    auto c = parameters_->getCollection<ParameterType::MIDI_VALUE>();
+    bool passNote = true ;
+    for ( size_t i = 0 ; i < c->size() - 1 ; i += 2 ){
+        passNote = passNote 
+            && midi >= c->getValue(i)
+            && midi <= c->getValue(i+1);
+        if ( !passNote ) break ;
     }
 }

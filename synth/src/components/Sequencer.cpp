@@ -22,33 +22,91 @@
 
 Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
     BaseComponent(id, ComponentType::Sequencer),
-    currentTime_(0)
+    currentTime_(0),
+    lastQueriedBeat_(0)
 {
     parameters_->add<ParameterType::STATUS>(true, false);
-    parameters_->add<ParameterType::AMPLITUDE>(cfg.velocity / 127.0f, true);
-    parameters_->add<ParameterType::MAX_VALUE>(cfg.length, false, 0, cfg.max_length);
+    parameters_->add<ParameterType::BPM>(cfg.bpm, false);
+    parameters_->add<ParameterType::DURATION>(cfg.length, false, 0, cfg.max_length);
 
-    initializeSequence();
+    parameters_->addCollection<ParameterType::MIDI_VALUE>({});
+    parameters_->addCollection<ParameterType::VELOCITY>({});
+    parameters_->addCollection<ParameterType::START_POSITION>({});
+    parameters_->addCollection<ParameterType::DURATION>({});
+
 }
 
 void Sequencer::onTick(float dt){
     if ( !parameters_->getParameter<ParameterType::STATUS>()->getValue() ) return ;
 
-    int bpm = sequence_->getBpm() ;
-    float maxBeats = parameters_->getParameter<ParameterType::MAX_VALUE>()->getInstantaneousValue();
-    float loopedBeat = std::fmod((currentTime_ * bpm ) / 60.0f , maxBeats);
-    uint8_t velocity = parameters_->getParameter<ParameterType::AMPLITUDE>()->getInstantaneousValue() * 127 ;
+    int bpm = parameters_->getParameter<ParameterType::BPM>()->getValue() ;
+    float maxBeats = parameters_->getParameter<ParameterType::DURATION>()->getValue();
+    float currentBeat = std::fmod((currentTime_ * bpm ) / 60.0f , maxBeats);
 
-    getSequence().processEvents(loopedBeat, maxBeats, [this, velocity](bool isNoteOn, SequenceNote n){
-        MidiNote m = MidiNote(n.pitch, velocity, isNoteOn);
-        ActiveNote anote = {m, 0};
-        if ( isNoteOn ){
-            queue_.push({MidiEvent::Type::NotePressed, anote});
-        } else {
-            queue_.push({MidiEvent::Type::NoteReleased, anote});
+    // how many beats have passed since last query?
+    float beatsSinceLastQuery ;
+    if ( currentBeat < lastQueriedBeat_ ){
+        beatsSinceLastQuery = (maxBeats - lastQueriedBeat_) + currentBeat ;
+    } else {
+        beatsSinceLastQuery = currentBeat - lastQueriedBeat_ ;
+    }
+
+    // check to see if sufficient time has passed to process events again
+    auto durations = parameters_->getCollection<ParameterType::DURATION>();
+    if ( beatsSinceLastQuery < durations->getMinValue() ) return ;
+
+    // Process Events...
+    auto notes = parameters_->getCollection<ParameterType::MIDI_VALUE>();
+    auto velocities = parameters_->getCollection<ParameterType::VELOCITY>();
+    auto starts = parameters_->getCollection<ParameterType::START_POSITION>();
+
+    for ( size_t i = 0 ; i < notes->size() ; ++i ){
+        float start = starts->getValue(i);
+        float end = start + durations->getValue(i);
+
+        
+        if ( currentBeat < lastQueriedBeat_ ){ // handle loop around
+            // Case 1: last query to loop end
+            if ( start > lastQueriedBeat_ && start <= maxBeats ){
+                pushToQueue(notes->getValue(i), velocities->getValue(i), true);
+                continue ;
+            }
+            if ( end > lastQueriedBeat_ && end <= maxBeats ){
+                pushToQueue(notes->getValue(i), velocities->getValue(i), false);
+                continue ;
+            }
+
+            // Case 2: loop start to current beat
+            if ( start >= 0.0f && start <= currentBeat ){
+                pushToQueue(notes->getValue(i), velocities->getValue(i), true);
+                continue ;
+            }
+            if ( end >= 0.0f && end <= currentBeat ){
+                pushToQueue(notes->getValue(i), velocities->getValue(i), false);
+                continue ;
+            }
+        } else { // hasn't looped yet
+            if ( start > lastQueriedBeat_ && start <= currentBeat ){
+                pushToQueue(notes->getValue(i), velocities->getValue(i), true);
+                continue ;
+            }
+            if ( end > lastQueriedBeat_ && end <= currentBeat ){
+                pushToQueue(notes->getValue(i), velocities->getValue(i), false);
+                continue ;
+            }
         }
-    });
+    }
 
+    lastQueriedBeat_ = currentBeat ;
     currentTime_ += dt ;
 }
 
+void Sequencer::pushToQueue(uint8_t midiNote, uint8_t velocity, bool noteOn){
+    MidiNote m = MidiNote(midiNote, velocity, noteOn);
+    ActiveNote anote = {m, 0};
+    if ( noteOn ){
+        queue_.push({MidiEvent::Type::NotePressed, anote});
+    } else {
+        queue_.push({MidiEvent::Type::NoteReleased, anote});
+    }
+}

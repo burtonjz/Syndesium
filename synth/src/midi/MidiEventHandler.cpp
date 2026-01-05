@@ -55,40 +55,8 @@ void MidiEventHandler::notifyPitchbend(uint16_t pitchbend) {
 }
 
 MidiEventHandler::MidiEventHandler():
-    BaseComponent(),
-    sequence_(nullptr)
+    BaseComponent()
 {}
-
-bool MidiEventHandler::hasSequence() const {
-    return sequence_.get() ;
-}
-
-SequenceData& MidiEventHandler::getSequence() const {
-    if ( !sequence_ ){
-        throw std::runtime_error("MidiEventHandler: cannot get sequence for a non-sequenceable component.");
-    } ;
-    return sequence_.get()->getSequence();
-}
-
-void MidiEventHandler::initializeSequence(){
-    if ( sequence_ ){
-        std::runtime_error("MidiEventHandler: sequence can only be initialized once.");
-    }
-
-    sequence_ = std::make_unique<Sequence>(this);
-}
-
-bool MidiEventHandler::addSequenceNote(SequenceNote n){
-    if ( !sequence_ ) return false ;
-    if ( n.velocity ) sequence_->getSequence().addNote(n);
-    return true ;
-}
-
-bool MidiEventHandler::removeSequenceNote(SequenceNote n){
-    if ( !sequence_ ) return false ;
-    sequence_->getSequence().removeNote(n);
-    return true ;
-}
 
 void MidiEventHandler::addListener(MidiEventListener* listener){
     if ( std::find(listeners_.begin(), listeners_.end(), listener) != listeners_.end() ) return ;

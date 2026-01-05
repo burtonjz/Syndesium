@@ -29,6 +29,8 @@ protected:
 public:
     MidiFilter(ComponentId id, MidiFilterConfig cfg);
 
+private:
+    bool passNote(uint8_t midi) const ;
 };
 
 #endif // __MIDI_FILTER_HPP_

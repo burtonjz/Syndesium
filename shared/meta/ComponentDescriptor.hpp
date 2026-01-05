@@ -24,12 +24,14 @@
 
 #include "types/ParameterType.hpp"
 #include "types/ComponentType.hpp"
+#include "meta/CollectionStructure.hpp"
 
 struct ComponentDescriptor {
     std::string name ;
     ComponentType type ;
     std::vector<ParameterType> modulatableParameters ;
     std::vector<ParameterType> controllableParameters ;
+    std::vector<CollectionDescriptor> collections ;
 
     size_t numAudioInputs  ;
     size_t numAudioOutputs ;
@@ -37,7 +39,6 @@ struct ComponentDescriptor {
     size_t numMidiOutputs ;
 
     bool canModulate ;
-    bool sequenceable = false ;
 
     bool isModule() const { return numAudioOutputs > 0 ; }
     bool isModulator() const { return canModulate ; }

@@ -44,7 +44,7 @@ enum class ComponentType {
     X(ADSREnvelope) \
     X(MidiFilter) \
     X(Sequencer) \
-    X(MonophonicFilter) \
+    X(MonophonicFilter) 
 
 constexpr int N_COMPONENT_TYPES = static_cast<int>(ComponentType::N_COMPONENTS) - 1 ;
 

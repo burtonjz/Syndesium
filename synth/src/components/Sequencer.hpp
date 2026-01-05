@@ -24,12 +24,15 @@
 class Sequencer : public MidiEventHandler {
 private:
     float currentTime_ ;
+    float lastQueriedBeat_ ;
+
     std::set<uint8_t> activeNotes_ ;
 
 public:
     Sequencer(ComponentId id, SequencerConfig cfg);
 
     void onTick(float dt) override ;
+    void pushToQueue(uint8_t midiNote, uint8_t velocity, bool noteOn);
 
 };
 

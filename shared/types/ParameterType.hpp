@@ -19,6 +19,8 @@
 #define __PARAMETER_TYPE_HPP_
 
 #include "types/Waveform.hpp"
+#include "types/ScaleType.hpp"
+#include "types/ScaleNote.hpp"
 
 #include <variant>
 #include <cstdint>
@@ -52,14 +54,18 @@ enum class ParameterType: uint8_t {
     DECAY,
     SUSTAIN,
     RELEASE,
-    MIN_VALUE,
-    MAX_VALUE,
     FILTER_TYPE,
     CUTOFF,
     BANDWIDTH,
     SHELF,
     Q_FACTOR,
     BPM,
+    MIDI_VALUE,
+    VELOCITY,
+    START_POSITION,
+    DURATION,
+    SCALE_NOTE,
+    SCALE_TYPE,
     N_PARAMETERS
 };
 
@@ -79,14 +85,17 @@ enum class ParameterType: uint8_t {
     X(DECAY) \
     X(SUSTAIN) \
     X(RELEASE) \
-    X(MIN_VALUE) \
-    X(MAX_VALUE) \
     X(FILTER_TYPE) \
     X(CUTOFF) \
     X(BANDWIDTH) \
     X(SHELF) \
     X(Q_FACTOR) \
-    X(BPM)
+    X(BPM) \
+    X(MIDI_VALUE) \
+    X(VELOCITY) \
+    X(DURATION) \
+    X(SCALE_NOTE) \
+    X(SCALE_TYPE) \
 
 constexpr int N_PARAMETER_TYPES = static_cast<int>(ParameterType::N_PARAMETERS) ;
 
@@ -110,8 +119,8 @@ enum class ModulationStrategy {
 template <ParameterType Type> struct ParameterTraits ;
 
 template <> struct ParameterTraits<ParameterType::DEPTH>{
-    using ValueType = float;
-    static constexpr std::string name = "depth";
+    using ValueType = float ;
+    static constexpr std::string name = "depth" ;
     static constexpr float minimum = -5.0 ;
     static constexpr float maximum = 5.0 ;
     static constexpr float defaultValue = 1.0 ;
@@ -120,8 +129,8 @@ template <> struct ParameterTraits<ParameterType::DEPTH>{
 };
 
 template <> struct ParameterTraits<ParameterType::STATUS>{
-    using ValueType = bool;
-    static constexpr std::string name = "status";
+    using ValueType = bool ;
+    static constexpr std::string name = "status" ;
     static constexpr float minimum = 0 ;
     static constexpr float maximum = 1 ;
     static constexpr float defaultValue = 1 ;
@@ -130,8 +139,8 @@ template <> struct ParameterTraits<ParameterType::STATUS>{
 };
 
 template <> struct ParameterTraits<ParameterType::WAVEFORM>{
-    using ValueType = uint8_t;
-    static constexpr std::string name = "waveform";
+    using ValueType = uint8_t ;
+    static constexpr std::string name = "waveform" ;
     static constexpr float minimum = 0 ;
     static constexpr float maximum = Waveform::N ;
     static constexpr float defaultValue = Waveform::SINE ;
@@ -140,8 +149,8 @@ template <> struct ParameterTraits<ParameterType::WAVEFORM>{
 };
 
 template <> struct ParameterTraits<ParameterType::FREQUENCY>{
-    using ValueType = double;
-    static constexpr std::string name = "frequency";
+    using ValueType = double ;
+    static constexpr std::string name = "frequency" ;
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 30000.0 ;
     static constexpr float defaultValue = 440.0 ;
@@ -150,8 +159,8 @@ template <> struct ParameterTraits<ParameterType::FREQUENCY>{
 };
 
 template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
-    using ValueType = double;
-    static constexpr std::string name = "amplitude";
+    using ValueType = double ;
+    static constexpr std::string name = "amplitude" ;
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
@@ -160,8 +169,8 @@ template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
 };
 
 template <> struct ParameterTraits<ParameterType::GAIN>{
-    using ValueType = double;
-    static constexpr std::string name = "gain";
+    using ValueType = double ;
+    static constexpr std::string name = "gain" ;
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
@@ -170,8 +179,8 @@ template <> struct ParameterTraits<ParameterType::GAIN>{
 };
 
 template <> struct ParameterTraits<ParameterType::DBGAIN>{
-    using ValueType = double;
-    static constexpr std::string name = "gain (db)";
+    using ValueType = double ;
+    static constexpr std::string name = "gain (db)" ;
     static constexpr float minimum = -24.0 ;
     static constexpr float maximum = 24.0 ;
     static constexpr float defaultValue = 0.0 ;
@@ -180,8 +189,8 @@ template <> struct ParameterTraits<ParameterType::DBGAIN>{
 };
 
 template <> struct ParameterTraits<ParameterType::PHASE>{
-    using ValueType = double;
-    static constexpr std::string name = "phase";
+    using ValueType = double ;
+    static constexpr std::string name = "phase" ;
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
@@ -190,8 +199,8 @@ template <> struct ParameterTraits<ParameterType::PHASE>{
 };
 
 template <> struct ParameterTraits<ParameterType::PAN>{
-    using ValueType = float;
-    static constexpr std::string name = "pan";
+    using ValueType = float ;
+    static constexpr std::string name = "pan" ;
     static constexpr float minimum = -1.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 0.0 ;
@@ -200,8 +209,8 @@ template <> struct ParameterTraits<ParameterType::PAN>{
 };
 
 template <> struct ParameterTraits<ParameterType::DETUNE>{
-    using ValueType = float;
-    static constexpr std::string name = "detune";
+    using ValueType = float ;
+    static constexpr std::string name = "detune" ;
     static constexpr float minimum = -1250.0f ;
     static constexpr float maximum = 1250.0f ;
     static constexpr float defaultValue = 0.0 ;
@@ -210,8 +219,8 @@ template <> struct ParameterTraits<ParameterType::DETUNE>{
 };
 
 template <> struct ParameterTraits<ParameterType::ATTACK>{
-    using ValueType = float;
-    static constexpr std::string name = "attack";
+    using ValueType = float ;
+    static constexpr std::string name = "attack" ;
     static constexpr float minimum = 0.001 ;
     static constexpr float maximum = 4.00 ;
     static constexpr float defaultValue = 0.01 ;
@@ -220,8 +229,8 @@ template <> struct ParameterTraits<ParameterType::ATTACK>{
 };
 
 template <> struct ParameterTraits<ParameterType::DECAY>{
-    using ValueType = float;
-    static constexpr std::string name = "decay";
+    using ValueType = float ;
+    static constexpr std::string name = "decay" ;
     static constexpr float minimum = 0.001 ;
     static constexpr float maximum = 4.0 ;
     static constexpr float defaultValue = 0.01 ;
@@ -230,8 +239,8 @@ template <> struct ParameterTraits<ParameterType::DECAY>{
 };
 
 template <> struct ParameterTraits<ParameterType::SUSTAIN>{
-    using ValueType = float;
-    static constexpr std::string name = "sustain";
+    using ValueType = float ;
+    static constexpr std::string name = "sustain" ;
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 0.8 ;
@@ -240,8 +249,8 @@ template <> struct ParameterTraits<ParameterType::SUSTAIN>{
 };
 
 template <> struct ParameterTraits<ParameterType::RELEASE>{
-    using ValueType = float;
-    static constexpr std::string name = "release";
+    using ValueType = float ;
+    static constexpr std::string name = "release" ;
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 4.0 ;
     static constexpr float defaultValue = 0.01 ;
@@ -249,29 +258,9 @@ template <> struct ParameterTraits<ParameterType::RELEASE>{
     static constexpr double uiStepPrecision = 0.01 ;
 };
 
-template <> struct ParameterTraits<ParameterType::MIN_VALUE>{
-    using ValueType = uint8_t;
-    static constexpr std::string name = "minimum";
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 127 ;
-    static constexpr float defaultValue = 0 ;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 1.0 ;
-};
-
-template <> struct ParameterTraits<ParameterType::MAX_VALUE>{
-    using ValueType = uint8_t;
-    static constexpr std::string name = "maximum";
-    static constexpr float minimum = 0 ;
-    static constexpr float maximum = 127 ;
-    static constexpr float defaultValue = 127 ;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 1.0 ;
-};
-
 template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
-    using ValueType = uint8_t;
-    static constexpr std::string name = "filter type";
+    using ValueType = uint8_t ;
+    static constexpr std::string name = "filter type" ;
     static constexpr float minimum = 0 ;
     static constexpr float maximum = 1 ;
     static constexpr float defaultValue = 0 ;
@@ -280,8 +269,8 @@ template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
 };
 
 template <> struct ParameterTraits<ParameterType::CUTOFF>{
-    using ValueType = float;
-    static constexpr std::string name = "cutoff";
+    using ValueType = float ;
+    static constexpr std::string name = "cutoff" ;
     static constexpr float minimum = 0.0f ;
     static constexpr float maximum = 30000.0f ;
     static constexpr float defaultValue = 20000.0f ;
@@ -290,8 +279,8 @@ template <> struct ParameterTraits<ParameterType::CUTOFF>{
 };
 
 template <> struct ParameterTraits<ParameterType::BANDWIDTH>{
-    using ValueType = float;
-    static constexpr std::string name = "bandwidth";
+    using ValueType = float ;
+    static constexpr std::string name = "bandwidth" ;
     static constexpr float minimum = 0.1f ;
     static constexpr float maximum = 4.0f ;
     static constexpr float defaultValue = 2.0f ;
@@ -300,8 +289,8 @@ template <> struct ParameterTraits<ParameterType::BANDWIDTH>{
 };
 
 template <> struct ParameterTraits<ParameterType::SHELF>{
-    using ValueType = float;
-    static constexpr std::string name = "shelf slope";
+    using ValueType = float ;
+    static constexpr std::string name = "shelf slope" ;
     static constexpr float minimum = 0.1f ;
     static constexpr float maximum = 2.0f ;
     static constexpr float defaultValue = 1.0f ;
@@ -310,8 +299,8 @@ template <> struct ParameterTraits<ParameterType::SHELF>{
 };
 
 template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
-    using ValueType = float;
-    static constexpr std::string name = "q factor";
+    using ValueType = float ;
+    static constexpr std::string name = "q factor" ;
     static constexpr float minimum = 0.5f ;
     static constexpr float maximum = 10.0f ;
     static constexpr float defaultValue = 0.5f ;
@@ -320,7 +309,7 @@ template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
 };
 
 template <> struct ParameterTraits<ParameterType::BPM>{
-    using ValueType = int;
+    using ValueType = int ;
     static constexpr std::string name = "bpm";
     static constexpr float minimum = 0 ;
     static constexpr float maximum = 300 ;
@@ -329,6 +318,66 @@ template <> struct ParameterTraits<ParameterType::BPM>{
     static constexpr double uiStepPrecision = 0.1 ;
 };
 
+template <> struct ParameterTraits<ParameterType::MIDI_VALUE>{
+    using ValueType = uint8_t ;
+    static constexpr std::string name = "midi value" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 127 ;
+    static constexpr float defaultValue = 69 ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 0.1 ;
+};
+
+template <> struct ParameterTraits<ParameterType::VELOCITY>{
+    using ValueType = uint8_t ;
+    static constexpr std::string name = "velocity" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 127 ;
+    static constexpr float defaultValue = 100 ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 1 ;
+};
+
+template <> struct ParameterTraits<ParameterType::START_POSITION>{
+    using ValueType = float ;
+    static constexpr std::string name = "start";
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 64 ;
+    static constexpr float defaultValue = 0 ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 0.125 ;
+};
+
+template <> struct ParameterTraits<ParameterType::DURATION>{
+    using ValueType = float ;
+    static constexpr std::string name = "duration" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = 64 ;
+    static constexpr float defaultValue = 1 ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 0.125 ;
+};
+
+template <> struct ParameterTraits<ParameterType::SCALE_NOTE>{
+    using ValueType = uint8_t ;
+    static constexpr std::string name = "Note" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = ScaleNote::N ;
+    static constexpr float defaultValue = ScaleNote::C ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 1 ;
+};
+
+template <> struct ParameterTraits<ParameterType::SCALE_TYPE>{
+    using ValueType = uint8_t ;
+    static constexpr std::string name = "Scale Type" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = ScaleType::N ;
+    static constexpr float defaultValue = ScaleType::MAJOR ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr double uiStepPrecision = 1 ;
+};
+  
 /*
 The following dispatch function and macro allows users to easily retreive a trait for a particular parameter at runtime
 

@@ -53,24 +53,45 @@ public:
     json sendApiResponse(int clientSock, json& response, const std::string& err = "");
 
 private:
-    // handler functions
+    /*
+    ---------------------------------------------------------
+    --------------------HANDLER FUNCTIONS--------------------
+    ---------------------------------------------------------
+    */
+    // engine management
     json getAudioDevices(int sock, const json& request);
     json getMidiDevices(int sock, const json& request);
     json setAudioDevice(int sock, const json& request);
     json setMidiDevice(int sock, const json& request);
     json setState(int sock, const json& request);
+    // api save/load
     json getConfiguration(int sock, const json& request);
     json loadConfiguration(int sock, const json& request);
-    json getWaveforms(int sock, const json& request);
+    // component management
     json addComponent(int sock, const json& request);
     json removeComponent(int sock, const json& request);
-    json getComponentParameter(int sock, const json& request);
-    json setComponentParameter(int sock, const json& request);
     json createConnection(int sock, const json& request);
     json removeConnection(int sock, const json& request);
-    json getSequence(int sock, const json& request);
-    json addSequenceNote(int sock, const json& request);
-    json removeSequenceNote(int sock, const json& request);
+    // parameter management
+    json getParameter(int sock, const json& request);
+    json setParameter(int sock, const json& request);
+    json getParameterDefault(int sock, const json& request);
+    json setParameterDefault(int sock, const json& request);
+    json getParameterValueRange(int sock, const json& request);
+    json setParameterValueRange(int sock, const json& request);
+    json resetParameter(int sock, const json& request);    
+    // collection management
+    json addCollectionValues(int sock, const json& request);
+    json removeCollectionValues(int sock, const json& request);
+    json getCollectionValues(int sock, const json& request);
+    json setCollectionValues(int sock, const json& request);
+    json getCollectionDefaults(int sock, const json& request);
+    json setCollectionDefaults(int sock, const json& request);
+    json getCollectionValueRange(int sock, const json& request);
+    json setCollectionValueRange(int sock, const json& request);
+    json resetCollection(int sock, const json& request);
+
+
 
     // load functions
     bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);

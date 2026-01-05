@@ -21,6 +21,8 @@
 #include "params/Parameter.hpp"
 #include "params/ModulationParameter.hpp"
 #include "types/ParameterType.hpp"
+#include "params/ParameterCollection.hpp"
+
 #include "config/Config.hpp"
 
 #include <nlohmann/json.hpp>
@@ -37,6 +39,8 @@ class ParameterBase ;
 class BaseModulator ;
 
 using params = std::array<ParameterBase*, N_PARAMETER_TYPES> ;
+using collections = std::array<ParameterCollectionBase*, N_PARAMETER_TYPES> ;
+
 using json = nlohmann::json ;
 
 class ParameterMap {
@@ -45,9 +49,11 @@ class ParameterMap {
         std::set<ParameterType> modulatable_ ; 
         std::set<ParameterType> reference_ ; // parameters that are reference only to a parent parameter map (like a polyOscillator managing child oscillators)
 
+        bool has_collections = false ;
+        collections collections_{} ;
+
     public:
         ParameterMap():
-            parameters_(),
             modulatable_(),
             reference_()
         {}
@@ -61,6 +67,15 @@ class ParameterMap {
             return static_cast<Parameter<typ>*>(getParameter(typ)) ;
         }
 
+        ParameterCollectionBase* getCollection(ParameterType p) const {
+            return collections_[static_cast<size_t>(p)];
+        }
+
+        template <ParameterType typ>
+        ParameterCollection<typ>* getCollection() const {
+            return static_cast<ParameterCollection<typ>*>(getCollection(typ));
+        }
+
         template <ParameterType typ>
         void add(
             GET_PARAMETER_VALUE_TYPE(typ) defaultValue,
@@ -70,7 +85,7 @@ class ParameterMap {
             BaseModulator* modulator = nullptr, ModulationData modData = {}
         ){
             if ( getParameter(typ) ){
-                SPDLOG_WARN("Parameter already in map.");
+                SPDLOG_ERROR("Parameter {} already in map.", GET_PARAMETER_TRAIT_MEMBER(typ, name));
                 return ;
             }
                 
@@ -79,8 +94,23 @@ class ParameterMap {
             if (modulatable) modulatable_.insert(typ);
         }
 
+        template <ParameterType typ>
+        void addCollection(
+            std::vector<GET_PARAMETER_VALUE_TYPE(typ)> defaultValues,
+            GET_PARAMETER_VALUE_TYPE(typ) minValue = GET_PARAMETER_TRAIT_MEMBER(typ, minimum), 
+            GET_PARAMETER_VALUE_TYPE(typ) maxValue = GET_PARAMETER_TRAIT_MEMBER(typ, maximum)
+        ){
+            if ( getCollection(typ) ){
+                SPDLOG_ERROR("Collection already defined for Parameter {}", GET_PARAMETER_TRAIT_MEMBER(typ, name));
+                return ;
+            }
+
+            ParameterCollection<typ>* c = new ParameterCollection<typ>(defaultValues, minValue, maxValue);
+            collections_[static_cast<size_t>(typ)] = c ;
+        }
+
         void addReferences(ParameterMap& other){
-            const params& otherParams = other.getBaseMap();
+            const params& otherParams = other.parameters_ ;
             for ( size_t i = 0 ; i < otherParams.size() ; ++i ){
                 if ( !otherParams[i] ) continue ;
 
@@ -95,10 +125,6 @@ class ParameterMap {
 
         std::set<ParameterType> getModulatableParameters() const {
             return modulatable_ ;
-        }
-
-        const params& getBaseMap() const {
-            return parameters_ ;
         }
 
         void modulate(){
