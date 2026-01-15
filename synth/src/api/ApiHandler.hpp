@@ -21,7 +21,10 @@
 #include <nlohmann/json.hpp>
 #include <functional>
 
+#include "core/BaseComponent.hpp"
+#include "meta/CollectionDescriptor.hpp"
 #include "types/ConnectionRequest.hpp"
+#include "types/CollectionRequest.hpp"
 #include "params/ParameterMap.hpp"
 
 
@@ -70,6 +73,7 @@ private:
     // component management
     json addComponent(int sock, const json& request);
     json removeComponent(int sock, const json& request);
+    bool routeConnectionRequest(ConnectionRequest request);
     json createConnection(int sock, const json& request);
     json removeConnection(int sock, const json& request);
     // parameter management
@@ -81,26 +85,23 @@ private:
     json setParameterValueRange(int sock, const json& request);
     json resetParameter(int sock, const json& request);    
     // collection management
-    json addCollectionValues(int sock, const json& request);
-    json removeCollectionValues(int sock, const json& request);
-    json getCollectionValues(int sock, const json& request);
-    json setCollectionValues(int sock, const json& request);
-    json getCollectionDefaults(int sock, const json& request);
-    json setCollectionDefaults(int sock, const json& request);
-    json getCollectionValueRange(int sock, const json& request);
-    json setCollectionValueRange(int sock, const json& request);
-    json resetCollection(int sock, const json& request);
-
-
-
+    json parseCollectionRequest(int sock, const json& request);
+    json addCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    json removeCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
+    json getCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    json getCollectionValues(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    json setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
+    json resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
+    json getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    
     // load functions
     bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);
     bool loadConnectComponent(int sock, const json& config);
     void loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap);
 
-    // cable connection functions
-    bool routeConnectionRequest(ConnectionRequest request);
-
+    // collection helpers
+    const CollectionDescriptor& getCollectionDescriptor(ComponentType t, CollectionType c) const ;
+    bool validateCollectionJson(const json& j, CollectionStructure s) const ;
 };
 
 

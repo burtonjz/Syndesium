@@ -27,14 +27,15 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <vector>
+#include <map>
 #include <cstdint>
 
 class PianoRollWidget : public QWidget {
     Q_OBJECT
 
 private:
-    std::vector<NoteWidget*> notes_ ;
-    std::vector<NoteWidget*> selectedNotes_ ;
+    std::map<int, NoteWidget*> notes_ ;
+    std::vector<int> selectedNotes_ ;
     int id_ ;
 
     float totalBeats_ ;
@@ -53,11 +54,7 @@ public:
     explicit PianoRollWidget(int id, QWidget* parent = nullptr);
 
     void setTotalBeats(float beats);
-
-    void setNotes(const std::vector<SequenceNote>& notes);
-    const std::vector<SequenceNote> getNotes() const ;
-
-    void removeNote(SequenceNote note);
+    void removeNote(int idx);
 
 protected:
     void paintEvent(QPaintEvent*) override ;
@@ -67,6 +64,8 @@ protected:
     void keyPressEvent(QKeyEvent* e) override ;
 
 private:
+    int findNoteIndex(NoteWidget* note) const ;
+    
     void updateSize();
     void drawGrid(QPainter& p);
     void drawPianoKeys(QPainter& p);

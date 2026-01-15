@@ -93,6 +93,7 @@ enum class ParameterType: uint8_t {
     X(BPM) \
     X(MIDI_VALUE) \
     X(VELOCITY) \
+    X(START_POSITION) \
     X(DURATION) \
     X(SCALE_NOTE) \
     X(SCALE_TYPE) \
@@ -392,7 +393,7 @@ auto dispatchParameterTrait(ParameterType p, Func&& func){
         #define X(NAME) case ParameterType::NAME: return func(ParameterTraits<ParameterType::NAME>{});
         PARAMETER_TYPE_LIST
         #undef X
-        default: throw std::runtime_error("Unknown ParameterTsype");
+        default: throw std::runtime_error("Unknown ParameterType");
     }
 } 
 

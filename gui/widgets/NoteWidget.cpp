@@ -16,11 +16,10 @@
  */
 
 #include "widgets/NoteWidget.hpp"
-#include "types/SequenceData.hpp"
 #include "widgets/PianoRollWidget.hpp"
 #include "core/Theme.hpp"
-#include <qevent.h>
-#include <qnamespace.h>
+#include <QEvent>
+#include <QWidget>
 
 NoteWidget::NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float end, PianoRollWidget* parent):
     QWidget(parent),
@@ -37,7 +36,7 @@ NoteWidget::NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float en
 }
 
 NoteWidget::NoteWidget(SequenceNote note, PianoRollWidget* parent):
-    NoteWidget::NoteWidget(note.pitch, note.velocity, note.startBeat, note.endBeat, parent)
+    NoteWidget::NoteWidget(note.pitch, note.velocity, note.startBeat, note.getEndBeat(), parent)
 {}
 
 void NoteWidget::paintEvent(QPaintEvent*){
@@ -105,7 +104,7 @@ void NoteWidget::setEndBeat(float endBeat, bool round){
 }
 
 SequenceNote NoteWidget::getNote() const {
-    return {midiNote_,velocity_,startBeat_,endBeat_};
+    return {midiNote_,velocity_,startBeat_,endBeat_ - startBeat_};
 }
 
 void NoteWidget::setSelected(bool selected){

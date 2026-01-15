@@ -26,8 +26,6 @@ private:
     float currentTime_ ;
     float lastQueriedBeat_ ;
 
-    std::set<uint8_t> activeNotes_ ;
-
 public:
     Sequencer(ComponentId id, SequencerConfig cfg);
 

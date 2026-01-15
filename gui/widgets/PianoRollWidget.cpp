@@ -18,8 +18,10 @@
 #include "widgets/PianoRollWidget.hpp"
 #include "core/Theme.hpp"
 #include "core/ApiClient.hpp"
+#include "types/CollectionType.hpp"
 #include "util/util.hpp"
 #include "widgets/NoteWidget.hpp"
+#include "types/CollectionRequest.hpp"
 
 #include <nlohmann/json.hpp>
 #include <QJsonArray>
@@ -49,38 +51,15 @@ void PianoRollWidget::setTotalBeats(float beats){
     update();
 }
 
-void PianoRollWidget::setNotes(const std::vector<SequenceNote>& notes){
-    if ( !notes_.empty() ){
-        for ( auto n : notes_ ){
-            delete n ;
-        }
-        notes_.clear();
+void PianoRollWidget::removeNote(int idx){
+    auto it = notes_.find(idx);
+    if ( it == notes_.end()){
+        qWarning() << "received request to delete note with index " << idx << ", but idx is not in map";
+        return ;
     }
 
-    for ( auto& note : notes ){
-        notes_.push_back(new NoteWidget(note, this));
-        connect(notes_.back(), &NoteWidget::noteClicked, this, &PianoRollWidget::onNoteClicked);
-    }
-
-    update();
-}
-
-const std::vector<SequenceNote> PianoRollWidget::getNotes() const {
-    std::vector<SequenceNote> v ;
-    for ( auto& n : notes_ ){
-        v.push_back(n->getNote());
-    }
-    return v ;
-}
-
-void PianoRollWidget::removeNote(SequenceNote note){
-    for ( auto it = notes_.begin(); it != notes_.end() ; ++it ){
-        if ( *it && (*it)->getNote() == note ){
-            delete *it ;
-            notes_.erase(it);
-            break ;
-        }
-    }
+    delete it->second ;
+    notes_.erase(it);
 }
 
 void PianoRollWidget::paintEvent(QPaintEvent*){
@@ -128,10 +107,13 @@ void PianoRollWidget::mouseReleaseEvent(QMouseEvent* e){
         } 
 
         // convert note to qObject
-        QJsonObject obj ;
-        obj["action"] = "add_sequence_note" ;
-        obj["componentId"] = id_ ;
-        obj["note"] = Util::nlohmannToQJsonObject(dragNote_->getNote());
+        CollectionRequest req ;
+        req.collectionType = CollectionType::SEQUENCER ;
+        req.action = CollectionAction::ADD ;
+        req.componentId = id_ ;
+        req.value = dragNote_->getNote() ;
+        
+        QJsonObject obj = Util::nlohmannToQJsonObject(req);
         ApiClient::instance()->sendMessage(obj); 
 
         isDragging_ = false ;
@@ -225,35 +207,38 @@ int PianoRollWidget::yToPitch(int y) const {
 void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
     QString action = json["action"].toString();
 
-    if ( action == "add_sequence_note" ){
+    if ( action == "add_collection_value" ){
         if ( json["status"] != "success" ){
             qDebug() << "sequence note was not successfully added." ;
             return ;
         }
 
-        QJsonDocument doc = QJsonDocument(json["note"].toObject());
+        QJsonDocument doc = QJsonDocument(json["value"].toObject());
         SequenceNote note = nlohmann::json::parse(doc.toJson().toStdString());
+        int index = json["index"].toInt();
+
         if ( dragNote_ && dragNote_->getNote() == note ){
-            notes_.push_back(dragNote_);
+            notes_[index] = dragNote_;
             dragNote_ = nullptr ;
         } else {
-            notes_.push_back(new NoteWidget(note, this));
-            connect(notes_.back(), &NoteWidget::noteClicked, this, &PianoRollWidget::onNoteClicked);
+            notes_[index] = new NoteWidget(note, this);
+            connect(notes_[index], &NoteWidget::noteClicked, this, &PianoRollWidget::onNoteClicked);
         }
         
         update();
         return ;
     }
 
-    if ( action == "remove_sequence_note" ){
+    if ( action == "remove_collection_value" ){
         if ( json["status"] != "success" ){
             qDebug() << "sequence note was not successfully removed." ;
             return ;
         }
 
-        QJsonDocument doc = QJsonDocument(json["note"].toObject());
-        SequenceNote note = nlohmann::json::parse(doc.toJson().toStdString());
-        removeNote(note);
+        QJsonDocument doc = QJsonDocument(json["value"].toObject());
+        int index = json["index"].toInt();
+        
+        removeNote(index);
         update();
         return ;
     }
@@ -261,27 +246,48 @@ void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
 
 void PianoRollWidget::onNoteClicked(NoteWidget* note, bool multiSelect){
     if ( !multiSelect ){
-        for (auto* n : selectedNotes_ ){
-            if (n) n->setSelected(false);
+        for ( int idx : selectedNotes_ ){
+            auto it = notes_.find(idx);
+            if ( it != notes_.end() && it->second ){
+                it->second->setSelected(false);
+            }
         }
         selectedNotes_.clear();
     }
 
-    if ( note && note->isSelected() ){
+    int idx = findNoteIndex(note);
+    if ( !note || idx == -1 ){
+        qDebug() << "clicked note does not have a valid index. Ignoring event.";
+        return ;
+    }
+
+    if ( note->isSelected() ){    
         note->setSelected(false);
-        selectedNotes_.erase(std::remove(selectedNotes_.begin(), selectedNotes_.end(), note), selectedNotes_.end());
+        selectedNotes_.erase(std::remove(selectedNotes_.begin(), selectedNotes_.end(), idx), selectedNotes_.end());
     } else {
         note->setSelected(true);
-        selectedNotes_.push_back(note);
+        selectedNotes_.push_back(idx);
     }
 }
 
 void PianoRollWidget::deleteSelectedNotes(){
-    for ( auto* note : selectedNotes_ ){
-        QJsonObject obj ;
-        obj["action"] = "remove_sequence_note" ;
-        obj["componentId"] = id_ ;
-        obj["note"] = Util::nlohmannToQJsonObject(note->getNote());
+    for ( int idx : selectedNotes_ ){
+        CollectionRequest req ;
+        req.collectionType = CollectionType::SEQUENCER ;
+        req.action = CollectionAction::REMOVE ;
+        req.index = idx ;
+        req.componentId = id_ ;
+        
+        QJsonObject obj = Util::nlohmannToQJsonObject(req);
         ApiClient::instance()->sendMessage(obj);
     }
+}
+
+int PianoRollWidget::findNoteIndex(NoteWidget* note) const {
+    for (const auto& [idx, widget] : notes_) {
+        if (widget == note) {
+            return idx;
+        }
+    }
+    return -1;  // Not found
 }

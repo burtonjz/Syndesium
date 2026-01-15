@@ -16,9 +16,10 @@
  */
 
 #include "meta/ComponentRegistry.hpp"
-#include "meta/CollectionStructure.hpp"
+#include "meta/CollectionDescriptor.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "types/ComponentType.hpp"
+#include "types/CollectionType.hpp"
 #include "types/ParameterType.hpp"
 #include <stdexcept>
 
@@ -92,7 +93,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 {},
                 {},
                 {
-                    CollectionDescriptor::Grouped(ParameterType::MIDI_VALUE,"midi range", 2)
+                    CollectionDescriptor::Grouped(ParameterType::MIDI_VALUE,CollectionType::GENERIC, 2)
                 },
                 0,
                 0,
@@ -126,7 +127,7 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 {
                     CollectionDescriptor::Synchronized(
                         {ParameterType::MIDI_VALUE, ParameterType::VELOCITY, ParameterType::START_POSITION, ParameterType::DURATION}, 
-                        "Sequence Note"
+                        CollectionType::SEQUENCER
                     )
                 },
                 0,

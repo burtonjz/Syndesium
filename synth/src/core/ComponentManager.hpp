@@ -142,16 +142,6 @@ public:
         modules_.clear();
     }
 
-    bool setComponentParameter(ComponentId id, ParameterType t, const json& value){
-        auto component = getRaw(id);
-        if (!component){
-            SPDLOG_WARN("component with id {} not found in component store.", id);
-            return false ;
-        }
-
-        return component->setParameterValue(t, value);
-    }
-
     void runParameterModulation(){
         for (auto it = components_.begin(); it != components_.end(); ++it){
             it->second->updateParameters();

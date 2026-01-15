@@ -18,7 +18,8 @@
 #include "components/Sequencer.hpp"
 #include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
-
+#include "params/ParameterMap.hpp"
+#include "params/ParameterCollection.hpp"
 
 Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
     BaseComponent(id, ComponentType::Sequencer),

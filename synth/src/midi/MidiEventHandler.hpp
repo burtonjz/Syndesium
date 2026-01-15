@@ -22,10 +22,7 @@
 #include "midi/MidiNote.hpp"
 #include "midi/MidiEventListener.hpp"
 #include "midi/MidiEventQueue.hpp"
-#include "midi/Sequence.hpp"
-#include "types/SequenceData.hpp"
 
-#include <memory>
 #include <vector>
 
 class MidiEventHandler : public MidiEventListener, public virtual BaseComponent {

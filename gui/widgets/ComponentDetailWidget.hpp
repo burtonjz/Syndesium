@@ -32,8 +32,9 @@
 #include <unordered_map>
 
 #include "types/ParameterType.hpp"
+#include "types/CollectionType.hpp"
+
 #include "meta/ComponentDescriptor.hpp"
-#include "widgets/PianoRollWidget.hpp"
 
 class ComponentDetailWidget : public QWidget {
     Q_OBJECT
@@ -41,12 +42,10 @@ class ComponentDetailWidget : public QWidget {
 private:
     int componentId_ ;
     ComponentDescriptor descriptor_ ;
-
-    PianoRollWidget* pianoRollWidget_ ;
-
     QPushButton* resetButton_ ;
     QPushButton* closeButton_ ;
     QMap<ParameterType, QWidget*> parameterWidgets_ ;
+    QMap<CollectionType, QWidget*> collectionWidgets_ ;
 
     QTimer* modifiedTimer_ ;
     QTimer* parameterChangedTimer_ ;
@@ -65,7 +64,8 @@ public:
     ComponentType getType() const ;
     
 protected:
-    void createParameter(ParameterType p);
+    void createParameterWidget(ParameterType p);
+    void createCollectionWidget(CollectionDescriptor cd);
 
 private:
     void createWaveformWidget();

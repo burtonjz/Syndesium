@@ -35,10 +35,6 @@ std::unordered_set<BaseModule*>& BaseComponent::getModulationInputs(){
     return modulationModules_ ;
 }
 
-bool BaseComponent::setParameterValue(ParameterType t, const json& value){
-    return parameters_->setValueDispatch(t,value); 
-}
-
 void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d ){
     if ( ! parameters_ ) return ;
 

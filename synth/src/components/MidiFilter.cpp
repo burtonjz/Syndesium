@@ -32,4 +32,5 @@ bool MidiFilter::passNote(uint8_t midi) const {
             && midi <= c->getValue(i+1);
         if ( !passNote ) break ;
     }
+    return passNote ;
 }

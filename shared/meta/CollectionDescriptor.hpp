@@ -15,10 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __COLLECTION_STRUCTURE_HPP_
-#define __COLLECTION_STRUCTURE_HPP_
+#ifndef __COLLECTION_DESCRIPTOR_HPP_
+#define __COLLECTION_DESCRIPTOR_HPP_
 
 #include "types/ParameterType.hpp"
+#include "types/CollectionType.hpp"
 
 #include <stdexcept>
 #include <vector>
@@ -30,53 +31,66 @@ enum class CollectionStructure {
 };
 
 struct CollectionDescriptor {
-    std::vector<ParameterType> types ;
+    std::vector<ParameterType> params ;
     CollectionStructure structure ;
-    std::string name ;
+    CollectionType collectionType ;
     size_t groupSize = 0 ; // for GROUPED only
 
     static CollectionDescriptor Independent(
-        ParameterType type,
-        const std::string& name
+        ParameterType p,
+        CollectionType collectionType
     ){
         return {
-            {type},
+            {p},
             CollectionStructure::INDEPENDENT,
-            name,
+            collectionType,
             0
         };
     }
 
     static CollectionDescriptor Grouped(
-        ParameterType type,
-        const std::string& name,
+        ParameterType p,
+        CollectionType collectionType,
         size_t groupSize
     ){
         if (groupSize < 2){
             throw std::invalid_argument("Grouped collections must have size > 1");
         }
         return {
-            {type},
+            {p},
             CollectionStructure::GROUPED,
-            name,
+            collectionType,
             groupSize
         };
     }
 
     static CollectionDescriptor Synchronized(
-        const std::vector<ParameterType>& types,
-        const std::string& name
+        const std::vector<ParameterType>& params,
+        CollectionType collectionType
     ){
-        if (types.size() < 2){
+        if ( params.size() < 2 ){
             throw std::invalid_argument("Synchronized collections require at least 2 parameter types");
         }
         return {
-            types,
+            params,
             CollectionStructure::SYNCHRONIZED,
-            name
+            collectionType
         };
+    }
+
+    bool isValid() const {
+        switch(structure){
+        case CollectionStructure::INDEPENDENT:
+            return params.size() == 1 ;
+        case CollectionStructure::GROUPED:
+            return params.size() == 1 && groupSize > 1 ;
+        case CollectionStructure::SYNCHRONIZED:
+            return params.size() > 1 ;
+        default:
+            return false ;
+        }
     }
 
 };
 
-#endif // __COLLECTION_STRUCTURE_HPP_
+#endif // __COLLECTION_DESCRIPTOR_HPP_

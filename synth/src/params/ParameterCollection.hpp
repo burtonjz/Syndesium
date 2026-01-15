@@ -74,13 +74,15 @@ public:
         return values_.size() - 1 ;
     }
 
-    void removeValue(size_t idx){
+    int removeValue(size_t idx){
         if ( idx >= values_.size() ){
-            SPDLOG_ERROR("Cannot remove value from collection. idx {} is out of range {}", idx, values_.size() );
-            return ;
+            std::string msg = fmt::format("Cannot remove value from collection. idx {} is out of range {}", idx, values_.size() );
+            SPDLOG_ERROR(msg);
+            throw std::runtime_error(msg);
         }
         values_.erase(values_.begin() + idx);
-        defaultValues_.erase(values_.begin() + idx);
+        defaultValues_.erase(defaultValues_.begin() + idx);
+        return values_.size();
     }
 
     size_t size() const {
@@ -89,7 +91,9 @@ public:
 
     ValueType getValue(size_t idx) const {
         if ( idx >= values_.size() ){
-            throw std::runtime_error("Cannot get value from collection. index out of range");
+            std::string msg = fmt::format("Cannot get value from collection. idx {} is out of range {}", idx, values_.size() );
+            SPDLOG_ERROR(msg);
+            throw std::runtime_error(msg);
         }
         return values_[idx] ;
     }
@@ -98,19 +102,26 @@ public:
         return values_ ;
     }
 
-    void setValue(size_t idx, ValueType v){
+    bool setValue(size_t idx, ValueType v){
         if ( idx >= values_.size() ){
             SPDLOG_ERROR("Cannot set value in collection. idx {} is out of range {}", idx, values_.size() );
-            return ;
+            return false ;
         }
         values_[idx] = limitToRange(v);
+        return true ;
     }
 
     ValueType getDefaultValue(size_t idx) const {
         if ( idx >= defaultValues_.size() ){
-            throw std::runtime_error("Cannot get default value from collection. index out of range");
+            std::string msg = fmt::format("Cannot get default value from collection. idx {} is out of range {}", idx, values_.size() );
+            SPDLOG_ERROR(msg);
+            throw std::runtime_error(msg);
         }
         return defaultValues_[idx] ;
+    }
+
+    const std::vector<ValueType>& getDefaultValues() const {
+        return defaultValues_ ;
     }
 
     void setDefaultValue(size_t idx, ValueType v){
@@ -141,24 +152,26 @@ public:
         return minValue_ ;
     }
 
-    void setMinValue(ValueType v){
+    bool setMinValue(ValueType v){
         if ( v > maxValue_ ){
             SPDLOG_ERROR("Cannot set minimum value higher than maximum value.");
-            return ;
+            return false ;
         }
         minValue_ = v ;
+        return true ;
     }
 
     ValueType getMaxValue() const {
         return maxValue_ ;
     }
 
-    void setMaxValue(ValueType v){
+    bool setMaxValue(ValueType v){
         if ( v < minValue_ ){
             SPDLOG_ERROR("Cannot set maximum value higher than minimum value");
-            return ;
+            return false ;
         }
         maxValue_ = v ;
+        return true ;
     }
 
     void setValueRange(ValueType min, ValueType max){

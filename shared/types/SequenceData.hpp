@@ -18,21 +18,41 @@
 #ifndef SEQUENCE_DATA_HPP_
 #define SEQUENCE_DATA_HPP_
 
+#include "types/ParameterType.hpp"
 #include <vector>
 #include <cstdint>
 #include <algorithm>
 #include <spdlog/spdlog.h>
 #include <nlohmann/json.hpp>
 
+using json = nlohmann::json ;
+
 struct SequenceNote {
     uint8_t pitch ;
     uint8_t velocity = 100 ;
     float startBeat ; 
-    float endBeat ;
+    float duration ;
+
+    float getEndBeat() const {
+        return startBeat + duration ;
+    }
+
     auto operator<=>(const SequenceNote&) const = default ;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(SequenceNote, pitch, velocity, startBeat, endBeat);
+inline void to_json(json& j, const SequenceNote& note){
+    j[GET_PARAMETER_TRAIT_MEMBER(ParameterType::MIDI_VALUE, name)] = note.pitch ;
+    j[GET_PARAMETER_TRAIT_MEMBER(ParameterType::VELOCITY, name)] = note.velocity ;
+    j[GET_PARAMETER_TRAIT_MEMBER(ParameterType::START_POSITION, name)] = note.startBeat ;
+    j[GET_PARAMETER_TRAIT_MEMBER(ParameterType::DURATION, name)] = note.duration ;
+}
+
+inline void from_json(const json& j, SequenceNote& note){
+    note.pitch =     j[GET_PARAMETER_TRAIT_MEMBER(ParameterType::MIDI_VALUE, name)];
+    note.velocity =  j[GET_PARAMETER_TRAIT_MEMBER(ParameterType::VELOCITY, name)];
+    note.startBeat = j[GET_PARAMETER_TRAIT_MEMBER(ParameterType::START_POSITION, name)];
+    note.duration =  j[GET_PARAMETER_TRAIT_MEMBER(ParameterType::DURATION, name)];
+}
 
 class SequenceData {
 private:
@@ -75,11 +95,12 @@ public:
         // handle loop around
         if ( currentBeat < lastQueriedBeat_ ){
             for ( const auto& n : notes_ ){
+                float endBeat = n.getEndBeat() ;
                 // Events from last query to loop end
                 if ( n.startBeat > lastQueriedBeat_ && n.startBeat <= loopLength ){
                     callback(true, n);
                 }
-                if ( n.endBeat > lastQueriedBeat_ && n.endBeat <= loopLength ){
+                if ( endBeat > lastQueriedBeat_ && endBeat <= loopLength ){
                     callback(false, n);
                 }
 
@@ -87,16 +108,17 @@ public:
                 if ( n.startBeat >= 0.0f && n.startBeat <= currentBeat ){
                     callback(true, n);
                 }
-                if ( n.endBeat >= 0.0f && n.endBeat <= currentBeat ){
+                if ( endBeat >= 0.0f && endBeat <= currentBeat ){
                     callback(false, n);
                 }
             }
         } else {
             for ( const auto& n : notes_ ){
+                float endBeat = n.getEndBeat() ;
                 if ( n.startBeat > lastQueriedBeat_ && n.startBeat <= currentBeat ){
                     callback(true, n);
                 }
-                if ( n.endBeat > lastQueriedBeat_ && n.endBeat <= currentBeat ){
+                if ( endBeat > lastQueriedBeat_ && endBeat <= currentBeat ){
                     callback(false, n);
                 }
             }

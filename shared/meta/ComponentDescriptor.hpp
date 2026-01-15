@@ -21,10 +21,12 @@
 #include <string>
 #include <vector>
 #include <nlohmann/json.hpp>
+#include <spdlog/spdlog.h>
 
+#include "types/CollectionType.hpp"
 #include "types/ParameterType.hpp"
 #include "types/ComponentType.hpp"
-#include "meta/CollectionStructure.hpp"
+#include "meta/CollectionDescriptor.hpp"
 
 struct ComponentDescriptor {
     std::string name ;
@@ -45,6 +47,29 @@ struct ComponentDescriptor {
     bool isMidiHandler() const { return numMidiOutputs > 0 ; }
     bool isMidiListener() const { return numMidiInputs > 0 ; }
 
+    int hasCollection(CollectionType c) const {
+        for ( size_t i = 0 ; i < collections.size() ; ++i ){
+            if ( collections[i].collectionType == c ){
+                return i ;
+            }
+        }
+        return -1 ;
+    }
+
+    const CollectionDescriptor& getCollection(size_t i) const {
+        return collections[i] ;
+    }
+
+    const CollectionDescriptor& getCollection(CollectionType c) const {
+        int i = hasCollection(c);
+        if ( i == -1 ){
+            std::string msg = fmt::format("No collection found with name {}", name);
+            SPDLOG_ERROR(msg);
+            throw std::runtime_error(msg);
+        }
+
+        return getCollection(i);
+    }
 };
 
 #endif // __SHARED_COMPONENT_DESCRIPTOR_HPP_

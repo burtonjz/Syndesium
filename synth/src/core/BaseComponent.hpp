@@ -51,7 +51,6 @@ public:
     ParameterMap* getParameters() { return parameters_ ;}
     std::unordered_set<BaseModule*>& getModulationInputs() ;
 
-    bool setParameterValue(ParameterType t, const json& value);
     void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} );
     void removeParameterModulation(ParameterType p);
     virtual BaseModulator* getParameterModulator(ParameterType p) const ;

@@ -26,9 +26,7 @@
 #include "config/Config.hpp"
 
 #include <nlohmann/json.hpp>
-#include <variant>
 #include <set>
-#include <stdexcept>
 #include <spdlog/spdlog.h>
 
 
@@ -53,24 +51,53 @@ class ParameterMap {
         collections collections_{} ;
 
     public:
-        ParameterMap():
-            modulatable_(),
-            reference_()
-        {}
+        ParameterMap();
 
-        ParameterBase* getParameter(ParameterType p) const {
-            return parameters_[static_cast<size_t>(p)];
-        }
+        ParameterBase* getParameter(ParameterType p) const ;
+        ParameterCollectionBase* getCollection(ParameterType p) const ;
 
+        void addReferences(ParameterMap& other);
+
+        std::set<ParameterType> getModulatableParameters() const ;
+        void modulate();
+        
+        // Parameter Dispatcher Functions
+        json getValueDispatch(ParameterType p) const ;
+        bool setValueDispatch(ParameterType p, const json& value);
+        json getDefaultDispatch(ParameterType p) const ;
+        bool setDefaultDispatch(ParameterType p, const json& value);
+        json getMinDispatch(ParameterType p) const ;
+        json getMaxDispatch(ParameterType p) const ;
+        bool setMaxDispatch(ParameterType p, const json& value);
+        bool setMinDispatch(ParameterType p, const json& value);
+        void addParameterDispatch(ParameterType p, const json& cfg);
+        
+        // collection dispatchers
+        json   getCollectionValueDispatch(ParameterType p, size_t idx) const ;
+        json   getCollectionValuesDispatch(ParameterType p) const ;
+        json   getCollectionDefaultsDispatch(ParameterType p) const ;
+        size_t addCollectionValueDispatch(ParameterType p, const json& value);
+        size_t removeCollectionValueDispatch(ParameterType p, size_t idx);
+        void   setCollectionValueDispatch(ParameterType p, size_t idx, const json& value);
+        json   getCollectionMinDispatch(ParameterType p) const ;
+        json   getCollectionMaxDispatch(ParameterType p) const ;
+        bool   setCollectionMinDispatch(ParameterType p, const json& value);
+        bool   setCollectionMaxDispatch(ParameterType p, const json& value);
+        void   resetCollectionDispatch(ParameterType p);
+        void   addCollectionDispatch(ParameterType p, const json& cfg);
+
+
+        // serialization
+        json toJson() const ;
+        void fromJson(const json& j);
+
+        // templates
         template <ParameterType typ>
         Parameter<typ>* getParameter() const {
             return static_cast<Parameter<typ>*>(getParameter(typ)) ;
         }
 
-        ParameterCollectionBase* getCollection(ParameterType p) const {
-            return collections_[static_cast<size_t>(p)];
-        }
-
+        
         template <ParameterType typ>
         ParameterCollection<typ>* getCollection() const {
             return static_cast<ParameterCollection<typ>*>(getCollection(typ));
@@ -109,168 +136,21 @@ class ParameterMap {
             collections_[static_cast<size_t>(typ)] = c ;
         }
 
-        void addReferences(ParameterMap& other){
-            const params& otherParams = other.parameters_ ;
-            for ( size_t i = 0 ; i < otherParams.size() ; ++i ){
-                if ( !otherParams[i] ) continue ;
-
-                parameters_[i] = otherParams[i] ;
-                reference_.insert(ParameterType(i)) ;
-
-                // we won't actually perform the modulation in the child object,
-                // but we still need to track modulatable parameters
-                if(otherParams[i]->isModulatable()) modulatable_.insert(ParameterType(i)); 
-            }
-        }
-
-        std::set<ParameterType> getModulatableParameters() const {
-            return modulatable_ ;
-        }
-
-        void modulate(){
-            for (auto it = modulatable_.begin(); it != modulatable_.end(); ++it ){
-                modulateParameter(*it);
-            }
-        }
-
-        // Dispatchers (for API getters/setters)
-        ParameterValue getValueDispatch(ParameterType p) const {
-            switch (p) {
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getValue();
-                PARAMETER_TYPE_LIST
-                #undef X
-                default: throw std::runtime_error("Invalid Parameter dispatch");
-            }
-        }
-
-        ParameterValue getDefaultDispatch(ParameterType p) const {
-            switch (p) {
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getDefaultValue();
-                PARAMETER_TYPE_LIST
-                #undef X
-                default: throw std::runtime_error("Invalid Parameter dispatch");
-            }
-        }
-
-        ParameterValue getMinDispatch(ParameterType p) const {
-            switch (p) {
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getMinimum();
-                PARAMETER_TYPE_LIST
-                #undef X
-                default: throw std::runtime_error("Invalid Parameter dispatch");
-            }
-        }
-
-        ParameterValue getMaxDispatch(ParameterType p) const {
-            switch (p) {
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->getMaximum();
-                PARAMETER_TYPE_LIST
-                #undef X
-                default: throw std::runtime_error("Invalid Parameter dispatch");
-            }
-        }
-
-        bool setValueDispatch(ParameterType p, const json& value){
-            switch (p){
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setValue(value);
-                PARAMETER_TYPE_LIST
-                #undef X
-            default:
-                return false ;
-            }
-        }
-
-        bool setDefaultValueDispatch(ParameterType p, const json& value){
-            switch (p){
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setDefaultValue(value);
-                PARAMETER_TYPE_LIST
-                #undef X
-            default:
-                return false ;
-            }
-        }
-
-        bool setMaximumDispatch(ParameterType p, const json& value){
-            switch (p){
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setMaximum(value);
-                PARAMETER_TYPE_LIST
-                #undef X
-            default:
-                return false ;
-            }
-        }
-
-        bool setMinimumDispatch(ParameterType p, const json& value){
-            switch (p){
-                #define X(NAME) case ParameterType::NAME: return getParameter<ParameterType::NAME>()->setMinimum(value);
-                PARAMETER_TYPE_LIST
-                #undef X
-            default:
-                return false ;
-            }
-        }
-
-        void addParameterDispatch(
-            ParameterType p,
-            const json& cfg
-        ){
-            switch(p){
-                #define X(NAME) case ParameterType::NAME: \
-                    add<ParameterType::NAME>( \
-                        cfg["defaultValue"].get<GET_PARAMETER_VALUE_TYPE(ParameterType::NAME)>(), \
-                        cfg["modulatable"].get<bool>()                                            \
-                    );                                                                            \
-                    break ;
-                PARAMETER_TYPE_LIST
-                #undef X
-            default:
-                throw std::runtime_error("Invalid Parameter dispatch");
-            };
-        
-        }
-
-        static json ParameterValueToJson(const ParameterValue& v){
-            return std::visit([](auto&& v) -> json {
-                if constexpr ( std::is_same_v<std::decay_t<decltype(v)>, uint8_t> ){
-                    return static_cast<int>(v);
-                } else return v ;
-            }, v);
-        }
-
-        json toJson() const {
-            json output ;
-            for ( size_t p = 0 ; p < N_PARAMETER_TYPES ; ++p ){
-                ParameterType typ = static_cast<ParameterType>(p);
-
-                if ( !parameters_[p] ) continue ;
-                if (reference_.find(typ) != reference_.end()) continue ;
-                
-                output[GET_PARAMETER_TRAIT_MEMBER(typ, name)] = { 
-                    {"currentValue", ParameterValueToJson(getValueDispatch(typ))},
-                    {"defaultValue", ParameterValueToJson(getDefaultDispatch(typ))},
-                    {"minimumValue", ParameterValueToJson(getMinDispatch(typ))},
-                    {"maximumValue", ParameterValueToJson(getMaxDispatch(typ))},
-                    {"modulatable", getParameter(typ)->isModulatable()}
-                };
-            }
-            return output ;
-        }
-
-        void fromJson(const json& j){
-            for (const auto& [name, value] : j.items() ){
-                ParameterType p = parameterFromString(name);
-                addParameterDispatch(p, value);
-            }
-        }
-
     private:
-        void modulateParameter(ParameterType typ){
-            auto p = getParameter(typ);
-            auto r = reference_.find(typ);
+        static json ParameterValueToJson(const ParameterValue& v);
+        void modulateParameter(ParameterType typ);
 
-            if ( ! p || r != reference_.end() ) return ;
-
-            p->modulate();
+        template<typename T>
+        static json CollectionToJsonArray(const std::vector<T>& values){
+            json j = json::array();
+            for ( const auto& v : values ){
+                if constexpr (std::is_same_v<T, uint8_t>){
+                    j.push_back(static_cast<int>(v));
+                } else {
+                    j.push_back(v);
+                }
+            }
+            return j ;
         }
 
 };

@@ -71,7 +71,7 @@ public:
     }
 
     // allow switch / comparisons
-    constexpr operator ScaleNote() const { return note_ ; }
+    constexpr operator Note() const { return note_ ; }
 
     // prevent bool usage e.g., if(Waveform)
     explicit operator bool() const = delete ;

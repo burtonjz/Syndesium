@@ -18,6 +18,7 @@
 #include "MidiEventHandler.hpp"
 #include <stdexcept>
 #include <algorithm>
+#include <spdlog/spdlog.h>
 
 void MidiEventHandler::notifyKeyPressed(const ActiveNote* note, bool rePressed) {
     for ( auto* li : listeners_ ){

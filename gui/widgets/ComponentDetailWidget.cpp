@@ -16,26 +16,29 @@
  */
 
 #include "widgets/ComponentDetailWidget.hpp"
+#include "widgets/PianoRollWidget.hpp"
+
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
+#include "types/CollectionType.hpp"
 #include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
 #include "core/ApiClient.hpp"
-#include "widgets/PianoRollWidget.hpp"
 
 #include <QJsonObject>
 #include <QEvent>
 #include <QCloseEvent>
 #include <QBoxLayout>
 #include <QScrollArea>
+#include <qboxlayout.h>
+#include <qscrollarea.h>
 
 ComponentDetailWidget::ComponentDetailWidget(int id, ComponentType type, QWidget* parent):
     QWidget(parent),
     componentId_(id),
-    descriptor_(ComponentRegistry::getComponentDescriptor(type)),
-    pianoRollWidget_(nullptr)
+    descriptor_(ComponentRegistry::getComponentDescriptor(type))
 {
     setWindowTitle(QString::fromStdString(descriptor_.name));
 
@@ -43,7 +46,11 @@ ComponentDetailWidget::ComponentDetailWidget(int id, ComponentType type, QWidget
     setAttribute(Qt::WA_ShowWithoutActivating);
 
     for ( auto p: descriptor_.controllableParameters ){
-        createParameter(p);
+        createParameterWidget(p);
+    }
+
+    for ( auto cd : descriptor_.collections ){
+        createCollectionWidget(cd);
     }
 
     setupLayout();
@@ -74,7 +81,7 @@ ComponentType ComponentDetailWidget::getType() const {
     return descriptor_.type ;
 }
 
-void ComponentDetailWidget::createParameter(ParameterType p){
+void ComponentDetailWidget::createParameterWidget(ParameterType p){
     switch(p){
     case ParameterType::WAVEFORM:
         createWaveformWidget();
@@ -86,6 +93,17 @@ void ComponentDetailWidget::createParameter(ParameterType p){
         // most things will just be dials
         createSpinWidget(p);
     }
+}
+
+void ComponentDetailWidget::createCollectionWidget(CollectionDescriptor cd){
+    // specialized widgets defined here
+    if ( cd.collectionType == CollectionType::SEQUENCER ){
+        PianoRollWidget* pianoRoll = new PianoRollWidget(componentId_);
+        collectionWidgets_[cd.collectionType] = pianoRoll ;
+        return ;
+    }
+
+    // TODO: generic collection widget creation
 }
 
 void ComponentDetailWidget::createWaveformWidget(){
@@ -138,20 +156,38 @@ void ComponentDetailWidget::createSpinWidget(ParameterType p){
 void ComponentDetailWidget::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     QHBoxLayout* buttonLayout = new QHBoxLayout();
-    QHBoxLayout* parameterLayout = new QHBoxLayout();
+    
 
+    // collections
+    QVBoxLayout* collectionLayout = new QVBoxLayout();
+    for ( auto cd : descriptor_.collections ){
+        QWidget* w = collectionWidgets_[cd.collectionType];
 
-    // // sequence ( if applicable)
-    // if ( descriptor_.sequenceable ){
-    //     auto* scroll = new QScrollArea() ;
-    //     QHBoxLayout* pianoLayout = new QHBoxLayout();
-    //     pianoRollWidget_ = new PianoRollWidget(componentId_);
-    //     scroll->setWidget(pianoRollWidget_);
-    //     pianoLayout->addWidget(scroll);
-    //     mainLayout->addLayout(pianoLayout);
-    // }
+        // specialized first
+        switch(cd.collectionType){
+        case CollectionType::SEQUENCER:
+        {
+            auto* scroll = new QScrollArea() ;
+            scroll->setWidget(w);
+            collectionLayout->addWidget(scroll);
+            break ;
+        }
+        case CollectionType::GENERIC:
+        default:
+            qWarning() << "attempted to make collection widget of type" << CollectionType::toString(cd.collectionType) << ", which is not implemented" ;
+            break ;
+        }
+        if ( cd.collectionType == CollectionType::SEQUENCER ){    
+            
+        } 
+
+        // TODO: generic collection layout logic
+    }
+
+    mainLayout->addLayout(collectionLayout);
 
     // parameters
+    QHBoxLayout* parameterLayout = new QHBoxLayout();
     parameterLayout->setSpacing(PARAMETER_WIDGET_SPACING);
 
     for ( auto p : descriptor_.controllableParameters ){
@@ -217,7 +253,7 @@ void ComponentDetailWidget::flushPendingChanges(){
 
     for ( auto [p, val] : pendingChanges_ ){
         QJsonObject obj ;
-        obj["action"] = "set_component_parameter" ;
+        obj["action"] = "set_parameter" ;
         obj["componentId"] = componentId_ ;
         obj["parameter"] = static_cast<int>(p);
         obj["value"] = QVariant::fromStdVariant(val).toJsonValue();

@@ -16,14 +16,15 @@
  */
 
 #include "api/ApiHandler.hpp"
+#include "core/BaseComponent.hpp"
 #include "core/Engine.hpp"
 #include "config/Config.hpp"
 #include "configs/ComponentConfig.hpp"
+#include "meta/CollectionDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
+#include "types/CollectionRequest.hpp"
 #include "types/ParameterType.hpp"
 #include "types/SocketType.hpp"
-#include "midi/MidiEventHandler.hpp"
-#include "midi/MidiEventListener.hpp"
 
 #include <netinet/in.h>
 #include <string>
@@ -67,18 +68,18 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["set_parameter"] = [this](int sock, const json& request){ return setParameter(sock, request); };
     handlers_["get_parameter_default"] = [this](int sock, const json& request){ return getParameterDefault(sock, request); };
     handlers_["set_parameter_default"] = [this](int sock, const json& request){ return setParameterDefault(sock, request); };
-    handlers_["get_parameter_value_range"] = [this](int sock, const json& request){ return getParameterValueRange(sock, request); };
-    handlers_["set_parameter_value_range"] = [this](int sock, const json& request){ return setParameterValueRange(sock, request); };
+    handlers_["get_parameter_range"] = [this](int sock, const json& request){ return getParameterValueRange(sock, request); };
+    handlers_["set_parameter_range"] = [this](int sock, const json& request){ return setParameterValueRange(sock, request); };
     handlers_["reset_parameter"] = [this](int sock, const json& request){ return resetParameter(sock, request); };
-    handlers_["add_collection_values"] = [this](int sock, const json& request){ return addCollectionValues(sock, request); };
-    handlers_["remove_collection_values"] = [this](int sock, const json& request){ return removeCollectionValues(sock, request); };
-    handlers_["get_collection_values"] = [this](int sock, const json& request){ return getCollectionValues(sock, request); };
-    handlers_["set_collection_values"] = [this](int sock, const json& request){ return setCollectionValues(sock, request); };
-    handlers_["get_collection_defaults"] = [this](int sock, const json& request){ return getCollectionDefaults(sock, request); };
-    handlers_["set_collection_defaults"] = [this](int sock, const json& request){ return setCollectionDefaults(sock, request); };
-    handlers_["get_collection_value_range"] = [this](int sock, const json& request){ return getCollectionValueRange(sock, request); };
-    handlers_["set_collection_value_range"] = [this](int sock, const json& request){ return setCollectionValueRange(sock, request); };
-    handlers_["reset_collection"] = [this](int sock, const json& request){ return resetCollection(sock, request); };
+    handlers_["add_collection_value"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    handlers_["remove_collection_value"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    handlers_["get_collection_value"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    handlers_["get_collection_values"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    handlers_["set_collection_value"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    handlers_["reset_collection"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    handlers_["get_collection_range"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    handlers_["set_collection_range"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    
 }
 
 void ApiHandler::start(){
@@ -191,6 +192,7 @@ json ApiHandler::sendApiResponse(int sock, json& response, const std::string& er
     } else {
         response["status"] = "failed" ;
         response["error"] = err ;
+        SPDLOG_ERROR("Api Request Failed: {}", err);
     }
     std::string r = response.dump() + '\n' ;
     SPDLOG_INFO("sending API response: {}", r.c_str());
@@ -250,8 +252,6 @@ json ApiHandler::setAudioDevice(int sock, const json& request){
     } else {
         return sendApiResponse(sock, response, "failed to set audio device");
     }
-
-    return response ;
 }
 
 json ApiHandler::setMidiDevice(int sock, const json& request){
@@ -442,7 +442,23 @@ json ApiHandler::removeConnection(int sock, const json& request){
 
 json ApiHandler::getParameter(int sock, const json& request){
     json response = request ;
-    return sendApiResponse(sock, response, "get component parameter not yet implemented");
+    ComponentId id ;
+    ParameterType param ;
+
+    try {
+        id = response["componentId"];
+        param = static_cast<ParameterType>(response["parameter"]);
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Component not found");
+    }
+
+    response["value"] = c->getParameters()->getValueDispatch(param);
+    return sendApiResponse(sock, response);
 }
 
 json ApiHandler::setParameter(int sock, const json& request){
@@ -458,8 +474,12 @@ json ApiHandler::setParameter(int sock, const json& request){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
 
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Component not found");
+    }
 
-    if ( engine_->componentManager.setComponentParameter(id, param, response["value"]) ){
+    if ( c->getParameters()->setValueDispatch(param, response["value"]) ){
         return sendApiResponse(sock,response);
     } else {
         return sendApiResponse(sock,response, "Error setting component parameter." );
@@ -468,73 +488,399 @@ json ApiHandler::setParameter(int sock, const json& request){
 
 json ApiHandler::getParameterDefault(int sock, const json& request){
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    ComponentId id ;
+    ParameterType param ;
+
+    try {
+        id = response["componentId"];
+        param = static_cast<ParameterType>(response["parameter"]);
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Component not found");
+    }
+
+    response["value"] = c->getParameters()->getDefaultDispatch(param);
+    return sendApiResponse(sock, response);
 }
 
 json ApiHandler::setParameterDefault(int sock, const json& request){
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    ComponentId id ;
+    ParameterType param ;
+
+    try {
+        id = response["componentId"];
+        param = static_cast<ParameterType>(response["parameter"]);
+        response.at("value"); // verify present
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Component not found");
+    }
+
+    if ( c->getParameters()->setDefaultDispatch(param, response["value"]) ){
+        return sendApiResponse(sock,response);
+    } else {
+        return sendApiResponse(sock,response, "Error setting component default." );
+    }
 }
 
 json ApiHandler::getParameterValueRange(int sock, const json& request){
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    ComponentId id ;
+    ParameterType param ;
+
+    try {
+        id = response["componentId"];
+        param = static_cast<ParameterType>(response["parameter"]);
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Component not found");
+    }
+
+    response["minimum"] = c->getParameters()->getMinDispatch(param);
+    response["maximum"] = c->getParameters()->getMaxDispatch(param);
+
+    return sendApiResponse(sock, response);
 }
 
 json ApiHandler::setParameterValueRange(int sock, const json& request){
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    ComponentId id ;
+    ParameterType param ;
+
+    try {
+        id = response["componentId"];
+        param = static_cast<ParameterType>(response["parameter"]);
+        response.at("minimum"); 
+        response.at("maximum"); 
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Component not found");
+    }
+
+    if ( !c->getParameters()->setMinDispatch(param, response["minimum"]) ){
+        return sendApiResponse(sock,response, "Error setting parameter minimum");
+    }
+
+    if ( !c->getParameters()->setMaxDispatch(param, response["maximum"]) ){
+        return sendApiResponse(sock,response, "Error setting parameter minimum");
+    }
+
+    return sendApiResponse(sock, response);
 }
 
 json ApiHandler::resetParameter(int sock, const json& request){
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    ComponentId id ;
+    ParameterType param ;
+
+    try {
+        id = response["componentId"];
+        param = static_cast<ParameterType>(response["parameter"]);
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Component not found");
+    }
+
+    response["minimum"] = c->getParameters()->getMinDispatch(param);
+    response["maximum"] = c->getParameters()->getMaxDispatch(param);
+
+    return sendApiResponse(sock, response);
 }
 
-json ApiHandler::addCollectionValues(int sock, const json& request){
+json ApiHandler::parseCollectionRequest(int sock, const json& request){
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    ComponentId id ;
+    CollectionType collectionType ;
+
+    try {
+        id = response["componentId"];
+        collectionType = CollectionType(response["collection"]);
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
+    }
+
+    auto c = engine_->componentManager.getRaw(id);
+    if ( !c ){
+        return sendApiResponse(sock, response, "Component not found");
+    }
+
+    const CollectionDescriptor* cd = nullptr ;
+    CollectionRequest req ;
+    try {
+        cd = &getCollectionDescriptor(c->getType(), collectionType);
+        req = response ;
+    } catch (const std::exception& e){
+        return sendApiResponse(sock,response, "Error getting collection: " + std::string(e.what()) );
+    }
+
+    if ( !cd || !cd->isValid() ){
+        return sendApiResponse(sock, response, "collection descriptor is malformed.");
+    }
+
+    if ( !req.valid(*cd) ){
+        return sendApiResponse(sock, response, "Invalid collection request structure");
+    }
+
+    switch(req.action){
+    case CollectionAction::ADD:       return addCollectionValue(sock, c, *cd, req);
+    case CollectionAction::REMOVE:    return removeCollectionValue(sock, c, *cd, req);
+    case CollectionAction::GET:       return getCollectionValue(sock, c, *cd, req);
+    case CollectionAction::GET_ALL:   return getCollectionValues(sock, c, *cd, req);
+    case CollectionAction::GET_RANGE: return getCollectionValueRange(sock, c, *cd, req);
+    case CollectionAction::SET:       return setCollectionValue(sock, c, *cd, req);
+    case CollectionAction::RESET:     return resetCollection(sock, c, *cd, req);
+    default:                          return sendApiResponse(sock, response, "Unknown collection action");
+    }
 }
 
-json ApiHandler::removeCollectionValues(int sock, const json& request){
+json ApiHandler::addCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+            request.index = c->getParameters()->addCollectionValueDispatch(cd.params[0], request.value);
+            break ;
+        case CollectionStructure::GROUPED:
+            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
+                size_t idx = c->getParameters()->addCollectionValueDispatch(cd.params[0], (*request.value)[i]);
+                if ( i == 0 ) request.index = idx ;
+            }
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                request.index = c->getParameters()->addCollectionValueDispatch(
+                    cd.params[i], 
+                    (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)]
+                );
+            }
+            break ;
+        default: 
+        {
+            json response = request ;
+            sendApiResponse(sock, response, "unrecognized collection structure");
+            break ;
+        }}
+    } catch (const std::exception& e){
+        json response = request ;
+        sendApiResponse(sock, response, "failed to add collection value:" + std::string(e.what()));
+    }
+
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    return sendApiResponse(sock, response);
+
 }
 
-json ApiHandler::getCollectionValues(int sock, const json& request){
+json ApiHandler::removeCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+            c->getParameters()->removeCollectionValueDispatch(cd.params[0], *request.index);
+            break ;
+        case CollectionStructure::GROUPED:
+            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
+                c->getParameters()->removeCollectionValueDispatch(cd.params[0], *request.index);
+            }
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                c->getParameters()->removeCollectionValueDispatch(cd.params[i], *request.index);
+            }
+            break ;
+        default: 
+        {
+            json response = request ;
+            sendApiResponse(sock, response, "unrecognized collection structure");
+            break ;
+        }}
+    } catch (const std::exception& e){
+        json response = request ;
+        sendApiResponse(sock, response, "failed to remove collection value:" + std::string(e.what()));
+    }
+
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setCollectionValues(int sock, const json& request){
+json ApiHandler::getCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+            request.value = c->getParameters()->getCollectionValueDispatch(cd.params[0], *request.index);
+            break ;
+        case CollectionStructure::GROUPED:
+            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
+                (*request.value)[i] = c->getParameters()->getCollectionValueDispatch(cd.params[0], *request.index);
+            }
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)] = 
+                    c->getParameters()->getCollectionValueDispatch(cd.params[i], *request.index);
+            }
+            break ;
+        default: 
+        {
+            json response = request ;
+            sendApiResponse(sock, response, "unrecognized collection structure");
+            break ;
+        }}
+    } catch (const std::exception& e){
+        json response = request ;
+        sendApiResponse(sock, response, "failed to get collection value:" + std::string(e.what()));
+    }
+
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    return sendApiResponse(sock, response);
 }
 
-json ApiHandler::getCollectionDefaults(int sock, const json& request){
+json ApiHandler::getCollectionValues(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+            request.value = c->getParameters()->getCollectionValuesDispatch(cd.params[0]);
+            break ;
+        case CollectionStructure::GROUPED:
+            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
+                (*request.value)[i] = c->getParameters()->getCollectionValuesDispatch(cd.params[0]);
+            }
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)] = 
+                    c->getParameters()->getCollectionValuesDispatch(cd.params[i]);
+            }
+            break ;
+        default: 
+        {
+            json response = request ;
+            sendApiResponse(sock, response, "unrecognized collection structure");
+            break ;
+        }}
+    } catch (const std::exception& e){
+        json response = request ;
+        sendApiResponse(sock, response, "failed to get collection values:" + std::string(e.what()));
+    }
+
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setCollectionDefaults(int sock, const json& request){
+json ApiHandler::setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+            c->getParameters()->setCollectionValueDispatch(cd.params[0], *request.index, *request.value);
+            break ;
+        case CollectionStructure::GROUPED:
+            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
+                c->getParameters()->setCollectionValueDispatch(cd.params[0], *request.index + i, (*request.value)[i]);
+            }
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                c->getParameters()->setCollectionValueDispatch(cd.params[i], *request.index, 
+                    (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)]);
+            }
+            break ;
+        default: 
+        {
+            json response = request ;
+            sendApiResponse(sock, response, "unrecognized collection structure");
+            break ;
+        }}
+    } catch (const std::exception& e){
+        json response = request ;
+        sendApiResponse(sock, response, "failed to set collection values:" + std::string(e.what()));
+    }
+
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    return sendApiResponse(sock, response);
 }
 
-json ApiHandler::getCollectionValueRange(int sock, const json& request){
+json ApiHandler::resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request){
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+            c->getParameters()->resetCollectionDispatch(cd.params[0]);
+            break ;
+        case CollectionStructure::GROUPED:
+            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
+                c->getParameters()->resetCollectionDispatch(cd.params[0]);
+            }
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                c->getParameters()->resetCollectionDispatch(cd.params[i]);
+            }
+            break ;
+        default: 
+        {
+            json response = request ;
+            sendApiResponse(sock, response, "unrecognized collection structure");
+            break ;
+        }}
+    } catch (const std::exception& e){
+        json response = request ;
+        sendApiResponse(sock, response, "failed to reset collection:" + std::string(e.what()));
+    }
+
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    return sendApiResponse(sock, response);
 }
 
-json ApiHandler::setCollectionValueRange(int sock, const json& request){
+json ApiHandler::getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
+    json min ;
+    json max ;
+    try {
+        switch ( cd.structure ){
+        case CollectionStructure::INDEPENDENT:
+        case CollectionStructure::GROUPED:
+            (*request.value)[0] = c->getParameters()->getCollectionMinDispatch(cd.params[0]);
+            (*request.value)[1] = c->getParameters()->getCollectionMaxDispatch( cd.params[0]);
+            break ;
+        case CollectionStructure::SYNCHRONIZED:
+            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
+                (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)][0] = 
+                    c->getParameters()->getCollectionMinDispatch(cd.params[i]);
+                (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)][1] = 
+                    c->getParameters()->getCollectionMinDispatch(cd.params[i]);
+            }
+            break ;
+        default: 
+        {
+            json response = request ;
+            sendApiResponse(sock, response, "unrecognized collection structure");
+            break ;
+        }}
+    } catch (const std::exception& e){
+        json response = request ;
+        sendApiResponse(sock, response, "failed to get collection range:" + std::string(e.what()));
+    }
+
     json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
+    return sendApiResponse(sock, response);
 }
 
-json ApiHandler::resetCollection(int sock, const json& request){
-    json response = request ;
-    return sendApiResponse(sock, response, "method is not yet implemented");
-}
 
 bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
     if ( request.inboundSocket == SocketType::MidiInbound && request.outboundSocket == SocketType::MidiOutbound )
@@ -545,7 +891,7 @@ bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
     if ( request.inboundSocket == SocketType::ModulationInbound && request.outboundSocket == SocketType::ModulationOutbound )
         return engine_->handleModulationConnection(request);
 
-    SPDLOG_WARN("WARN: socket types are incompatible. No connection will be made");
+    SPDLOG_WARN("WARN: socket params are incompatible. No connection will be made");
     return false ;
 }
 
@@ -801,4 +1147,16 @@ void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMa
             loadUpdateIds(element, idMap);
         }
     }
+}
+
+const CollectionDescriptor& ApiHandler::getCollectionDescriptor(ComponentType t, CollectionType c) const {
+    const ComponentDescriptor& descriptor = ComponentRegistry::getComponentDescriptor(t);
+    int idx = descriptor.hasCollection(c);
+    if ( idx == -1 ){
+        std::string msg = fmt::format("Cannot retrieve collection {} from Component Type {}.", CollectionType::toString(c),  static_cast<char>(t) );
+        SPDLOG_ERROR(msg);
+        throw std::runtime_error(msg);
+    }
+
+    return descriptor.getCollection(idx);
 }
