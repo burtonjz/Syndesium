@@ -36,9 +36,9 @@ SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent
     titleText_ = new QGraphicsTextItem(name_, this);
     titleText_->setAcceptedMouseButtons(Qt::NoButton);
 
-    titleText_->setDefaultTextColor(Theme::COMPONENT_TEXT);
-    titleText_->setPos(COMPONENT_TEXT_PADDING,COMPONENT_TEXT_PADDING);
-    titleText_->setTextWidth(COMPONENT_WIDTH - COMPONENT_TEXT_PADDING * 2);
+    titleText_->setDefaultTextColor(Theme::Theme::COMPONENT_TEXT);
+    titleText_->setPos(Theme::COMPONENT_TEXT_PADDING,Theme::COMPONENT_TEXT_PADDING);
+    titleText_->setTextWidth(Theme::COMPONENT_WIDTH - Theme::COMPONENT_TEXT_PADDING * 2);
 }
 
 SocketContainerWidget::~SocketContainerWidget(){
@@ -48,8 +48,8 @@ SocketContainerWidget::~SocketContainerWidget(){
 }
 
 QRectF SocketContainerWidget::boundingRect() const {
-    qreal delta = HIGHLIGHT_BUFFER + HIGHLIGHT_WIDTH ;
-    return QRectF(0, 0, COMPONENT_WIDTH, COMPONENT_HEIGHT)
+    qreal delta = Theme::COMPONENT_HIGHLIGHT_BUFFER + Theme::COMPONENT_HIGHLIGHT_WIDTH ;
+    return QRectF(0, 0, Theme::COMPONENT_WIDTH, Theme::COMPONENT_HEIGHT)
         .adjusted(-delta, -delta, delta, delta);
 }
 
@@ -58,18 +58,18 @@ void SocketContainerWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
     Q_UNUSED(widget)
 
     // draw background
-    QRectF baseRect(0, 0,COMPONENT_WIDTH, COMPONENT_HEIGHT);
-    painter->setBrush(Theme::COMPONENT_BACKGROUND);
-    painter->setPen(QPen(Theme::COMPONENT_BORDER,COMPONENT_BORDER_WIDTH));
-    painter->drawRoundedRect(baseRect, COMPONENT_ROUNDED_RADIUS, COMPONENT_ROUNDED_RADIUS);
+    QRectF baseRect(0, 0,Theme::COMPONENT_WIDTH, Theme::COMPONENT_HEIGHT);
+    painter->setBrush(Theme::Theme::COMPONENT_BACKGROUND);
+    painter->setPen(QPen(Theme::Theme::COMPONENT_BORDER,Theme::COMPONENT_BORDER_WIDTH));
+    painter->drawRoundedRect(baseRect, Theme::COMPONENT_ROUNDED_RADIUS, Theme::COMPONENT_ROUNDED_RADIUS);
 
     // when selected, draw an indicator around the object
     if (isSelected()){
-        painter->setPen(QPen(Theme::COMPONENT_BORDER_SELECTED, HIGHLIGHT_WIDTH, Qt::SolidLine));
+        painter->setPen(QPen(Theme::Theme::COMPONENT_BORDER_SELECTED, Theme::COMPONENT_HIGHLIGHT_WIDTH, Qt::SolidLine));
         painter->setBrush(Qt::NoBrush);
         painter->drawRoundedRect(
-            baseRect.adjusted(-HIGHLIGHT_BUFFER,-HIGHLIGHT_BUFFER,HIGHLIGHT_BUFFER,HIGHLIGHT_BUFFER),
-            COMPONENT_ROUNDED_RADIUS,COMPONENT_ROUNDED_RADIUS
+            baseRect.adjusted(-Theme::COMPONENT_HIGHLIGHT_BUFFER,-Theme::COMPONENT_HIGHLIGHT_BUFFER,Theme::COMPONENT_HIGHLIGHT_BUFFER,Theme::COMPONENT_HIGHLIGHT_BUFFER),
+            Theme::COMPONENT_ROUNDED_RADIUS,Theme::COMPONENT_ROUNDED_RADIUS
         );
     }
 }
@@ -128,23 +128,23 @@ void SocketContainerWidget::positionSockets(QPointF newPos){
     qreal startY = 25 ; // below the title
     // left
     for ( int i = 0; i < leftSockets_.size(); ++i ){
-        leftSockets_[i]->setPos(scenePos + QPointF(-6, startY + i * SOCKET_SPACING));
+        leftSockets_[i]->setPos(scenePos + QPointF(-6, startY + i * Theme::SOCKET_WIDGET_SPACING));
     }
 
     // right
     for ( int i = 0; i < rightSockets_.size(); ++i ){
-        rightSockets_[i]->setPos(scenePos + QPointF(COMPONENT_WIDTH + 6, startY + i * SOCKET_SPACING));
+        rightSockets_[i]->setPos(scenePos + QPointF(Theme::COMPONENT_WIDTH + 6, startY + i * Theme::SOCKET_WIDGET_SPACING));
     }
 
     qreal startX = 4 ;
     // bottom
     for ( int i = 0; i < bottomSockets_.size(); ++i ){
-        bottomSockets_[i]->setPos(scenePos + QPointF(startX + i * SOCKET_SPACING, COMPONENT_HEIGHT + 6 ));
+        bottomSockets_[i]->setPos(scenePos + QPointF(startX + i * Theme::SOCKET_WIDGET_SPACING, Theme::COMPONENT_HEIGHT + 6 ));
     }
 
     // top
     for ( int i = 0; i < topSockets_.size(); ++i ){
-        topSockets_[i]->setPos(scenePos + QPointF(COMPONENT_WIDTH - 6 - i * SOCKET_SPACING, -6));
+        topSockets_[i]->setPos(scenePos + QPointF(Theme::COMPONENT_WIDTH - 6 - i * Theme::SOCKET_WIDGET_SPACING, -6));
     }
 }
 

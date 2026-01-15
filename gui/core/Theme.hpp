@@ -25,6 +25,11 @@
 
 class Theme {
 public:
+    /*
+    ================================================
+    ==================THEME COLORS==================
+    ================================================ 
+    */
     static const QColor GRAPH_GRID_COLOR ;
 
     // Cable/Connection Colors
@@ -64,6 +69,9 @@ public:
     static const QColor PIANO_ROLL_NOTE_COLOR ;
     static const QColor PIANO_ROLL_NOTE_SELECTED_COLOR ;
     static const QColor PIANO_ROLL_NOTE_BORDER ;
+    static const QColor PIANO_ROLL_BACKGROUND ;
+    static const QColor PIANO_ROLL_GRID_PRIMARY ;
+    static const QColor PIANO_ROLL_GRID_SECONDARY ;
 
     // Modulation indicator
     static const QColor MODULATION_ACTIVE ;
@@ -74,7 +82,45 @@ public:
     // Get stylesheet snippets
     static QString getComponentStyle(bool selected = false, bool hovered = false);
     static QString getModulationStyle();
+
+    /*
+    =======================================================
+    =============== THEME LAYOUT / CONTROLS ===============
+    =======================================================
+    */
+
+    static constexpr const char* DEFAULT_WINDOW_TITLE = "Syndesium" ;
+
+    static constexpr int   GRAPH_DOUBLE_CLICK_MS = 300 ;
+    static constexpr qreal GRAPH_GRID_SIZE = 20.0 ;
+    static constexpr qreal GRAPH_WHEEL_SCALE_FACTOR = 1.15 ;
+
+    static constexpr qreal COMPONENT_WIDTH = 120.0 ;
+    static constexpr qreal COMPONENT_HEIGHT = 80.0 ;
+    static constexpr qreal COMPONENT_ROUNDED_RADIUS = 5.0 ;
+    static constexpr qreal COMPONENT_BORDER_WIDTH = 2.0 ;
+    static constexpr qreal COMPONENT_TEXT_PADDING = 5.0 ;
+    static constexpr qreal COMPONENT_HIGHLIGHT_BUFFER = 2.0 ; 
+    static constexpr qreal COMPONENT_HIGHLIGHT_WIDTH = 3.0 ;
+    static constexpr qreal SOCKET_WIDGET_SPACING = 15.0 ;
+    static constexpr qreal SOCKET_WIDGET_RADIUS = 6.0 ;
+
+    static constexpr qreal COMPONENT_DETAIL_WIDGET_SPACING = 10 ;
+    static constexpr qreal COMPONENT_DETAIL_WIDGET_WIDTH = 120 ;
+    static constexpr qreal COMPONENT_DETAIL_MARGINS = 20 ;
+
+    static constexpr qreal PIANO_ROLL_NOTE_HEIGHT = 30 ;
+    static constexpr qreal PIANO_ROLL_PIXELS_PER_BEAT = 100 ;
+    static constexpr qreal PIANO_ROLL_KEY_WIDTH = 60 ;
+    static constexpr qreal PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY = 1 ;
+    static constexpr qreal PIANO_ROLL_GRID_PEN_WIDTH_SECONDARY = .75 ;
+    static constexpr qreal PIANO_ROLL_KEY_LABEL_X_PAD = 4 ;
+
+    static constexpr int ANALYZER_MARGIN_LEFT = 60 ;
+    static constexpr int ANALYZER_MARGIN_RIGHT = 20 ;
+    static constexpr int ANALYZER_MARGIN_TOP = 20 ;
+    static constexpr int ANALYZER_MARGIN_BOTTOM = 40 ;
 };
 
- #endif // __UI_THEME_HPP_
+#endif // __UI_THEME_HPP_
 

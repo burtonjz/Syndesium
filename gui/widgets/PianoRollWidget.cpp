@@ -72,10 +72,13 @@ void PianoRollWidget::paintEvent(QPaintEvent*){
 
 void PianoRollWidget::mousePressEvent(QMouseEvent* e){
     if ( e->button() == Qt::LeftButton ){
+        qDebug() << "Press pos:" << e->pos() << "global:" << e->globalPosition() ;
         float beat = xToBeat(e->pos().x());
         uint8_t pitch = yToPitch(e->pos().y());
+        qDebug() << "Calculated beat:" << beat << "pitch:" << pitch ;
 
         dragNote_ = new NoteWidget(pitch,100,beat,beat,this);
+        qDebug() << "Created note at geometry:" << dragNote_->geometry();
         connect(dragNote_, &NoteWidget::noteClicked, this, &PianoRollWidget::onNoteClicked);
         isDragging_ = true ;
     }
@@ -83,7 +86,10 @@ void PianoRollWidget::mousePressEvent(QMouseEvent* e){
 
 void PianoRollWidget::mouseMoveEvent(QMouseEvent* e){
     if ( isDragging_ ){
-        float endBeat = xToBeat(e->pos().x());
+        qDebug() << "Move pos:" << e->pos() << "global:" << e->globalPosition() ;
+        QPointF pos = mapFromGlobal(e->globalPosition());
+        float endBeat = xToBeat(pos.x());
+        qDebug() << "End Beat:" << endBeat ;
         dragNote_->setEndBeat(endBeat);
     }
 }
@@ -128,59 +134,63 @@ void PianoRollWidget::keyPressEvent(QKeyEvent* e){
 }
 
 void PianoRollWidget::updateSize(){
-    int width = KEY_WIDTH + static_cast<int>(totalBeats_ * PIXELS_PER_BEAT);
-    int height = 128 * NOTE_HEIGHT ;
+    int width = Theme::PIANO_ROLL_KEY_WIDTH + static_cast<int>(totalBeats_ * Theme::PIANO_ROLL_PIXELS_PER_BEAT);
+    int height = 128 * Theme::PIANO_ROLL_NOTE_HEIGHT ;
     setMinimumSize(width,height);
     setMaximumSize(width,height);
 }
 
 void PianoRollWidget::drawGrid(QPainter& p){
     // vertical beats
-    p.setPen(QPen(Theme::BACKGROUND_LIGHT, MAIN_GRID_PEN_WIDTH));
+    p.setPen(QPen(Theme::PIANO_ROLL_BACKGROUND, Theme::PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY));
     for ( int beat = 0; beat <= totalBeats_ ; ++beat ){
-        int x = KEY_WIDTH + beat * PIXELS_PER_BEAT ;
+        int x = Theme::PIANO_ROLL_KEY_WIDTH + beat * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
         p.drawLine(x, 0, x, height());
 
     }
 
     // vertical beat subdivisions
-    p.setPen(QPen(Theme::BACKGROUND_MEDIUM, SUB_GRID_PEN_WIDTH));
     for ( float beat = 0 ; beat <= totalBeats_ ; beat += 0.25f ){
-        int x = KEY_WIDTH + beat * PIXELS_PER_BEAT ;
+        if ( std::fmod(beat, 1.0) < .0001 ){
+            p.setPen(QPen(Theme::PIANO_ROLL_GRID_PRIMARY, Theme::PIANO_ROLL_GRID_PEN_WIDTH_SECONDARY));
+        } else {
+            p.setPen(QPen(Theme::PIANO_ROLL_GRID_SECONDARY, Theme::PIANO_ROLL_GRID_PEN_WIDTH_SECONDARY));
+        }
+        int x = Theme::PIANO_ROLL_KEY_WIDTH + beat * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
         p.drawLine(x,0,x,height());
     }
 
     // horizontal notes
     for ( uint8_t note = 0 ; note < 128; ++note ){
-        int y = note * NOTE_HEIGHT ;
+        int y = note * Theme::PIANO_ROLL_NOTE_HEIGHT ;
         QColor keyColor ;
         if ( isWhiteNote(127 - note) ){
-            keyColor = Theme::BACKGROUND_MEDIUM ;
+            keyColor = Theme::PIANO_ROLL_KEY_WHITE ;
         } else {
-            keyColor = Theme::BACKGROUND_DARK ;
+            keyColor = Theme::PIANO_ROLL_KEY_BLACK ;
         }
-        p.setPen(QPen(keyColor, MAIN_GRID_PEN_WIDTH));
+        p.setPen(QPen(keyColor, Theme::PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY));
     }
 }
 
 void PianoRollWidget::drawPianoKeys(QPainter& p){
     for ( uint8_t note = 0; note < 128; ++note ){
-        int y = (127 - note) * NOTE_HEIGHT ;
+        int y = (127 - note) * Theme::PIANO_ROLL_NOTE_HEIGHT ;
         QColor keyColor ;
         if ( isWhiteNote(note) ){
             keyColor = Theme::PIANO_ROLL_KEY_WHITE ;
         } else {
             keyColor = Theme::PIANO_ROLL_KEY_BLACK ;
         }
-        p.fillRect(0,y,KEY_WIDTH, NOTE_HEIGHT, keyColor);
+        p.fillRect(0,y,Theme::PIANO_ROLL_KEY_WIDTH, Theme::PIANO_ROLL_NOTE_HEIGHT, keyColor);
         p.setPen(Theme::PIANO_ROLL_KEY_BORDER);
-        p.drawRect(0,y,KEY_WIDTH, NOTE_HEIGHT);
+        p.drawRect(0,y,Theme::PIANO_ROLL_KEY_WIDTH, Theme::PIANO_ROLL_NOTE_HEIGHT);
 
         // draw some note names
         if ( note % 12 == 0 ){
             p.setPen(Theme::PIANO_ROLL_KEY_LABEL);
             p.drawText(
-                QRect(2,y, KEY_WIDTH - KEY_LABEL_X_PAD, NOTE_HEIGHT),
+                QRect(2,y, Theme::PIANO_ROLL_KEY_WIDTH - Theme::PIANO_ROLL_KEY_LABEL_X_PAD, Theme::PIANO_ROLL_NOTE_HEIGHT),
                 Qt::AlignCenter,
                 QString("C%1").arg(note / 12 - 1)
             );
@@ -196,12 +206,12 @@ bool PianoRollWidget::isWhiteNote(uint8_t pitch) const {
            note == 11 ;
 }
 
-float PianoRollWidget::xToBeat(int x) const {
-    return static_cast<float>(x - KEY_WIDTH) / PIXELS_PER_BEAT ;
+float PianoRollWidget::xToBeat(float x) const {
+    return static_cast<float>(x - Theme::PIANO_ROLL_KEY_WIDTH) / Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
 }
 
-int PianoRollWidget::yToPitch(int y) const {
-    return 127 - (y / NOTE_HEIGHT);
+int PianoRollWidget::yToPitch(float y) const {
+    return 127 - static_cast<int>((y + Theme::PIANO_ROLL_NOTE_HEIGHT / 2.0) / Theme::PIANO_ROLL_NOTE_HEIGHT);
 }
 
 void PianoRollWidget::onApiDataReceived(const QJsonObject& json){

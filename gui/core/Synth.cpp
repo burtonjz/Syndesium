@@ -22,6 +22,7 @@
 #include "types/ComponentType.hpp"
 #include "config/Config.hpp"
 #include "widgets/SpectrumAnalyzerWidget.hpp"
+#include "core/Theme.hpp"
 
 #include "ui_Synth.h"
 
@@ -54,7 +55,7 @@ Synth::Synth(ModuleContext ctx, QWidget* parent):
 {
     ui_->setupUi(this);
 
-    setWindowTitle(QString(DEFAULT_WINDOW_TITLE) + "[*]");
+    setWindowTitle(QString(Theme::DEFAULT_WINDOW_TITLE) + "[*]");
     qDebug() << "creating window: " << windowTitle() ;
 
     // API connections

@@ -415,9 +415,9 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
 
 void GraphPanel::wheelEvent(QWheelEvent* event){
     if ( event->angleDelta().y() > 0 ){
-        scale(WHEEL_SCALE_FACTOR, WHEEL_SCALE_FACTOR);
+        scale(Theme::GRAPH_WHEEL_SCALE_FACTOR, Theme::GRAPH_WHEEL_SCALE_FACTOR);
     } else {
-        scale( 1.0 / WHEEL_SCALE_FACTOR, 1.0 / WHEEL_SCALE_FACTOR );
+        scale( 1.0 / Theme::GRAPH_WHEEL_SCALE_FACTOR, 1.0 / Theme::GRAPH_WHEEL_SCALE_FACTOR );
     }
 }
 
@@ -425,16 +425,16 @@ void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
     // Draw Grid
     painter->setPen(QPen(Theme::GRAPH_GRID_COLOR, 1));
 
-    qreal left = int(rect.left()) - (int(rect.left()) % int(GRID_SIZE));
-    qreal top = int(rect.top()) - (int(rect.top()) % int(GRID_SIZE));
+    qreal left = int(rect.left()) - (int(rect.left()) % int(Theme::GRAPH_GRID_SIZE));
+    qreal top = int(rect.top()) - (int(rect.top()) % int(Theme::GRAPH_GRID_SIZE));
 
     QVarLengthArray<QLineF, 100> lines ;
 
-    for (qreal x = left; x < rect.right(); x+= GRID_SIZE){
+    for (qreal x = left; x < rect.right(); x+= Theme::GRAPH_GRID_SIZE){
         lines.append(QLineF(x, rect.top(), x, rect.bottom()));
     }
 
-    for (qreal y = top; y < rect.bottom(); y += GRID_SIZE){
+    for (qreal y = top; y < rect.bottom(); y += Theme::GRAPH_GRID_SIZE){
         lines.append(QLineF(rect.left(), y, rect.right(), y));
     }
 

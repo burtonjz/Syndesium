@@ -26,6 +26,7 @@
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
 #include "core/ApiClient.hpp"
+#include "core/Theme.hpp"
 
 #include <QJsonObject>
 #include <QEvent>
@@ -188,7 +189,7 @@ void ComponentDetailWidget::setupLayout(){
 
     // parameters
     QHBoxLayout* parameterLayout = new QHBoxLayout();
-    parameterLayout->setSpacing(PARAMETER_WIDGET_SPACING);
+    parameterLayout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
     for ( auto p : descriptor_.controllableParameters ){
         QWidget* w = parameterWidgets_[p];
@@ -213,7 +214,9 @@ void ComponentDetailWidget::setupLayout(){
 
     // resize this widget to fit all parameters
     int nParameters = parameterWidgets_.size();
-    int width = (nParameters * PARAMETER_WIDGET_WIDTH) + ((nParameters - 1) * PARAMETER_WIDGET_SPACING) + MODULE_DETAIL_MARGINS ;
+    int width = (nParameters * Theme::COMPONENT_DETAIL_WIDGET_WIDTH) + 
+        ((nParameters - 1) * Theme::COMPONENT_DETAIL_WIDGET_SPACING) + 
+        Theme::COMPONENT_DETAIL_MARGINS ;
     resize(width, sizeHint().height());
 }
 

@@ -98,11 +98,6 @@ private:
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
     void componentDoubleClicked(ComponentWidget* widget);
 
-    // size & scale
-    static constexpr int DOUBLE_CLICK_MS = 300 ;
-    static constexpr qreal GRID_SIZE = 20.0 ;
-    static constexpr qreal WHEEL_SCALE_FACTOR = 1.15 ;
-
 private slots:
     void onApiDataReceived(const QJsonObject &json);
     

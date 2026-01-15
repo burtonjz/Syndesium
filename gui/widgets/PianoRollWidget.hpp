@@ -43,13 +43,6 @@ private:
     bool isDragging_ = false ;
     NoteWidget* dragNote_ ;
 
-    static constexpr qreal NOTE_HEIGHT = 30 ;
-    static constexpr qreal PIXELS_PER_BEAT = 48 ;
-    static constexpr qreal KEY_WIDTH = 60 ;
-    static constexpr qreal MAIN_GRID_PEN_WIDTH = 1 ;
-    static constexpr qreal SUB_GRID_PEN_WIDTH = .75 ;
-    static constexpr qreal KEY_LABEL_X_PAD = 4 ;
-
 public:
     explicit PianoRollWidget(int id, QWidget* parent = nullptr);
 
@@ -65,14 +58,14 @@ protected:
 
 private:
     int findNoteIndex(NoteWidget* note) const ;
-    
+
     void updateSize();
     void drawGrid(QPainter& p);
     void drawPianoKeys(QPainter& p);
 
     bool isWhiteNote(uint8_t pitch) const ;
-    float xToBeat(int x) const ;
-    int yToPitch(int y) const ;
+    float xToBeat(float x) const ;
+    int yToPitch(float y) const ;
 
     // functions for api responses
     void onNoteAdded(SequenceNote note);

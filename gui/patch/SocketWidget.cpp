@@ -37,7 +37,8 @@ SocketWidget::SocketWidget(SocketSpec spec, SocketContainerWidget* parent):
 }
 
 QRectF SocketWidget::boundingRect() const {
-    return QRectF(-SOCKET_RADIUS, -SOCKET_RADIUS, SOCKET_RADIUS * 2, SOCKET_RADIUS * 2);
+    auto radius = Theme::SOCKET_WIDGET_RADIUS ;
+    return QRectF(-radius, -radius, radius * 2, radius * 2); 
 }
 
 void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){

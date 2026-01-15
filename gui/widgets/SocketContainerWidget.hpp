@@ -43,15 +43,6 @@ private:
 protected:
     std::vector<SocketWidget*> sockets_ ; 
     QGraphicsTextItem* titleText_ ;
-    
-    static constexpr qreal COMPONENT_WIDTH = 120.0 ;
-    static constexpr qreal COMPONENT_HEIGHT = 80.0 ;
-    static constexpr qreal COMPONENT_ROUNDED_RADIUS = 5.0 ;
-    static constexpr qreal COMPONENT_BORDER_WIDTH = 2.0 ;
-    static constexpr qreal COMPONENT_TEXT_PADDING = 5.0 ;
-    static constexpr qreal HIGHLIGHT_BUFFER = 2.0 ; 
-    static constexpr qreal HIGHLIGHT_WIDTH = 3.0 ;
-    static constexpr qreal SOCKET_SPACING = 15.0 ;
 
 public:
     explicit SocketContainerWidget(QString name, QGraphicsItem* parent = nullptr);

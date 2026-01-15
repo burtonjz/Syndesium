@@ -55,7 +55,6 @@ private:
     QJsonObject saveData_ ;
     bool hasUnsavedChanges_ ;
 
-    static constexpr const char* DEFAULT_WINDOW_TITLE = "Syndesium" ;
 public:
     Synth(ModuleContext ctx, QWidget* parent = nullptr);
     ~Synth();

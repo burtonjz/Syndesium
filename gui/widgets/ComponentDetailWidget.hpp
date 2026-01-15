@@ -52,10 +52,6 @@ private:
 
     std::unordered_map<ParameterType, ParameterValue> pendingChanges_ ;
 
-    static constexpr qreal PARAMETER_WIDGET_SPACING = 10 ;
-    static constexpr qreal PARAMETER_WIDGET_WIDTH = 120 ;
-    static constexpr qreal MODULE_DETAIL_MARGINS = 20 ;
-
 public:
     explicit ComponentDetailWidget(int id, ComponentType typ, QWidget* parent = nullptr);
     ~ComponentDetailWidget() override = default ;

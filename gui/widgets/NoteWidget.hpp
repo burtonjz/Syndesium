@@ -41,10 +41,6 @@ private:
     float y_ ;
     float w_ ;
 
-    static constexpr qreal NOTE_HEIGHT = 30 ;
-    static constexpr qreal PIXELS_PER_BEAT = 48 ;
-    static constexpr qreal KEY_WIDTH = 60 ;
-
 public:
     NoteWidget(uint8_t midiNote, uint8_t velocity, float start, float end, PianoRollWidget* parent);
     NoteWidget(SequenceNote note, PianoRollWidget* parent);

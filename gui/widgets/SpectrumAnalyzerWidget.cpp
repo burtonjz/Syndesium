@@ -150,13 +150,13 @@ void SpectrumAnalyzerWidget::resizeEvent(QResizeEvent *event) {
 void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
     painter.setPen(Theme::COMPONENT_BORDER);
     
-    int plotWidth = width() - MARGIN_LEFT - MARGIN_RIGHT ;
-    int plotHeight = height() - MARGIN_TOP - MARGIN_BOTTOM ;
+    int plotWidth = width() - Theme::ANALYZER_MARGIN_LEFT - Theme::ANALYZER_MARGIN_RIGHT ;
+    int plotHeight = height() - Theme::ANALYZER_MARGIN_TOP - Theme::ANALYZER_MARGIN_BOTTOM ;
     
     // Horizontal grid lines (dB)
     for (double db = minDb_; db <= maxDb_; db += 10.0) {
         int y = static_cast<int>(dbToY(db));
-        painter.drawLine(MARGIN_LEFT, y, MARGIN_LEFT + plotWidth, y);
+        painter.drawLine(Theme::ANALYZER_MARGIN_LEFT, y, Theme::ANALYZER_MARGIN_LEFT + plotWidth, y);
     }
     
     // Vertical grid lines (frequency, logarithmic)
@@ -164,7 +164,7 @@ void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
     for (double freq : freqs) {
         if (freq >= minFreq_ && freq <= maxFreq_) {
             int x = static_cast<int>(freqToX(freq));
-            painter.drawLine(x, MARGIN_TOP, x, MARGIN_TOP + plotHeight);
+            painter.drawLine(x, Theme::ANALYZER_MARGIN_TOP, x, Theme::ANALYZER_MARGIN_TOP + plotHeight);
         }
     }
 }
@@ -208,8 +208,8 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
     font.setPointSize(9);
     painter.setFont(font);
     
-    int plotWidth = width() - MARGIN_LEFT - MARGIN_RIGHT;
-    int plotHeight = height() - MARGIN_TOP - MARGIN_BOTTOM;
+    int plotWidth = width() - Theme::ANALYZER_MARGIN_LEFT - Theme::ANALYZER_MARGIN_RIGHT;
+    int plotHeight = height() - Theme::ANALYZER_MARGIN_TOP - Theme::ANALYZER_MARGIN_BOTTOM;
     
     // Y-axis labels (dB)
     for (double db = minDb_; db <= maxDb_; db += 20.0) {
@@ -241,7 +241,7 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
 }
 
 double SpectrumAnalyzerWidget::freqToX(double freq) const {
-    int plotWidth = width() - MARGIN_LEFT - MARGIN_RIGHT;
+    int plotWidth = width() - Theme::ANALYZER_MARGIN_LEFT - Theme::ANALYZER_MARGIN_RIGHT;
     
     // Logarithmic mapping
     double logMin = std::log10(minFreq_);
@@ -249,15 +249,15 @@ double SpectrumAnalyzerWidget::freqToX(double freq) const {
     double logFreq = std::log10(freq);
     
     double normalized = (logFreq - logMin) / (logMax - logMin);
-    return MARGIN_LEFT + normalized * plotWidth;
+    return Theme::ANALYZER_MARGIN_LEFT + normalized * plotWidth;
 }
 
 double SpectrumAnalyzerWidget::dbToY(double db) const {
-    int plotHeight = height() - MARGIN_TOP - MARGIN_BOTTOM;
+    int plotHeight = height() - Theme::ANALYZER_MARGIN_TOP - Theme::ANALYZER_MARGIN_BOTTOM;
     
     // Linear mapping (inverted - lower dB = higher on screen)
     double normalized = (db - minDb_) / (maxDb_ - minDb_) ;
-    return MARGIN_TOP + (1.0 - normalized) * plotHeight ;
+    return Theme::ANALYZER_MARGIN_TOP + (1.0 - normalized) * plotHeight ;
 }
 
 double SpectrumAnalyzerWidget:: binToFreq(size_t bin) const {

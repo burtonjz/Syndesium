@@ -46,9 +46,9 @@ void NoteWidget::paintEvent(QPaintEvent*){
     QColor fillColor = selected_ ? Theme::PIANO_ROLL_NOTE_SELECTED_COLOR :
         Theme::PIANO_ROLL_NOTE_COLOR ;
 
-    painter.fillRect(0,0,w_, NOTE_HEIGHT, fillColor);
+    painter.fillRect(0,0,w_, Theme::PIANO_ROLL_NOTE_HEIGHT, fillColor);
     painter.setPen(Theme::PIANO_ROLL_NOTE_BORDER);
-    painter.drawRect(0,0,w_, NOTE_HEIGHT);
+    painter.drawRect(0,0,w_, Theme::PIANO_ROLL_NOTE_HEIGHT);
 }
 
 void NoteWidget::mousePressEvent(QMouseEvent* e){
@@ -137,10 +137,12 @@ QString NoteWidget::midi2str(uint8_t midiNote){
 }
 
 void NoteWidget::updateSize(){
-    x_ = KEY_WIDTH + startBeat_ * PIXELS_PER_BEAT ;
-    y_ = (127 - midiNote_) * NOTE_HEIGHT ;
-    w_ = static_cast<int>(endBeat_ - startBeat_) * PIXELS_PER_BEAT ;
-    setGeometry(x_,y_,w_, NOTE_HEIGHT);
+    x_ = Theme::PIANO_ROLL_KEY_WIDTH + startBeat_ * 
+        Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
+    y_ = (127 - midiNote_) * Theme::PIANO_ROLL_NOTE_HEIGHT ;
+    w_ = static_cast<int>(endBeat_ - startBeat_) * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
+    setGeometry(x_,y_,w_, Theme::PIANO_ROLL_NOTE_HEIGHT);
     show();
     update();
+    qDebug() << "updating note geometry to " << geometry() ;
 }

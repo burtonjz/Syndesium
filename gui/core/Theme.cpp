@@ -59,6 +59,9 @@ const QColor Theme::PIANO_ROLL_KEY_LABEL = QColor(30,30,30);
 const QColor Theme::PIANO_ROLL_NOTE_COLOR = QColor(100,150,255,200);   
 const QColor Theme::PIANO_ROLL_NOTE_SELECTED_COLOR = QColor(100,255,150,150);   
 const QColor Theme::PIANO_ROLL_NOTE_BORDER = QColor(70, 200, 120);   
+const QColor Theme::PIANO_ROLL_BACKGROUND = QColor(50, 25, 25);
+const QColor Theme::PIANO_ROLL_GRID_PRIMARY = QColor(200,200,200);
+const QColor Theme::PIANO_ROLL_GRID_SECONDARY = QColor(100,100,100);
 
 void Theme::applyDarkTheme() {
     QPalette darkPalette;

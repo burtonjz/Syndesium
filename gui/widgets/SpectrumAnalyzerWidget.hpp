@@ -78,11 +78,6 @@ private:
     double dbToY(double db) const;
     double binToFreq(size_t bin) const;
     
-    // Grid settings
-    static constexpr int MARGIN_LEFT = 60;
-    static constexpr int MARGIN_RIGHT = 20;
-    static constexpr int MARGIN_TOP = 20;
-    static constexpr int MARGIN_BOTTOM = 40;
 };
 
 #endif // SPECTRUM_ANALYZER_WIDGET_HPP
