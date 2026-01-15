@@ -89,7 +89,6 @@ private:
     json addCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
     json removeCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json getCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
-    json getCollectionValues(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
     json setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);

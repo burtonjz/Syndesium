@@ -22,6 +22,7 @@
 
 #include <spdlog/spdlog.h>
 #include <vector>
+#include <map>
 
 class ParameterCollectionBase {
 protected:
@@ -44,10 +45,12 @@ public:
     using ValueType = GET_PARAMETER_VALUE_TYPE(typ);
 
 private:
-    std::vector<ValueType> values_ ;
+    int nextID = 0 ;
+    std::vector<int> active_ ;
+    std::map<int, ValueType> values_ ;
     ValueType minValue_ ;
     ValueType maxValue_ ;
-    std::vector<ValueType> defaultValues_ ;
+    std::map<int, ValueType> defaultValues_ ;
 
 public:
     ParameterCollection(
@@ -69,42 +72,44 @@ public:
 
     size_t addValue(ValueType v){
         v = limitToRange(v);
-        values_.push_back(v);
-        defaultValues_.push_back(v);
-        return values_.size() - 1 ;
+        values_[nextID] = v ;
+        defaultValues_[nextID] = v ;
+        active_.push_back(nextID);
+        return nextID++ ;
     }
 
-    int removeValue(size_t idx){
-        if ( idx >= values_.size() ){
-            std::string msg = fmt::format("Cannot remove value from collection. idx {} is out of range {}", idx, values_.size() );
+    int removeValue(int idx){
+        if ( !values_.contains(idx) ){
+            std::string msg = fmt::format("Cannot remove value from collection. idx {} is not in use", idx);
             SPDLOG_ERROR(msg);
             throw std::runtime_error(msg);
         }
-        values_.erase(values_.begin() + idx);
-        defaultValues_.erase(defaultValues_.begin() + idx);
+        values_.erase(idx);
+        defaultValues_.erase(idx);
+        active_.erase(std::remove(active_.begin(), active_.end(), idx), active_.end());
         return values_.size();
-    }
+    } 
 
     size_t size() const {
         return values_.size() ;
     }
 
     ValueType getValue(size_t idx) const {
-        if ( idx >= values_.size() ){
-            std::string msg = fmt::format("Cannot get value from collection. idx {} is out of range {}", idx, values_.size() );
+        if ( ! values_.contains(idx) ){
+            std::string msg = fmt::format("Cannot get value from collection. idx {} is not in use", idx);
             SPDLOG_ERROR(msg);
             throw std::runtime_error(msg);
         }
-        return values_[idx] ;
+        return values_.at(idx) ;
     }
 
-    const std::vector<ValueType>& getValues() const {
+    const std::map<int, ValueType>& getValues() const {
         return values_ ;
     }
 
     bool setValue(size_t idx, ValueType v){
-        if ( idx >= values_.size() ){
-            SPDLOG_ERROR("Cannot set value in collection. idx {} is out of range {}", idx, values_.size() );
+        if ( ! values_.contains(idx) ){
+            SPDLOG_ERROR("Cannot set value in collection. idx {} is not in use", idx);
             return false ;
         }
         values_[idx] = limitToRange(v);
@@ -112,37 +117,25 @@ public:
     }
 
     ValueType getDefaultValue(size_t idx) const {
-        if ( idx >= defaultValues_.size() ){
-            std::string msg = fmt::format("Cannot get default value from collection. idx {} is out of range {}", idx, values_.size() );
+        if ( ! defaultValues_.contains(idx) ){
+            std::string msg = fmt::format("Cannot get default value from collection. idx {} is not in use", idx);
             SPDLOG_ERROR(msg);
             throw std::runtime_error(msg);
         }
         return defaultValues_[idx] ;
     }
 
-    const std::vector<ValueType>& getDefaultValues() const {
-        return defaultValues_ ;
-    }
-
     void setDefaultValue(size_t idx, ValueType v){
-        if ( idx >= defaultValues_.size() ){
-            SPDLOG_ERROR("Cannot set default value in collection. idx {} is out of range {}", idx, values_.size() );
+        if ( ! defaultValues_.contains(idx) ){
+            SPDLOG_ERROR("Cannot set default value in collection. idx {} is not in use", idx);
             return ;
         }
         defaultValues_[idx] = limitToRange(v);
     }
 
-    void setValues(std::vector<ValueType> values){
-        values_.clear();
-        defaultValues_.clear();
-        for ( auto v : values ){
-            addValue(v);
-        }
-    }
-
     void resetValue(size_t idx){
-        if ( idx >= values_.size() ){
-            SPDLOG_ERROR("Cannot set value in collection. idx {} is out of range {}", idx, values_.size() );
+        if ( ! values_.contains(idx) ){
+            SPDLOG_ERROR("Cannot set value in collection. idx {} is not in use", idx);
             return ;
         }
         values_[idx] = defaultValues_[idx] ;
@@ -190,11 +183,16 @@ public:
     void clear(){
         values_.clear();
         defaultValues_.clear();
+        active_.clear();
     }
 
     void reserve(size_t capacity){
         values_.reserve(capacity);
         defaultValues_.reserve(capacity);
+    }
+
+    const std::vector<int>& getIndices() const {
+        return active_ ;
     }
 
 private:

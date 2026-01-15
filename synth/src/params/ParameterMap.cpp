@@ -155,24 +155,6 @@ json ParameterMap::getCollectionValueDispatch(ParameterType p, size_t idx) const
     }
 }
 
-json ParameterMap::getCollectionValuesDispatch(ParameterType p) const {
-    switch (p) {
-        #define X(NAME) case ParameterType::NAME: return CollectionToJsonArray(getCollection<ParameterType::NAME>()->getValues()) ;
-        PARAMETER_TYPE_LIST
-        #undef X
-        default: throw std::runtime_error("Invalid Collection dispatch");
-    }
-}
-
-json ParameterMap::getCollectionDefaultsDispatch(ParameterType p) const {
-    switch (p) {
-        #define X(NAME) case ParameterType::NAME: return CollectionToJsonArray(getCollection<ParameterType::NAME>()->getDefaultValues()) ;
-        PARAMETER_TYPE_LIST
-        #undef X
-        default: throw std::runtime_error("Invalid Collection dispatch");
-    }
-}
-
 size_t ParameterMap::addCollectionValueDispatch(ParameterType p, const json& value){
     switch (p) {
         #define X(NAME) case ParameterType::NAME: return getCollection<ParameterType::NAME>()->addValue(value);

@@ -646,7 +646,6 @@ json ApiHandler::parseCollectionRequest(int sock, const json& request){
     case CollectionAction::ADD:       return addCollectionValue(sock, c, *cd, req);
     case CollectionAction::REMOVE:    return removeCollectionValue(sock, c, *cd, req);
     case CollectionAction::GET:       return getCollectionValue(sock, c, *cd, req);
-    case CollectionAction::GET_ALL:   return getCollectionValues(sock, c, *cd, req);
     case CollectionAction::GET_RANGE: return getCollectionValueRange(sock, c, *cd, req);
     case CollectionAction::SET:       return setCollectionValue(sock, c, *cd, req);
     case CollectionAction::RESET:     return resetCollection(sock, c, *cd, req);
@@ -747,38 +746,6 @@ json ApiHandler::getCollectionValue(int sock, BaseComponent* c, const Collection
     } catch (const std::exception& e){
         json response = request ;
         sendApiResponse(sock, response, "failed to get collection value:" + std::string(e.what()));
-    }
-
-    json response = request ;
-    return sendApiResponse(sock, response);
-}
-
-json ApiHandler::getCollectionValues(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request){
-    try {
-        switch ( cd.structure ){
-        case CollectionStructure::INDEPENDENT:
-            request.value = c->getParameters()->getCollectionValuesDispatch(cd.params[0]);
-            break ;
-        case CollectionStructure::GROUPED:
-            for ( size_t i = 0 ; i < cd.groupSize ; ++i ){
-                (*request.value)[i] = c->getParameters()->getCollectionValuesDispatch(cd.params[0]);
-            }
-            break ;
-        case CollectionStructure::SYNCHRONIZED:
-            for ( size_t i = 0 ; i < cd.params.size() ; ++i ){
-                (*request.value)[GET_PARAMETER_TRAIT_MEMBER(cd.params[i], name)] = 
-                    c->getParameters()->getCollectionValuesDispatch(cd.params[i]);
-            }
-            break ;
-        default: 
-        {
-            json response = request ;
-            sendApiResponse(sock, response, "unrecognized collection structure");
-            break ;
-        }}
-    } catch (const std::exception& e){
-        json response = request ;
-        sendApiResponse(sock, response, "failed to get collection values:" + std::string(e.what()));
     }
 
     json response = request ;

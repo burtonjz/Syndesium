@@ -61,7 +61,7 @@ void Sequencer::onTick(float dt){
     auto velocities = parameters_->getCollection<ParameterType::VELOCITY>();
     auto starts = parameters_->getCollection<ParameterType::START_POSITION>();
 
-    for ( size_t i = 0 ; i < notes->size() ; ++i ){
+    for ( int i : notes->getIndices() ){
         float start = starts->getValue(i);
         float end = start + durations->getValue(i);
 
