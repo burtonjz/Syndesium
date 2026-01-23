@@ -109,7 +109,9 @@ public:
     static constexpr qreal COMPONENT_DETAIL_WIDGET_WIDTH = 120 ;
     static constexpr qreal COMPONENT_DETAIL_MARGINS = 20 ;
 
-    static constexpr qreal PIANO_ROLL_NOTE_HEIGHT = 30 ;
+    static constexpr qreal PIANO_ROLL_NOTE_HEIGHT = 30 ; 
+    static constexpr qreal PIANO_ROLL_NOTE_EDGE_THRESHOLD = 8 ;
+
     static constexpr qreal PIANO_ROLL_PIXELS_PER_BEAT = 100 ;
     static constexpr qreal PIANO_ROLL_KEY_WIDTH = 60 ;
     static constexpr qreal PIANO_ROLL_GRID_PEN_WIDTH_PRIMARY = 1 ;

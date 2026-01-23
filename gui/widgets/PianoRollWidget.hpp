@@ -42,6 +42,9 @@ private:
 
     bool isDragging_ = false ;
     NoteWidget* dragNote_ ;
+    float anchorBeat_ ;
+
+    bool isResizing_ = false ;
 
 public:
     explicit PianoRollWidget(int id, QWidget* parent = nullptr);
@@ -57,8 +60,7 @@ protected:
     void keyPressEvent(QKeyEvent* e) override ;
 
 private:
-    int findNoteIndex(NoteWidget* note) const ;
-
+    // draw functions
     void updateSize();
     void drawGrid(QPainter& p);
     void drawPianoKeys(QPainter& p);
@@ -67,14 +69,32 @@ private:
     float xToBeat(float x) const ;
     int yToPitch(float y) const ;
 
+    // note handling
+    int findNoteIndex(NoteWidget* note) const ;
+    NoteWidget* findNoteAtPos(const QPointF& pos);
+    
+    // functions for Qt event handling
+    void onNoteSelected(NoteWidget* note, bool multiSelect);
+    void onNoteHover(const QPointF pos);
+    void deselectNotes();
+
+    void onDragStart(const QPointF pos);
+    void onDragMove(const QPointF pos);
+    void onDragEnd(const QPointF pos);
+
+    bool onResizeStart(NoteWidget* note, const QPointF pos);
+    void onResizeMove(const QPointF pos);
+    void onResizeEnd(const QPointF pos);
+
     // functions for api responses
     void onNoteAdded(SequenceNote note);
     void onNoteRemoved(SequenceNote note);
+    void deleteNote(int idx);
     void deleteSelectedNotes();
     
 public slots:
     void onApiDataReceived(const QJsonObject &json);
-    void onNoteClicked(NoteWidget* note, bool multiSelect);
+
 };
 
 #endif // PIANOROLL_WIDGET_HPP_

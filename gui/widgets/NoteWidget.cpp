@@ -51,14 +51,6 @@ void NoteWidget::paintEvent(QPaintEvent*){
     painter.drawRect(0,0,w_, Theme::PIANO_ROLL_NOTE_HEIGHT);
 }
 
-void NoteWidget::mousePressEvent(QMouseEvent* e){
-    if ( e->button() == Qt::LeftButton ){
-        bool multiSelect = e->modifiers() & Qt::ControlModifier ;
-        emit noteClicked(this, multiSelect);
-        e->accept();
-    }
-}
-
 uint8_t NoteWidget::getMidiNote() const {
     return midiNote_ ;
 }
@@ -82,12 +74,7 @@ float NoteWidget::getStartBeat() const {
 }
 
 void NoteWidget::setStartBeat(float startBeat, bool round){
-    if ( round ){
-        startBeat_ = std::round(startBeat * 4) / 4.0f ;
-    } else {
-        startBeat_ = startBeat ;
-    }
-    updateSize();
+    setBeatRange(startBeat, endBeat_, round);
 }
 
 float NoteWidget::getEndBeat() const {
@@ -95,11 +82,24 @@ float NoteWidget::getEndBeat() const {
 }
 
 void NoteWidget::setEndBeat(float endBeat, bool round){
-    if ( round ){
-        endBeat_ = std::round(endBeat * 4) / 4.0f ;
-    } else {
-        endBeat_ = endBeat ;
+    setBeatRange(startBeat_, endBeat, round);
+}
+
+void NoteWidget::setBeatRange(float start, float end, bool round){
+    if ( start > end ){
+        std::swap(start, end);
     }
+
+    if ( start < 0 ) start = 0 ;
+
+    if ( round ){
+        startBeat_ = std::round(start * 4) / 4.0f ;
+        endBeat_ = std::round(end * 4) / 4.0f ;
+    } else {
+        startBeat_ = start ;
+        endBeat_ = end ;
+    }
+
     updateSize();
 }
 
@@ -140,9 +140,8 @@ void NoteWidget::updateSize(){
     x_ = Theme::PIANO_ROLL_KEY_WIDTH + startBeat_ * 
         Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
     y_ = (127 - midiNote_) * Theme::PIANO_ROLL_NOTE_HEIGHT ;
-    w_ = static_cast<int>(endBeat_ - startBeat_) * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
+    w_ = static_cast<float>(endBeat_ - startBeat_) * Theme::PIANO_ROLL_PIXELS_PER_BEAT ;
     setGeometry(x_,y_,w_, Theme::PIANO_ROLL_NOTE_HEIGHT);
     show();
     update();
-    qDebug() << "updating note geometry to " << geometry() ;
 }

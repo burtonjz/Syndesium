@@ -46,7 +46,6 @@ public:
     NoteWidget(SequenceNote note, PianoRollWidget* parent);
 
     void paintEvent(QPaintEvent*) override ;
-    void mousePressEvent(QMouseEvent* e) override ;
 
     // Getters/Setters
     uint8_t getMidiNote() const ;
@@ -57,6 +56,7 @@ public:
     void setStartBeat(float startBeat, bool round = false);
     float getEndBeat() const ;
     void setEndBeat(float endBeat, bool round = false);
+    void setBeatRange(float start, float end, bool round = false);
 
     void setSelected(bool selected);
     bool isSelected() const ;
@@ -68,8 +68,6 @@ public:
 private:
     void updateSize();
 
-signals:
-    void noteClicked(NoteWidget* note, bool multiSelect);
 };
 
 

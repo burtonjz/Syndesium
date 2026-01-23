@@ -71,58 +71,60 @@ void PianoRollWidget::paintEvent(QPaintEvent*){
 }
 
 void PianoRollWidget::mousePressEvent(QMouseEvent* e){
+    QPointF pos = mapFromGlobal(e->globalPosition());
+    
     if ( e->button() == Qt::LeftButton ){
-        qDebug() << "Press pos:" << e->pos() << "global:" << e->globalPosition() ;
-        float beat = xToBeat(e->pos().x());
-        uint8_t pitch = yToPitch(e->pos().y());
-        qDebug() << "Calculated beat:" << beat << "pitch:" << pitch ;
+        NoteWidget* clickedNote = findNoteAtPos(pos);
+        if ( clickedNote ){
+            if ( onResizeStart(clickedNote, pos) ){
+                e->accept();
+                return ;
+            } 
 
-        dragNote_ = new NoteWidget(pitch,100,beat,beat,this);
-        qDebug() << "Created note at geometry:" << dragNote_->geometry();
-        connect(dragNote_, &NoteWidget::noteClicked, this, &PianoRollWidget::onNoteClicked);
-        isDragging_ = true ;
+            bool multiSelect = e->modifiers() & Qt::ControlModifier ;
+            onNoteSelected(clickedNote, multiSelect);
+            e->accept();
+            return ;
+        }
+
+        deselectNotes();
+        onDragStart(pos);
+        return ;
     }
 }
 
 void PianoRollWidget::mouseMoveEvent(QMouseEvent* e){
-    if ( isDragging_ ){
-        qDebug() << "Move pos:" << e->pos() << "global:" << e->globalPosition() ;
-        QPointF pos = mapFromGlobal(e->globalPosition());
-        float endBeat = xToBeat(pos.x());
-        qDebug() << "End Beat:" << endBeat ;
-        dragNote_->setEndBeat(endBeat);
+    QPointF pos = mapFromGlobal(e->globalPosition());
+
+    if ( isDragging_ ){    
+        onDragMove(pos);
+        return ;
     }
+
+    if ( isResizing_ ){
+        onResizeMove(pos);
+        return ;
+    }
+
+    onNoteHover(pos);
+    
 }
 
 void PianoRollWidget::mouseReleaseEvent(QMouseEvent* e){
-    if ( isDragging_ && e->button() == Qt::LeftButton ){
-        float endBeat = xToBeat(e->pos().x());
-        if ( endBeat < dragNote_->getStartBeat() ){
-            dragNote_->setEndBeat(dragNote_->getStartBeat(), true);
-            dragNote_->setStartBeat(endBeat, true);
-        }  else {
-            dragNote_->setStartBeat(dragNote_->getStartBeat(), true);
-            dragNote_->setEndBeat(endBeat, true);
-        }
+    QPointF pos = mapFromGlobal(e->globalPosition());
 
-        if ( dragNote_->getEndBeat() == dragNote_->getStartBeat() ){
-            delete dragNote_ ;
-            dragNote_ = nullptr ;
-            isDragging_ = false ;
+    if ( e->button() == Qt::LeftButton ){
+         if ( isDragging_ ){
+            onDragEnd(pos);
+            e->accept();
             return ;
-        } 
+         }
 
-        // convert note to qObject
-        CollectionRequest req ;
-        req.collectionType = CollectionType::SEQUENCER ;
-        req.action = CollectionAction::ADD ;
-        req.componentId = id_ ;
-        req.value = dragNote_->getNote() ;
-        
-        QJsonObject obj = Util::nlohmannToQJsonObject(req);
-        ApiClient::instance()->sendMessage(obj); 
-
-        isDragging_ = false ;
+         if ( isResizing_ ){
+            onResizeEnd(pos);
+            e->accept();
+            return ;
+         }
     }
 }
 
@@ -134,8 +136,8 @@ void PianoRollWidget::keyPressEvent(QKeyEvent* e){
 }
 
 void PianoRollWidget::updateSize(){
-    int width = Theme::PIANO_ROLL_KEY_WIDTH + static_cast<int>(totalBeats_ * Theme::PIANO_ROLL_PIXELS_PER_BEAT);
-    int height = 128 * Theme::PIANO_ROLL_NOTE_HEIGHT ;
+    float width = Theme::PIANO_ROLL_KEY_WIDTH + static_cast<float>(totalBeats_ * Theme::PIANO_ROLL_PIXELS_PER_BEAT);
+    float height = 128 * Theme::PIANO_ROLL_NOTE_HEIGHT ;
     setMinimumSize(width,height);
     setMaximumSize(width,height);
 }
@@ -211,7 +213,8 @@ float PianoRollWidget::xToBeat(float x) const {
 }
 
 int PianoRollWidget::yToPitch(float y) const {
-    return 127 - static_cast<int>((y + Theme::PIANO_ROLL_NOTE_HEIGHT / 2.0) / Theme::PIANO_ROLL_NOTE_HEIGHT);
+    float row = ( y - Theme::PIANO_ROLL_NOTE_HEIGHT / 2.0 ) / Theme::PIANO_ROLL_NOTE_HEIGHT ;
+    return 127 - static_cast<int>(std::round(row));
 }
 
 void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
@@ -232,7 +235,6 @@ void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
             dragNote_ = nullptr ;
         } else {
             notes_[index] = new NoteWidget(note, this);
-            connect(notes_[index], &NoteWidget::noteClicked, this, &PianoRollWidget::onNoteClicked);
         }
         
         update();
@@ -254,21 +256,16 @@ void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
     }
 }
 
-void PianoRollWidget::onNoteClicked(NoteWidget* note, bool multiSelect){
-    if ( !multiSelect ){
-        for ( int idx : selectedNotes_ ){
-            auto it = notes_.find(idx);
-            if ( it != notes_.end() && it->second ){
-                it->second->setSelected(false);
-            }
-        }
-        selectedNotes_.clear();
+void PianoRollWidget::onNoteSelected(NoteWidget* note, bool multiSelect){
+    int idx = findNoteIndex(note);
+
+    if ( !note || idx == -1 ){
+        deselectNotes();
+        return ;
     }
 
-    int idx = findNoteIndex(note);
-    if ( !note || idx == -1 ){
-        qDebug() << "clicked note does not have a valid index. Ignoring event.";
-        return ;
+    if ( !multiSelect ){
+        deselectNotes();
     }
 
     if ( note->isSelected() ){    
@@ -280,16 +277,46 @@ void PianoRollWidget::onNoteClicked(NoteWidget* note, bool multiSelect){
     }
 }
 
+void PianoRollWidget::deselectNotes(){
+    for ( int idx : selectedNotes_ ){
+        auto it = notes_.find(idx);
+        if ( it != notes_.end() && it->second ){
+            it->second->setSelected(false);
+        }
+    }
+    selectedNotes_.clear();
+}
+
+void PianoRollWidget::onNoteHover(const QPointF pos){
+    NoteWidget* n = findNoteAtPos(pos);
+    if ( n ){
+        QPointF notePos = n->mapFromParent(pos); // note local position
+        const qreal threshold = Theme::PIANO_ROLL_NOTE_EDGE_THRESHOLD ;
+
+        if ( notePos.x() <= threshold || notePos.x() >= n->width() - threshold ){
+            setCursor(Qt::SizeHorCursor);
+        } else {
+            setCursor(Qt::ArrowCursor);
+        }
+    } else {
+        setCursor(Qt::ArrowCursor);
+    }
+}
+
+void PianoRollWidget::deleteNote(int idx){
+    CollectionRequest req ;
+    req.collectionType = CollectionType::SEQUENCER ;
+    req.action = CollectionAction::REMOVE ;
+    req.index = idx ;
+    req.componentId = id_ ;
+    
+    QJsonObject obj = Util::nlohmannToQJsonObject(req);
+    ApiClient::instance()->sendMessage(obj);
+};
+
 void PianoRollWidget::deleteSelectedNotes(){
     for ( int idx : selectedNotes_ ){
-        CollectionRequest req ;
-        req.collectionType = CollectionType::SEQUENCER ;
-        req.action = CollectionAction::REMOVE ;
-        req.index = idx ;
-        req.componentId = id_ ;
-        
-        QJsonObject obj = Util::nlohmannToQJsonObject(req);
-        ApiClient::instance()->sendMessage(obj);
+        deleteNote(idx);
     }
 }
 
@@ -300,4 +327,110 @@ int PianoRollWidget::findNoteIndex(NoteWidget* note) const {
         }
     }
     return -1;  // Not found
+}
+
+NoteWidget* PianoRollWidget::findNoteAtPos(const QPointF& pos) {
+    for ( auto& [idx, note] : notes_ ) {
+        if (note && note->geometry().contains(pos.toPoint())) {
+            return note;
+        }
+    }
+    return nullptr;
+}
+
+void PianoRollWidget::onDragStart(const QPointF pos){
+    anchorBeat_ = xToBeat(pos.x());
+    uint8_t pitch = yToPitch(pos.y());
+    dragNote_ = new NoteWidget(pitch,100,anchorBeat_ + 0.25,anchorBeat_,this);
+    isDragging_ = true ;
+}
+
+void PianoRollWidget::onDragMove(const QPointF pos){
+    float dragBeat = xToBeat(pos.x());
+    dragNote_->setBeatRange(anchorBeat_, dragBeat);
+}
+
+void PianoRollWidget::onDragEnd(const QPointF pos){
+    float dragBeat = xToBeat(pos.x());
+    dragNote_->setBeatRange(anchorBeat_, dragBeat, true);
+
+    if ( dragNote_->getEndBeat() == dragNote_->getStartBeat() ){
+        delete dragNote_ ;
+        dragNote_ = nullptr ;
+        isDragging_ = false ;
+        return ;
+    } 
+
+    // send note to api client
+    CollectionRequest req ;
+    req.collectionType = CollectionType::SEQUENCER ;
+    req.action = CollectionAction::ADD ;
+    req.componentId = id_ ;
+    req.value = dragNote_->getNote() ;
+    
+    QJsonObject obj = Util::nlohmannToQJsonObject(req);
+    ApiClient::instance()->sendMessage(obj); 
+
+    isDragging_ = false ;
+    return ;
+}
+
+bool PianoRollWidget::onResizeStart(NoteWidget* note, const QPointF pos){
+    // if it's within edge threshold, start a resize
+    QPointF notePos = note->mapFromParent(pos); // this is a local position
+    const qreal threshold = Theme::PIANO_ROLL_NOTE_EDGE_THRESHOLD ;
+    if ( notePos.x() <= threshold ){ // left side click
+        isResizing_ = true ;
+        anchorBeat_ = note->getEndBeat() ;
+        dragNote_ = note ;
+        return true ;
+    } else if ( notePos.x() >= note->width() - threshold ){ // right side click
+        isResizing_ = true ;
+        anchorBeat_ = note->getStartBeat() ;
+        dragNote_ = note ;
+        return true ;
+    }
+
+    return false ;
+}
+
+void PianoRollWidget::onResizeMove(const QPointF pos){
+    float dragBeat = xToBeat(pos.x());
+    dragNote_->setBeatRange(anchorBeat_, dragBeat);
+}
+
+void PianoRollWidget::onResizeEnd(const QPointF pos){
+    float dragBeat = xToBeat(pos.x());
+    dragNote_->setBeatRange(anchorBeat_, dragBeat, true);
+
+
+    int idx = findNoteIndex(dragNote_);
+    
+    // validate index
+    if ( idx == -1 ){
+        qWarning() << "attempted to delete a note that has no index. Please investigate" ;
+        return ;
+    }
+
+    // delete note if no length
+    if ( dragNote_->getEndBeat() == dragNote_->getStartBeat() ){
+        deleteNote(idx);
+        dragNote_ = nullptr ;
+        isResizing_ = false ;
+        return ;
+    } 
+
+    // otherwise, update note
+    CollectionRequest req ;
+    req.collectionType = CollectionType::SEQUENCER ;
+    req.action = CollectionAction::SET ;
+    req.componentId = id_ ;
+    req.index =  idx ;
+    req.value = dragNote_->getNote() ;
+    
+    QJsonObject obj = Util::nlohmannToQJsonObject(req);
+    ApiClient::instance()->sendMessage(obj); 
+
+    isResizing_ = false ;
+    return ;
 }
