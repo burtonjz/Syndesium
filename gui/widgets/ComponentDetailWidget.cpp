@@ -101,6 +101,7 @@ void ComponentDetailWidget::createCollectionWidget(CollectionDescriptor cd){
     if ( cd.collectionType == CollectionType::SEQUENCER ){
         PianoRollWidget* pianoRoll = new PianoRollWidget(componentId_);
         collectionWidgets_[cd.collectionType] = pianoRoll ;
+        connect(this, &ComponentDetailWidget::parameterChanged, pianoRoll, &PianoRollWidget::onParameterChanged);
         return ;
     }
 
@@ -246,8 +247,6 @@ void ComponentDetailWidget::onValueChange(){
     }
 
     pendingChanges_[p] = v ;
-
-    emit wasModified();
     parameterChangedTimer_->start();
 }
 
@@ -262,7 +261,9 @@ void ComponentDetailWidget::flushPendingChanges(){
         obj["value"] = QVariant::fromStdVariant(val).toJsonValue();
         
         ApiClient::instance()->sendMessage(obj); 
+        emit parameterChanged(componentId_,descriptor_,p,val) ;
     }
 
     pendingChanges_.clear();
+    emit wasModified();
 }

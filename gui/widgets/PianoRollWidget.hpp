@@ -18,6 +18,7 @@
 #ifndef PIANOROLL_WIDGET_HPP_
 #define PIANOROLL_WIDGET_HPP_
 
+#include "meta/ComponentDescriptor.hpp"
 #include "types/SequenceData.hpp"
 #include "widgets/NoteWidget.hpp"
 
@@ -86,6 +87,10 @@ private:
     void onResizeMove(const QPointF pos);
     void onResizeEnd(const QPointF pos);
 
+    void updateSelectedNotePitch(int p);
+    void updateSelectedNoteStart(float t);
+    void updateSelectedNoteDuration(float d);
+
     // functions for api responses
     void onNoteAdded(SequenceNote note);
     void onNoteRemoved(SequenceNote note);
@@ -94,7 +99,7 @@ private:
     
 public slots:
     void onApiDataReceived(const QJsonObject &json);
-
+    void onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value);
 };
 
 #endif // PIANOROLL_WIDGET_HPP_

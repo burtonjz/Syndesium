@@ -21,6 +21,8 @@
 #include "params/ParameterMap.hpp"
 #include "params/ParameterCollection.hpp"
 
+#include <spdlog/spdlog.h>
+
 Sequencer::Sequencer(ComponentId id, SequencerConfig cfg):
     BaseComponent(id, ComponentType::Sequencer),
     currentTime_(0),
@@ -103,6 +105,7 @@ void Sequencer::onTick(float dt){
 }
 
 void Sequencer::pushToQueue(uint8_t midiNote, uint8_t velocity, bool noteOn){
+    SPDLOG_DEBUG("sending note to queue (note={},velocity={},on={})", midiNote, velocity, noteOn);
     MidiNote m = MidiNote(midiNote, velocity, noteOn);
     ActiveNote anote = {m, 0};
     if ( noteOn ){

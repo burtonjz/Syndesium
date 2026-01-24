@@ -46,6 +46,8 @@ PianoRollWidget::PianoRollWidget(int id, QWidget* parent):
 }
 
 void PianoRollWidget::setTotalBeats(float beats){
+    // we need to remove notes that aren't within the new bounds
+
     totalBeats_ = beats ;
     updateSize();
     update();
@@ -129,9 +131,42 @@ void PianoRollWidget::mouseReleaseEvent(QMouseEvent* e){
 }
 
 void PianoRollWidget::keyPressEvent(QKeyEvent* e){
-    qDebug() << "Key pressed:" << e->key() << "Text:" << e->text();
     if ( e->key() == Qt::Key_Delete ){
         deleteSelectedNotes();
+        e->accept();
+        return ;
+    }
+
+    if ( e->key() == Qt::Key_Up ){
+        updateSelectedNotePitch(1);
+        e->accept();
+        return ;
+    }
+        
+    if ( e->key() == Qt::Key_Down ){
+        updateSelectedNotePitch(-1);
+        e->accept();
+        return ;
+    }
+
+    if ( e->key() == Qt::Key_Right ){
+        if ( e->modifiers() & Qt::ControlModifier ){
+            updateSelectedNoteDuration(0.125);
+        } else {
+            updateSelectedNoteStart(0.125);
+        }        
+        e->accept();
+        return ;
+    }
+
+    if ( e->key() == Qt::Key_Left ){
+        if ( e->modifiers() & Qt::ControlModifier ){
+            updateSelectedNoteDuration(-0.125);
+        } else {
+            updateSelectedNoteStart(-0.125);
+        }
+        e->accept();
+        return ;
     }
 }
 
@@ -215,45 +250,6 @@ float PianoRollWidget::xToBeat(float x) const {
 int PianoRollWidget::yToPitch(float y) const {
     float row = ( y - Theme::PIANO_ROLL_NOTE_HEIGHT / 2.0 ) / Theme::PIANO_ROLL_NOTE_HEIGHT ;
     return 127 - static_cast<int>(std::round(row));
-}
-
-void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
-    QString action = json["action"].toString();
-
-    if ( action == "add_collection_value" ){
-        if ( json["status"] != "success" ){
-            qDebug() << "sequence note was not successfully added." ;
-            return ;
-        }
-
-        QJsonDocument doc = QJsonDocument(json["value"].toObject());
-        SequenceNote note = nlohmann::json::parse(doc.toJson().toStdString());
-        int index = json["index"].toInt();
-
-        if ( dragNote_ && dragNote_->getNote() == note ){
-            notes_[index] = dragNote_;
-            dragNote_ = nullptr ;
-        } else {
-            notes_[index] = new NoteWidget(note, this);
-        }
-        
-        update();
-        return ;
-    }
-
-    if ( action == "remove_collection_value" ){
-        if ( json["status"] != "success" ){
-            qDebug() << "sequence note was not successfully removed." ;
-            return ;
-        }
-
-        QJsonDocument doc = QJsonDocument(json["value"].toObject());
-        int index = json["index"].toInt();
-        
-        removeNote(index);
-        update();
-        return ;
-    }
 }
 
 void PianoRollWidget::onNoteSelected(NoteWidget* note, bool multiSelect){
@@ -433,4 +429,111 @@ void PianoRollWidget::onResizeEnd(const QPointF pos){
 
     isResizing_ = false ;
     return ;
+}
+
+void PianoRollWidget::updateSelectedNotePitch(int p){
+    for ( int idx : selectedNotes_ ){
+        NoteWidget* n = notes_[idx];
+        if ( !n ) continue ;
+
+        n->setMidiNote(n->getMidiNote() + p);
+        
+        CollectionRequest req ;
+        req.collectionType = CollectionType::SEQUENCER ; 
+        req.action = CollectionAction::SET ;
+        req.index = idx ;
+        req.componentId = id_ ;
+        req.value = n->getNote() ;
+
+        QJsonObject obj = Util::nlohmannToQJsonObject(req);
+        ApiClient::instance()->sendMessage(obj); 
+    }
+}
+
+void PianoRollWidget::updateSelectedNoteStart(float t){
+    for ( int idx : selectedNotes_ ){
+        NoteWidget* n = notes_[idx];
+        if ( !n ) continue ;
+    
+        n->setBeatRange(n->getStartBeat() + t, n->getEndBeat() + t);
+        CollectionRequest req ;
+        req.collectionType = CollectionType::SEQUENCER ; 
+        req.action = CollectionAction::SET ;
+        req.index = idx ;
+        req.componentId = id_ ;
+        req.value = n->getNote() ;
+
+        QJsonObject obj = Util::nlohmannToQJsonObject(req);
+        ApiClient::instance()->sendMessage(obj); 
+    }
+}
+
+void PianoRollWidget::updateSelectedNoteDuration(float d){
+    for ( int idx : selectedNotes_ ){
+        NoteWidget* n = notes_[idx];
+        if ( !n ) continue ;
+        
+        n->setEndBeat(n->getEndBeat() + d);
+        CollectionRequest req ;
+        req.collectionType = CollectionType::SEQUENCER ; 
+        req.action = CollectionAction::SET ;
+        req.index = idx ;
+        req.componentId = id_ ;
+        req.value = n->getNote() ;
+
+        QJsonObject obj = Util::nlohmannToQJsonObject(req);
+        ApiClient::instance()->sendMessage(obj); 
+    }
+}
+
+
+void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
+    QString action = json["action"].toString();
+
+    if ( action == "add_collection_value" ){
+        if ( json["status"] != "success" ){
+            qDebug() << "sequence note was not successfully added." ;
+            return ;
+        }
+
+        QJsonDocument doc = QJsonDocument(json["value"].toObject());
+        SequenceNote note = nlohmann::json::parse(doc.toJson().toStdString());
+        int index = json["index"].toInt();
+
+        if ( dragNote_ && dragNote_->getNote() == note ){
+            notes_[index] = dragNote_;
+            dragNote_ = nullptr ;
+        } else {
+            notes_[index] = new NoteWidget(note, this);
+        }
+        
+        update();
+        return ;
+    }
+
+    if ( action == "remove_collection_value" ){
+        if ( json["status"] != "success" ){
+            qDebug() << "sequence note was not successfully removed." ;
+            return ;
+        }
+
+        QJsonDocument doc = QJsonDocument(json["value"].toObject());
+        int index = json["index"].toInt();
+        
+        removeNote(index);
+        update();
+        return ;
+    }
+}
+
+void PianoRollWidget::onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value){
+    qDebug() << "Component Parameter Changed: " << componentId << "Parameter:" << GET_PARAMETER_TRAIT_MEMBER(p, name) << ", Value:" << std::get<double>(value) ;
+    if ( componentId != id_ ) return ;
+
+    if ( p == ParameterType::DURATION ){
+        setTotalBeats(std::get<double>(value));
+        return ;
+    }
+
+
 }
