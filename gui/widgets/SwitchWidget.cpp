@@ -32,8 +32,8 @@ SwitchWidget::SwitchWidget(QWidget* parent)
 }
 
 QSize SwitchWidget::sizeHint() const {
-    int width = Theme::SWITCH_WIDGET_HEIGHT * 2;
-    int height = Theme::SWITCH_WIDGET_HEIGHT;
+    int width = Theme::SWITCH_WIDGET_HEIGHT * 2 ;
+    int height = Theme::SWITCH_WIDGET_HEIGHT ;
     return QSize(width, height);
 }
 
@@ -42,9 +42,9 @@ void SwitchWidget::paintEvent(QPaintEvent*) {
     p.setRenderHint(QPainter::Antialiasing);
 
     // Calculate dimensions
-    int trackWidth = Theme::SWITCH_WIDGET_HEIGHT * 2;
-    int trackHeight = Theme::SWITCH_WIDGET_HEIGHT;
-    int thumbSize = trackHeight - 2 * Theme::SWITCH_WIDGET_MARGIN;
+    int trackWidth = Theme::SWITCH_WIDGET_HEIGHT * 2 ;
+    int trackHeight = Theme::SWITCH_WIDGET_HEIGHT ;
+    int thumbSize = trackHeight - 2 * Theme::SWITCH_WIDGET_MARGIN ;
     
     // Draw track
     QRectF trackRect(0, 0, trackWidth, trackHeight);
@@ -68,7 +68,7 @@ void SwitchWidget::paintEvent(QPaintEvent*) {
     p.setOpacity(1.0);
     qreal thumbX = Theme::SWITCH_WIDGET_MARGIN + 
                    thumbPosition_ * (trackWidth - thumbSize - 2 * Theme::SWITCH_WIDGET_MARGIN);
-    qreal thumbY = Theme::SWITCH_WIDGET_MARGIN;
+    qreal thumbY = Theme::SWITCH_WIDGET_MARGIN ;
     
     QRectF thumbRect(thumbX, thumbY, thumbSize, thumbSize);
     
