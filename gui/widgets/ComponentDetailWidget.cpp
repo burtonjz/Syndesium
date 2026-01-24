@@ -152,7 +152,7 @@ QWidget* ComponentDetailWidget::createFilterTypeWidget(){
 
 QWidget* ComponentDetailWidget::createStatusWidget(){
     auto w = new SwitchWidget(this);
-
+    w->setChecked(true);
     connect(w, &QAbstractButton::toggled, this, &ComponentDetailWidget::onValueChange);
     return w ;
 }
