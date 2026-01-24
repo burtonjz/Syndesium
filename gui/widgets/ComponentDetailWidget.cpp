@@ -49,11 +49,11 @@ ComponentDetailWidget::ComponentDetailWidget(int id, ComponentType type, QWidget
     setAttribute(Qt::WA_ShowWithoutActivating);
 
     for ( auto p: descriptor_.controllableParameters ){
-        createParameterWidget(p);
+        parameterWidgets_[p] = createParameterWidget(p);
     }
 
     for ( auto cd : descriptor_.collections ){
-        createCollectionWidget(cd);
+        collectionWidgets_[cd.collectionType] = createCollectionWidget(cd);
     }
 
     setupLayout();
@@ -84,35 +84,42 @@ ComponentType ComponentDetailWidget::getType() const {
     return descriptor_.type ;
 }
 
-void ComponentDetailWidget::createParameterWidget(ParameterType p){
+QWidget* ComponentDetailWidget::createParameterWidget(ParameterType p){
     switch(p){
     case ParameterType::WAVEFORM:
-        parameterWidgets_[p] = createWaveformWidget();
-        break ;
+        return createWaveformWidget();
     case ParameterType::FILTER_TYPE:
-        parameterWidgets_[p] = createFilterTypeWidget();
-        break ;
+        return createFilterTypeWidget();
     case ParameterType::STATUS:
-        parameterWidgets_[p] = createStatusWidget();
-        break ;
+        return createStatusWidget();
     default:
         // most things will just be dials
-        parameterWidgets_[p] = createSpinWidget(p);
-        break ;
+        return createSpinWidget(p);
     }
 }
 
-void ComponentDetailWidget::createCollectionWidget(CollectionDescriptor cd){
-    // specialized widgets defined here
-    if ( cd.collectionType == CollectionType::SEQUENCER ){
+QWidget* ComponentDetailWidget::createCollectionWidget(CollectionDescriptor cd){
+    switch(cd.collectionType){
+    case CollectionType::SEQUENCER:
+    {
         PianoRollWidget* pianoRoll = new PianoRollWidget(componentId_);
-        collectionWidgets_[cd.collectionType] = pianoRoll ;
         connect(this, &ComponentDetailWidget::parameterChanged, pianoRoll, &PianoRollWidget::onParameterChanged);
-        return ;
+        return pianoRoll ;
     }
-
-    // TODO: generic collection widget creation
-    
+    case CollectionType::GENERIC:
+    default:
+    {
+        switch (cd.structure){
+        case CollectionStructure::INDEPENDENT:
+            return createIndependentCollection(cd);
+        case CollectionStructure::GROUPED:
+            return createGroupedCollection(cd);
+        case CollectionStructure::SYNCHRONIZED:
+            return createSynchronizedCollection(cd);
+        default:
+            return nullptr ;
+        }
+    }}
 }
 
 QWidget* ComponentDetailWidget::createWaveformWidget(){
@@ -170,6 +177,21 @@ QWidget* ComponentDetailWidget::createSpinWidget(ParameterType p){
     return w ;
 }
 
+QWidget* ComponentDetailWidget::createIndependentCollection(CollectionDescriptor cd){
+    // TODO
+    return nullptr ;
+}
+
+QWidget* ComponentDetailWidget::createGroupedCollection(CollectionDescriptor cd){
+    // TODO
+    return nullptr ;
+}
+
+QWidget* ComponentDetailWidget::createSynchronizedCollection(CollectionDescriptor cd){
+    // TODO
+    return nullptr ;
+}
+
 void ComponentDetailWidget::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     QHBoxLayout* buttonLayout = new QHBoxLayout();
@@ -194,9 +216,6 @@ void ComponentDetailWidget::setupLayout(){
             qWarning() << "attempted to make collection widget of type" << CollectionType::toString(cd.collectionType) << ", which is not implemented" ;
             break ;
         }
-        if ( cd.collectionType == CollectionType::SEQUENCER ){    
-            
-        } 
 
         // TODO: generic collection layout logic
     }

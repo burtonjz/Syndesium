@@ -117,6 +117,10 @@ public:
     static constexpr qreal COMPONENT_DETAIL_WIDGET_WIDTH = 120 ;
     static constexpr qreal COMPONENT_DETAIL_MARGINS = 20 ;
 
+    static constexpr qreal COMPONENT_DETAIL_COLLECTION_ROW_SPACING = 2 ;
+    static constexpr qreal COMPONENT_DETAIL_COLLECTION_WIDGET_SPACING = 8 ;
+    static constexpr qreal COMPONENT_DETAIL_COLLECTION_DELETE_BTN_SIZE = 24 ;
+
     static constexpr qreal PIANO_ROLL_NOTE_HEIGHT = 30 ; 
     static constexpr qreal PIANO_ROLL_NOTE_EDGE_THRESHOLD = 8 ;
 

@@ -60,14 +60,21 @@ public:
     ComponentType getType() const ;
     
 protected:
-    void createParameterWidget(ParameterType p);
-    void createCollectionWidget(CollectionDescriptor cd);
+    QWidget* createParameterWidget(ParameterType p);
+    QWidget* createCollectionWidget(CollectionDescriptor cd);
 
 private:
     QWidget* createWaveformWidget();
     QWidget* createFilterTypeWidget();
     QWidget* createStatusWidget();
     QWidget* createSpinWidget(ParameterType p);
+
+    QWidget* createIndependentCollection(CollectionDescriptor cd);
+    QWidget* createGroupedCollection(CollectionDescriptor cd);
+    QWidget* createSynchronizedCollection(CollectionDescriptor cd);
+
+    void requestCollectionItemCreate(int index, std::function<void(bool)> callback);
+    void requestCollectionItemDelete(int index, std::function<void(bool)> callback);
     
     void setupLayout();
     void closeEvent(QCloseEvent* event) override ;

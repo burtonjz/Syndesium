@@ -33,6 +33,8 @@ COMPONENTS TO ADD:
 - Phaser
 - Chorus
 - Reverb
+- Inverter
+- Quantizer? 
 - Mixer (with different mixing strategies so this can support ring modulation, for example)
 - Bitcrusher
 
@@ -44,3 +46,4 @@ IMPROVEMENTS:
 ONE DAY...:
 - Envelope that supports drawing curve
 - Custom Wavetable Drawing
+- export custom synths to VST or LV2 or whatever
