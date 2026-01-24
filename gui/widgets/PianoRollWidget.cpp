@@ -527,13 +527,10 @@ void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
 }
 
 void PianoRollWidget::onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value){
-    qDebug() << "Component Parameter Changed: " << componentId << "Parameter:" << GET_PARAMETER_TRAIT_MEMBER(p, name) << ", Value:" << std::get<double>(value) ;
     if ( componentId != id_ ) return ;
 
     if ( p == ParameterType::DURATION ){
         setTotalBeats(std::get<double>(value));
         return ;
     }
-
-
 }

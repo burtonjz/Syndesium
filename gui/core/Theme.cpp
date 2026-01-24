@@ -63,7 +63,14 @@ const QColor Theme::PIANO_ROLL_BACKGROUND = QColor(50, 25, 25);
 const QColor Theme::PIANO_ROLL_GRID_PRIMARY = QColor(200,200,200);
 const QColor Theme::PIANO_ROLL_GRID_SECONDARY = QColor(100,100,100);
 
+const QColor Theme::SWITCH_WIDGET_ON_COLOR = QColor(0, 150, 136);      // Teal - good as is
+const QColor Theme::SWITCH_WIDGET_OFF_COLOR = QColor(60, 60, 60);      // Dark gray track
+const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_ON = QColor(255, 255, 255);   // White thumb when on
+const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_OFF = QColor(189, 189, 189);  // Light gray thumb when off
+const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR = QColor(40, 40, 40);      // Very dark gray when disabled
+
 void Theme::applyDarkTheme() {
+
     QPalette darkPalette;
     darkPalette.setColor(QPalette::Window, BACKGROUND_MEDIUM);
     darkPalette.setColor(QPalette::WindowText, TEXT_PRIMARY);

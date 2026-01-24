@@ -73,6 +73,14 @@ public:
     static const QColor PIANO_ROLL_GRID_PRIMARY ;
     static const QColor PIANO_ROLL_GRID_SECONDARY ;
 
+    // Switch Widget
+    static const QColor SWITCH_WIDGET_ON_COLOR ;
+    static const QColor SWITCH_WIDGET_OFF_COLOR ;
+    static const QColor SWITCH_WIDGET_THUMB_COLOR_ON ;
+    static const QColor SWITCH_WIDGET_THUMB_COLOR_OFF ;
+    static const QColor SWITCH_WIDGET_DISABLED_COLOR ;
+
+
     // Modulation indicator
     static const QColor MODULATION_ACTIVE ;
     
@@ -122,6 +130,14 @@ public:
     static constexpr int ANALYZER_MARGIN_RIGHT = 20 ;
     static constexpr int ANALYZER_MARGIN_TOP = 20 ;
     static constexpr int ANALYZER_MARGIN_BOTTOM = 40 ;
+
+    static constexpr qreal SWITCH_WIDGET_OPACITY_ON = 0.5 ;
+    static constexpr qreal SWITCH_WIDGET_OPACITY_OFF = 0.38 ;
+    static constexpr qreal SWITCH_WIDGET_OPACITY_DISABLED = 0.12 ;
+    static constexpr int SWITCH_WIDGET_HEIGHT = 16 ;
+    static constexpr int SWITCH_WIDGET_MARGIN = 3 ;
+    static constexpr int SWITCH_WIDGET_CORNER_ROUND = 8 ;
+    static constexpr int SWITCH_WIDGET_ANIMATION_DURATION = 120 ; // msec
 };
 
 #endif // __UI_THEME_HPP_

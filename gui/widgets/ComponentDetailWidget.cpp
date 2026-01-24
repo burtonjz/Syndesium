@@ -16,7 +16,6 @@
  */
 
 #include "widgets/ComponentDetailWidget.hpp"
-#include "widgets/PianoRollWidget.hpp"
 
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
@@ -27,6 +26,9 @@
 #include "types/FilterType.hpp"
 #include "core/ApiClient.hpp"
 #include "core/Theme.hpp"
+
+#include "widgets/PianoRollWidget.hpp"
+#include "widgets/SwitchWidget.hpp"
 
 #include <QJsonObject>
 #include <QEvent>
@@ -85,14 +87,18 @@ ComponentType ComponentDetailWidget::getType() const {
 void ComponentDetailWidget::createParameterWidget(ParameterType p){
     switch(p){
     case ParameterType::WAVEFORM:
-        createWaveformWidget();
+        parameterWidgets_[p] = createWaveformWidget();
         break ;
     case ParameterType::FILTER_TYPE:
-        createFilterTypeWidget();
+        parameterWidgets_[p] = createFilterTypeWidget();
+        break ;
+    case ParameterType::STATUS:
+        parameterWidgets_[p] = createStatusWidget();
         break ;
     default:
         // most things will just be dials
-        createSpinWidget(p);
+        parameterWidgets_[p] = createSpinWidget(p);
+        break ;
     }
 }
 
@@ -106,9 +112,10 @@ void ComponentDetailWidget::createCollectionWidget(CollectionDescriptor cd){
     }
 
     // TODO: generic collection widget creation
+    
 }
 
-void ComponentDetailWidget::createWaveformWidget(){
+QWidget* ComponentDetailWidget::createWaveformWidget(){
     // populate combo box with available waveforms
     auto w = new QComboBox(this);
     for ( auto wf : Waveform::getWaveforms()){
@@ -122,11 +129,11 @@ void ComponentDetailWidget::createWaveformWidget(){
         w->setCurrentIndex(index);
     } 
 
-    parameterWidgets_[ParameterType::WAVEFORM] = w ;
     connect(w, &QComboBox::currentTextChanged, this, &ComponentDetailWidget::onValueChange);
+    return w ;
 }
 
-void ComponentDetailWidget::createFilterTypeWidget(){
+QWidget* ComponentDetailWidget::createFilterTypeWidget(){
     auto w = new QComboBox(this);
     for ( auto ft : FilterType::getFilterTypes()){
         FilterType f = FilterType(ft);
@@ -139,11 +146,18 @@ void ComponentDetailWidget::createFilterTypeWidget(){
         w->setCurrentIndex(index);
     } 
 
-    parameterWidgets_[ParameterType::FILTER_TYPE] = w ;
     connect(w, &QComboBox::currentTextChanged, this, &ComponentDetailWidget::onValueChange);
+    return w ;
 }
 
-void ComponentDetailWidget::createSpinWidget(ParameterType p){
+QWidget* ComponentDetailWidget::createStatusWidget(){
+    auto w = new SwitchWidget(this);
+
+    connect(w, &QAbstractButton::toggled, this, &ComponentDetailWidget::onValueChange);
+    return w ;
+}
+
+QWidget* ComponentDetailWidget::createSpinWidget(ParameterType p){
     auto w = new QDoubleSpinBox(this);
     
     auto step = GET_PARAMETER_TRAIT_MEMBER(p, uiStepPrecision);
@@ -151,8 +165,9 @@ void ComponentDetailWidget::createSpinWidget(ParameterType p){
     w->setSingleStep(step);
     w->setValue(GET_PARAMETER_TRAIT_MEMBER(p, defaultValue));
 
-    parameterWidgets_[p] = w ;
     connect(w, &QDoubleSpinBox::valueChanged, this, &ComponentDetailWidget::onValueChange);
+
+    return w ;
 }
 
 void ComponentDetailWidget::setupLayout(){
@@ -244,6 +259,10 @@ void ComponentDetailWidget::onValueChange(){
         v = cb->itemData(cb->currentIndex()).value<uint8_t>();
     } else if ( auto sb = dynamic_cast<QDoubleSpinBox*>(it.value())){
         v = sb->value();
+    } else if ( auto st = dynamic_cast<SwitchWidget*>(it.value())){
+        v = st->isChecked();
+    } else {
+        return ;
     }
 
     pendingChanges_[p] = v ;

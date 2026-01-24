@@ -1,7 +1,7 @@
 TO DO
 
 SEQUENCER
-- Clean up sequence UX, note overlap, updating elegantly, any random bugs
+- Support per-note velocities
 
 UI
 - Midi Control Mapping

@@ -64,9 +64,11 @@ protected:
     void createCollectionWidget(CollectionDescriptor cd);
 
 private:
-    void createWaveformWidget();
-    void createFilterTypeWidget();
-    void createSpinWidget(ParameterType p);
+    QWidget* createWaveformWidget();
+    QWidget* createFilterTypeWidget();
+    QWidget* createStatusWidget();
+    QWidget* createSpinWidget(ParameterType p);
+    
     void setupLayout();
     void closeEvent(QCloseEvent* event) override ;
 
