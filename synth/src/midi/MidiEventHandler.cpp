@@ -16,7 +16,6 @@
  */
 
 #include "MidiEventHandler.hpp"
-#include <stdexcept>
 #include <algorithm>
 #include <spdlog/spdlog.h>
 

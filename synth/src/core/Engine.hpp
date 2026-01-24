@@ -68,7 +68,7 @@ public:
     RtMidiIn* getMidiIn();
     MidiController* getMidiController();
     MidiEventHandler* getDefaultMidiHandler();
-    double getDeltaTime() const;
+    int getSampleRate() const ;
     int getAudioDeviceId() const;
     int getMidiDeviceId() const;
     const std::map<int,std::string> getAvailableMidiDevices() const;
@@ -140,7 +140,7 @@ private:
     // Analysis buffer
     LockFreeRingBuffer<double> analysisAudioOut_;
     
-    double dt_;
+    double sampleRate_ ;
 };
 
 #endif // __ENGINE_HPP_

@@ -255,7 +255,7 @@ void Engine::audioLoop(){
         Config::set("audio.sample_rate", sampleRate);
     }
 
-    dt_ = 1.0 / sampleRate ;
+    sampleRate_ = sampleRate ;
     
     // Open audio stream
     if (dac_.openStream(
@@ -338,10 +338,11 @@ int Engine::audioCallback(
     }
     
     engine->signalController.clearBuffer();
-    
+
+    float bufferDt = nBufferFrames / static_cast<float>(engine->getSampleRate());
+    engine->midiController.tick(bufferDt);
     double sample;
     for (unsigned int i = 0; i < nBufferFrames; ++i){
-        engine->midiController.tick(engine->getDeltaTime());
         engine->componentManager.runParameterModulation();
         sample = engine->signalController.processFrame();
         buffer[i] = dsp::fastAtan(sample);
@@ -385,8 +386,7 @@ void Engine::audioCleanup(RtAudio* dac, RtAudioErrorType error){
 // ============================================================================
 
 void Engine::setup(){
-    unsigned int sampleRate = Config::get<unsigned int>("audio.sample_rate").value();
-    dt_ = 1.0 / sampleRate;
+    sampleRate_ = Config::get<unsigned int>("audio.sample_rate").value();
     
     midiController.initialize();
     signalController.updateProcessingGraph();
@@ -418,8 +418,8 @@ MidiEventHandler* Engine::getDefaultMidiHandler(){
     return &midiDefaultHandler_;
 }
 
-double Engine::getDeltaTime() const {
-    return dt_;
+int Engine::getSampleRate() const {
+    return sampleRate_ ;
 }
 
 int Engine::getAudioDeviceId() const {
