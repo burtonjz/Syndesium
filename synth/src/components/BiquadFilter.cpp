@@ -21,11 +21,12 @@ BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     parameters_->add<ParameterType::BANDWIDTH>(cfg.bandwidth,true);
     parameters_->add<ParameterType::SHELF>(cfg.shelfSlope,true);
 
+    parameters_->getParameter(ParameterType::FILTER_TYPE)->addListener(this);
     parameters_->getParameter(ParameterType::FREQUENCY)->addListener(this);
+    parameters_->getParameter(ParameterType::DBGAIN)->addListener(this);
     parameters_->getParameter(ParameterType::Q_FACTOR)->addListener(this);
     parameters_->getParameter(ParameterType::BANDWIDTH)->addListener(this);
     parameters_->getParameter(ParameterType::SHELF)->addListener(this);
-    parameters_->getParameter(ParameterType::DBGAIN)->addListener(this);
 
     sampleRate_ = Config::get<double>("audio.sample_rate").value();
 
@@ -43,6 +44,7 @@ void BiquadFilter::calculateCoefficients(){
 
     switch(FilterType::from_uint8(parameters_->getParameter<ParameterType::FILTER_TYPE>()->getValue())){
     case FilterType::LowPass:
+        spdlog::debug("Calculating LowPass coefficients");
         Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
         alpha = sin_w0 / ( 2.0 * Q );
         b0 = (1.0 - cos_w0) / 2.0 ; // b0
@@ -53,6 +55,7 @@ void BiquadFilter::calculateCoefficients(){
         a2 = 1.0 - alpha ; // a2
         break ;
     case FilterType::HighPass:
+        spdlog::debug("Calculating HighPass coefficients");
         Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
         alpha = sin_w0 / ( 2.0 * Q);
         b0 = (1.0 + cos_w0) / 2.0 ;
@@ -63,16 +66,39 @@ void BiquadFilter::calculateCoefficients(){
         a2 = 1.0 - alpha ;
         break ;
     case FilterType::BandPass:
+        spdlog::debug("Calculating BandPass coefficients");
         Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
         alpha = sin_w0 / ( 2.0 * Q);
-        b0 = Q * alpha ;
+        b0 = alpha ;
         b1 = 0.0 ;
         b2 = -b0 ;
         a0 = 1.0 + alpha ;
         a1 = -2.0 * cos_w0 ;
         a2 = 1.0 - alpha ;
         break ;
+    case FilterType::BandStop:
+        Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
+        alpha = sin_w0 / (2.0 * Q);
+        b0 = 1.0;
+        b1 = -2.0 * cos_w0;
+        b2 = 1.0;
+        a0 = 1.0 + alpha;
+        a1 = -2.0 * cos_w0;
+        a2 = 1.0 - alpha;
+        break;
+    case FilterType::PeakingBell:
+        Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
+        A = std::pow(10.0, parameters_->getParameter<ParameterType::DBGAIN>()->getInstantaneousValue() / 40.0);
+        alpha = sin_w0 / (2.0 * Q);
+        b0 = 1.0 + alpha * A;
+        b1 = -2.0 * cos_w0;
+        b2 = 1.0 - alpha * A;
+        a0 = 1.0 + alpha / A;
+        a1 = -2.0 * cos_w0;
+        a2 = 1.0 - alpha / A;
+        break;
     case FilterType::LowShelf:
+        spdlog::debug("Calculating LowShelf coefficients");
         S = parameters_->getParameter<ParameterType::SHELF>()->getInstantaneousValue() ;
         A = std::pow(10.0, parameters_->getParameter<ParameterType::DBGAIN>()->getInstantaneousValue() / 40.0 );
         alpha = (sin_w0 / 2.0) * std::sqrt((A + 1.0 / A) * ( 1.0 / S - 1.0 ) + 2.0 );
@@ -84,6 +110,7 @@ void BiquadFilter::calculateCoefficients(){
         a2 = (A + 1.0) + (A - 1.0) * cos_w0 - 2.0 * std::sqrt(A) * alpha ;
         break ;
     case FilterType::HighShelf:
+        spdlog::debug("Calculating HighShelf coefficients");
         S = parameters_->getParameter<ParameterType::SHELF>()->getInstantaneousValue() ;
         A = std::pow(10.0, parameters_->getParameter<ParameterType::DBGAIN>()->getInstantaneousValue() / 40.0 );
         alpha = (sin_w0 / 2.0) * std::sqrt((A + 1.0 / A) * ( 1.0 / S - 1.0 ) + 2.0 );

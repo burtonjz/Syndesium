@@ -69,6 +69,8 @@ const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_ON = QColor(255, 255, 255);   // W
 const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_OFF = QColor(189, 189, 189);  // Light gray thumb when off
 const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR = QColor(40, 40, 40);      // Very dark gray when disabled
 
+const QColor Theme::ANALYZER_BACKGROUND_COLOR = QColor(20,20,20);
+
 void Theme::applyDarkTheme() {
 
     QPalette darkPalette;

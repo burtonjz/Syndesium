@@ -36,9 +36,9 @@ SpectrumAnalyzerWidget::SpectrumAnalyzerWidget(QWidget *parent):
     Config::load();
 
     port_ = Config::get<unsigned int>("analysis.spectrum_analyzer.port").value_or(54322);
-    sampleRate_ = Config::get<double>("audio.sample_rate").value_or(44100);
+    sampleRate_ = Config::get<float>("audio.sample_rate").value_or(44100);
     fftSize_ = Config::get<unsigned int>("analysis.spectrum_analyzer.buffer_size").value_or(2048);
-    smoothFactor_ = Config::get<double>("analysis.spectrum_analyzer.smooth_factor").value_or(0.7);
+    smoothFactor_ = Config::get<float>("analysis.spectrum_analyzer.smooth_factor").value_or(0.7);
 
     spectrumData_.resize(fftSize_ / 2, minDb_);
     smoothedData_.resize(fftSize_ / 2, minDb_);
@@ -74,19 +74,19 @@ void SpectrumAnalyzerWidget::setPort(quint16 port) {
     }
 }
 
-void SpectrumAnalyzerWidget::setFrequencyRange(double minHz, double maxHz) {
+void SpectrumAnalyzerWidget::setFrequencyRange(float minHz, float maxHz) {
     minFreq_ = minHz;
     maxFreq_ = maxHz;
     update();
 }
 
-void SpectrumAnalyzerWidget::setMagnitudeRange(double minDb, double maxDb) {
+void SpectrumAnalyzerWidget::setMagnitudeRange(float minDb, float maxDb) {
     minDb_ = minDb;
     maxDb_ = maxDb;
     update();
 }
 
-void SpectrumAnalyzerWidget::setSampleRate(double sampleRate) {
+void SpectrumAnalyzerWidget::setSampleRate(float sampleRate) {
     sampleRate_ = sampleRate;
     update();
 }
@@ -104,7 +104,7 @@ void SpectrumAnalyzerWidget::onReadyRead() {
         if ( count > 0 ){
             spectrumData_.assign(data, data + count);
 
-            if ( smoothedData_.size() != count ){ // don't smooth on first packed
+            if ( smoothedData_.size() != count ){ // don't smooth on first packet
                 smoothedData_.resize(count);
                 smoothedData_ = spectrumData_ ; 
             } else {
@@ -121,9 +121,10 @@ void SpectrumAnalyzerWidget::onReadyRead() {
 }
 
 void SpectrumAnalyzerWidget::onUpdateTimeout() {
-    if (dataReady_) {
-        update(); // Trigger repaint
-        dataReady_ = false;
+    if ( dataReady_ ) {
+        renderToCache() ;
+        update(); 
+        dataReady_ = false ;
     }
 }
 
@@ -131,19 +132,15 @@ void SpectrumAnalyzerWidget::paintEvent(QPaintEvent *event) {
     Q_UNUSED(event);
     
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    
-    // Background
-    painter.fillRect(rect(), QColor(20, 20, 20));
-    
-    // Draw components
-    drawGrid(painter);
-    drawSpectrum(painter);
-    drawLabels(painter);
+
+    if ( !cachedFrame_.isNull() ){
+        painter.drawImage(0,0, cachedFrame_);
+    }
 }
 
 void SpectrumAnalyzerWidget::resizeEvent(QResizeEvent *event) {
     Q_UNUSED(event);
+    cachedFrame_ = QImage();
     update();
 }
 
@@ -154,14 +151,14 @@ void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
     int plotHeight = height() - Theme::ANALYZER_MARGIN_TOP - Theme::ANALYZER_MARGIN_BOTTOM ;
     
     // Horizontal grid lines (dB)
-    for (double db = minDb_; db <= maxDb_; db += 10.0) {
+    for (float db = minDb_; db <= maxDb_; db += 10.0) {
         int y = static_cast<int>(dbToY(db));
         painter.drawLine(Theme::ANALYZER_MARGIN_LEFT, y, Theme::ANALYZER_MARGIN_LEFT + plotWidth, y);
     }
     
     // Vertical grid lines (frequency, logarithmic)
-    std::vector<double> freqs = {20, 50, 100, 2.0, 500, 1000, 2000, 5000, 10000, 20000};
-    for (double freq : freqs) {
+    std::vector<float> freqs = {20, 50, 100, 2.0, 500, 1000, 2000, 5000, 10000, 20000};
+    for (float freq : freqs) {
         if (freq >= minFreq_ && freq <= maxFreq_) {
             int x = static_cast<int>(freqToX(freq));
             painter.drawLine(x, Theme::ANALYZER_MARGIN_TOP, x, Theme::ANALYZER_MARGIN_TOP + plotHeight);
@@ -173,27 +170,29 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
     if (smoothedData_.empty()) return;
     
     // Create path for spectrum
-    QPainterPath path;
-    bool firstPoint = true;
+    QPainterPath path ;
+    bool firstPoint = true ;
     
-    // skip bin 0 (DC Control)
-    for (size_t bin = 1; bin < smoothedData_.size(); ++bin) {
-        double freq = binToFreq(bin);
+    int plotWidth = width() - Theme::ANALYZER_MARGIN_LEFT - Theme::ANALYZER_MARGIN_RIGHT ;
+
+    int sampleInterval = Theme::ANALYZER_PIXEL_RESOLUTION ;
+    for ( int px = 0 ; px < plotWidth; px += sampleInterval ){
+        float x = Theme::ANALYZER_MARGIN_LEFT + px ;
+        float freq = xToFreq(x);
         
-        // Only draw frequencies in our display range
-        if (freq < minFreq_ || freq > maxFreq_) continue ;
-        
-        double db = smoothedData_[bin];
-        db = std::max(minDb_, std::min(maxDb_, db)); 
-        
-        double x = freqToX(freq);
-        double y = dbToY(db);
-        
-        if (firstPoint) {
-            path.moveTo(x, y);
-            firstPoint = false;
+        if ( freq < minFreq_ || freq > maxFreq_ ) continue ;
+
+        size_t bin = freqToBin(freq);
+        if ( bin >= smoothedData_.size() ) continue ;
+
+        float db = std::max(minDb_, std::min(maxDb_, smoothedData_[bin]));
+        float y = dbToY(db);
+
+        if ( firstPoint ){
+            path.moveTo(x,y);
+            firstPoint = false ;
         } else {
-            path.lineTo(x, y);
+            path.lineTo(x,y);
         }
     }
     
@@ -212,14 +211,14 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
     int plotHeight = height() - Theme::ANALYZER_MARGIN_TOP - Theme::ANALYZER_MARGIN_BOTTOM;
     
     // Y-axis labels (dB)
-    for (double db = minDb_; db <= maxDb_; db += 20.0) {
+    for (float db = minDb_; db <= maxDb_; db += 20.0) {
         int y = static_cast<int>(dbToY(db));
         QString label = QString::number(static_cast<int>(db)) + " dB";
         painter.drawText(5, y + 5, label);
     }
     
     // X-axis labels (frequency)
-    std::vector<std::pair<double, QString>> freqLabels = {
+    std::vector<std::pair<float, QString>> freqLabels = {
         {20, "20Hz"},
         {50, "50"},
         {100, "100"},
@@ -240,26 +239,57 @@ void SpectrumAnalyzerWidget::drawLabels(QPainter &painter) {
     }
 }
 
-double SpectrumAnalyzerWidget::freqToX(double freq) const {
-    int plotWidth = width() - Theme::ANALYZER_MARGIN_LEFT - Theme::ANALYZER_MARGIN_RIGHT;
+void SpectrumAnalyzerWidget::renderToCache() {
+    if ( cachedFrame_.size() != size()){
+        cachedFrame_ = QImage(size(), QImage::Format_ARGB32_Premultiplied);
+    }
+
+    cachedFrame_.fill(Theme::ANALYZER_BACKGROUND_COLOR);
+    
+    QPainter painter(&cachedFrame_);
+    painter.setRenderHint(QPainter::Antialiasing);
+
+    drawGrid(painter);
+    drawSpectrum(painter);
+    drawLabels(painter);
+
+}
+
+float SpectrumAnalyzerWidget::freqToX(float freq) const {
+    int plotWidth = width() - Theme::ANALYZER_MARGIN_LEFT - Theme::ANALYZER_MARGIN_RIGHT ;
     
     // Logarithmic mapping
-    double logMin = std::log10(minFreq_);
-    double logMax = std::log10(maxFreq_);
-    double logFreq = std::log10(freq);
+    float logMin = std::log10(minFreq_);
+    float logMax = std::log10(maxFreq_);
+    float logFreq = std::log10(freq);
     
-    double normalized = (logFreq - logMin) / (logMax - logMin);
+    float normalized = (logFreq - logMin) / (logMax - logMin);
     return Theme::ANALYZER_MARGIN_LEFT + normalized * plotWidth;
 }
 
-double SpectrumAnalyzerWidget::dbToY(double db) const {
+float SpectrumAnalyzerWidget::xToFreq(float x) const {    
+    int plotWidth = width() - Theme::ANALYZER_MARGIN_LEFT - Theme::ANALYZER_MARGIN_RIGHT ;
+    float normalized = (x - Theme::ANALYZER_MARGIN_LEFT) / plotWidth ;
+
+    float logMin = std::log10(minFreq_);
+    float logMax = std::log10(maxFreq_);
+    float logFreq = logMin + normalized * (logMax - logMin);
+
+    return std::pow(10.0, logFreq);
+}
+
+float SpectrumAnalyzerWidget::dbToY(float db) const {
     int plotHeight = height() - Theme::ANALYZER_MARGIN_TOP - Theme::ANALYZER_MARGIN_BOTTOM;
     
     // Linear mapping (inverted - lower dB = higher on screen)
-    double normalized = (db - minDb_) / (maxDb_ - minDb_) ;
+    float normalized = (db - minDb_) / (maxDb_ - minDb_) ;
     return Theme::ANALYZER_MARGIN_TOP + (1.0 - normalized) * plotHeight ;
 }
 
-double SpectrumAnalyzerWidget:: binToFreq(size_t bin) const {
+float SpectrumAnalyzerWidget::binToFreq(size_t bin) const {
     return (bin * sampleRate_) / fftSize_ ;
+}
+
+size_t SpectrumAnalyzerWidget::freqToBin(float freq) const {
+    return static_cast<size_t>((freq * fftSize_) / sampleRate_ );
 }

@@ -18,6 +18,7 @@
 #ifndef __PARAMETER_TYPE_HPP_
 #define __PARAMETER_TYPE_HPP_
 
+#include "types/FilterType.hpp"
 #include "types/Waveform.hpp"
 #include "types/ScaleType.hpp"
 #include "types/ScaleNote.hpp"
@@ -263,8 +264,8 @@ template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
     using ValueType = uint8_t ;
     static constexpr std::string name = "filter type" ;
     static constexpr float minimum = 0 ;
-    static constexpr float maximum = 1 ;
-    static constexpr float defaultValue = 0 ;
+    static constexpr float maximum = FilterType::N ;
+    static constexpr float defaultValue = FilterType::LowPass ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
     static constexpr double uiStepPrecision = 1.0 ;
 };

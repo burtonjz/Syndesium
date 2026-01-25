@@ -80,6 +80,8 @@ public:
     static const QColor SWITCH_WIDGET_THUMB_COLOR_OFF ;
     static const QColor SWITCH_WIDGET_DISABLED_COLOR ;
 
+    static const QColor ANALYZER_BACKGROUND_COLOR ;
+
 
     // Modulation indicator
     static const QColor MODULATION_ACTIVE ;
@@ -134,6 +136,7 @@ public:
     static constexpr int ANALYZER_MARGIN_RIGHT = 20 ;
     static constexpr int ANALYZER_MARGIN_TOP = 20 ;
     static constexpr int ANALYZER_MARGIN_BOTTOM = 40 ;
+    static constexpr int ANALYZER_PIXEL_RESOLUTION = 2 ;
 
     static constexpr qreal SWITCH_WIDGET_OPACITY_ON = 0.5 ;
     static constexpr qreal SWITCH_WIDGET_OPACITY_OFF = 0.38 ;
