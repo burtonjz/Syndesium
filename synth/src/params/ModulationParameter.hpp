@@ -18,7 +18,6 @@
 #ifndef __MODULATION_PARAMETER_HPP_
 #define __MODULATION_PARAMETER_HPP_
 
-#include "containers/AtomicFloat.hpp"
 #include <array>
 #include <bitset>
 
@@ -35,26 +34,28 @@ enum class ModulationParameter : int {
     INPUT_2,
     OUTPUT_1,
     OUTPUT_2,
+    FILTER_STATE_1,
+    FILTER_STATE_2,
     N_PARAMETERS
 };
 
 constexpr int N_MODULATION_PARAMETERS = static_cast<int>(ModulationParameter::N_PARAMETERS);
 
 struct ModulationData {
-    std::array<AtomicFloat, N_MODULATION_PARAMETERS> data ;
+    std::array<double, N_MODULATION_PARAMETERS> data ;
     std::bitset<N_MODULATION_PARAMETERS> inUse ;
 
     bool has(ModulationParameter p) const {
         return inUse.test(static_cast<size_t>(p));
     }
 
-    void set(ModulationParameter p, float value){
-        data[static_cast<size_t>(p)].set(value);
+    void set(ModulationParameter p, double value){
+        data[static_cast<size_t>(p)] = value ;
         inUse.set(static_cast<size_t>(p));
     }
 
-    float get(ModulationParameter p) const {
-        return data[static_cast<size_t>(p)].get() ;
+    double get(ModulationParameter p) const {
+        return data[static_cast<size_t>(p)] ;
     }
 
     bool isEmpty() const {

@@ -9,7 +9,9 @@
 BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     BaseComponent(id, ComponentType::BiquadFilter),
     BaseModule(),
-    BaseModulator()
+    BaseModulator(),
+    state1_(0.0),
+    state2_(0.0)
 {
     parameters_->add<ParameterType::FILTER_TYPE>(cfg.filterType, false);
     parameters_->add<ParameterType::FREQUENCY>(cfg.frequency, true);
@@ -91,13 +93,16 @@ void BiquadFilter::calculateCoefficients(){
     coefficients_ = {b0/a0, b1/a0, b2/a0, a1/a0, a2/a0};
 }
 
-inline double BiquadFilter::getCurrentOutput(double x0, double x1, double x2, double y1, double y2) const {
-    return (coefficients_[0])* x0 + 
-        (coefficients_[1]) * x1  + 
-        (coefficients_[2]) * x2  - 
-        (coefficients_[3]) * y1 - 
-        (coefficients_[4]) * y2 ;
-    
+inline double BiquadFilter::getCurrentOutput(double input){
+    return getCurrentOutput(input, state1_, state2_);
+}
+
+inline double BiquadFilter::getCurrentOutput(double input, double& s1, double& s2) const {
+    // Direct Form II transposed
+    double output = coefficients_[0] * input + state1_ ;
+    s1 = coefficients_[1] * input - coefficients_[3] * output + state2_ ;
+    s2 = coefficients_[2] * input - coefficients_[4] * output ;
+    return output ;
 }
 
 double BiquadFilter::modulate(double value, ModulationData* mData) const {
@@ -105,52 +110,32 @@ double BiquadFilter::modulate(double value, ModulationData* mData) const {
 
     // check required data
     if ( !mData ) return output ; 
-    if ( ! mData->has(ModulationParameter::INPUT_1) ){
-        mData->set(ModulationParameter::INPUT_1, 0.0);
+    if ( ! mData->has(ModulationParameter::FILTER_STATE_1) ){
+        mData->set(ModulationParameter::FILTER_STATE_1, 0.0);
     }
-    if ( ! mData->has(ModulationParameter::INPUT_2) ){
-        mData->set(ModulationParameter::INPUT_2, 0.0);
+    if ( ! mData->has(ModulationParameter::FILTER_STATE_2) ){
+        mData->set(ModulationParameter::FILTER_STATE_2, 0.0);
     }
-    if ( ! mData->has(ModulationParameter::OUTPUT_1) ){
-        mData->set(ModulationParameter::OUTPUT_1, 0.0);
-    }
-    if ( ! mData->has(ModulationParameter::OUTPUT_2) ){
-        mData->set(ModulationParameter::OUTPUT_2, 0.0);
-    }
+    
+    double s1 = mData->get(ModulationParameter::FILTER_STATE_1); 
+    double s2 = mData->get(ModulationParameter::FILTER_STATE_2);
 
-    output = getCurrentOutput(
-        value,
-        mData->get(ModulationParameter::INPUT_1),
-        mData->get(ModulationParameter::INPUT_2),
-        mData->get(ModulationParameter::OUTPUT_1),
-        mData->get(ModulationParameter::OUTPUT_2)
-    );
+    output = getCurrentOutput(value,s1, s2);
 
     // tick modulation data
-    mData->set(ModulationParameter::OUTPUT_2, mData->get(ModulationParameter::OUTPUT_1));
-    mData->set(ModulationParameter::OUTPUT_1, output);
-    mData->set(ModulationParameter::INPUT_2, mData->get(ModulationParameter::INPUT_1));
-    mData->set(ModulationParameter::INPUT_1, value);
+    mData->set(ModulationParameter::FILTER_STATE_1, s1);
+    mData->set(ModulationParameter::FILTER_STATE_2, s2);
     
     return output ;
 }
 
 void BiquadFilter::calculateSample(){
-    double input = 0, output = 0 ;
-
+    double input = 0 ;
     for (auto m : getInputs()){
         input += m->getCurrentSample();
     }
 
-    output = getCurrentOutput(input, lastInputs_[0], lastInputs_[1], lastOutputs_[0], lastOutputs_[1]);
-    buffer_[bufferIndex_] = output ;
-
-    // tick inputs/outputs
-    lastOutputs_[1] = lastOutputs_[0];
-    lastOutputs_[0] = output ;
-    lastInputs_[1] = lastInputs_[0];
-    lastInputs_[0] = input ;
-
+    buffer_[bufferIndex_] = getCurrentOutput(input, state1_, state2_);
 }
 
 void BiquadFilter::tick(){

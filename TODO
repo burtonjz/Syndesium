@@ -1,47 +1,56 @@
 TO DO
 
-SEQUENCER
-- Support per-note velocities
-
 UI
-- Midi Control Mapping
-  - Allow user to hit a button then touch the midi device knob to match that knob to that control
-- Modulation Enhancements:
-  - Right click context menu to delete specific connections
-  - UI support modulation depth, setting modulation strategy, and configuring a modulation chain.
-- Misc
-  - Improve module add logic so they do not spawn on top of each other.
-  - allow naming of components
-  - allow grouping of components -- hide internal connections and expose unused, or specified connections.
-  - Make save/load functions save/update hardware socket container widget positions.
-  - Move component additions to the file bar to make more room for the graph panel, and then create shortcut context menus to quickly add modules
-  - remember previous setup selections (save in config), and move setup to menu bar with a shortcut.
-  - implement module duplicate
-  - no deleting modules in run mode.
-  - create a dock and popout system for detail widgets for easier management.
-  - Create max zoom for gui graph panel?
-  - add sync socket to oscillator (orange?) 
+- FUNCTIONALITY/FLOW
+  - Midi Control Mapping 
+    - Dockable parameters and allow users to map them to Midi Control signals 
+  - Component Detail Widgets
+    - create a dock and popout system for detail widgets for easier management (probably unify with the Midi Control Mapping stuff)
+  - Parameter Modulation
+    - make modulation depth and modulation strategy accessible via a context menu
+    - create a ModulationChain class that supports passing multiple modulation effects to the same parameter (maybe this should be a standalone component, "ModulationMixer")
+  - Setup
+    - Move setup to the menu toolbar, add shortcut, and add saved hardware midi/audio choices to config file so it loads up when the application loads up.
+  - Run
+    - Block deletion of components while in run mode. 
+- COMPONENTS
+  - General
+    - upgrade generic components from QDoubleSpinBox to a custom Slider or Dial
+    - Support generic parameter collections (have specialized sequencer, but should have a more basic one for elsewhere that I use collections)
+    - Ensure that modules do not spawn on top of eachother during add logic
+    - Move add logic to a toolbar menu, and make hot keys that open up a context menu to quickly add new components
+    - Allow component duplication -- one method where you just copy the component, and another where you copy it with any possible connections
+    - Allow naming of components for improved readablitiy
+    - allow grouping of components -- hide internal connections and expose unused, or specified connections.
+  - SEQUENCER
+    - Support per-note velocities
+    - Make the horizontal scroll bar scroll with shift+mouse wheel
+    - Do not allow sequence notes to be created while the engine is running 
+    - Ensure when the sequencer status knob is toggled, that it immediately sends note off signals for any active note (or don't allow toggling during run)
 
-ANALYSIS / VISUALS:
-- find optimizations for the spectrum analyzer (seems to run pretty hot)
-- create mechanism to send the output of a specific module to the spectrum analyzer (e.g., output of oscillator vs output of filter)
 
-COMPONENTS TO ADD:
-- Arpeggiator
-- Pitchbend support
-- Panner
-- Phaser
-- Chorus
-- Reverb
-- Inverter
-- Quantizer? 
-- Mixer (with different mixing strategies so this can support ring modulation, for example)
-- Bitcrusher
-
-IMPROVEMENTS:
-- Hard Sync secondary oscillator to primary oscillator.
-- Phase syncing to minimize wave interference?
-- Tempo Utility? (support multiple independent sequencers staying in sync)
+BACKEND
+- COMPONENT IMPROVEMENTS
+  - [POLYPHONIC] OSCILLATOR
+    - add hard sync feature between two oscillators 
+    - Phase syncing to minimize wave interference?
+  - BiquadFilter
+    - Caching of coefficients
+    - Allow "listening" to parameter changes so that we only recalculate on change
+    - interpolate coefficients (lerp) with smoothing factor
+    - update to Direct Form 2
+- COMPONENTS TO ADD
+  - Arpeggiator
+  - Pitchbend support
+  - Panner
+  - Phaser
+  - Chorus
+  - Delay
+  - Reverb
+  - Inverter
+  - Quantizer? 
+  - Mixer (with different mixing strategies so this can support ring modulation, for example)
+  - Bitcrusher
 
 ONE DAY...:
 - Envelope that supports drawing curve

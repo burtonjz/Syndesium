@@ -25,6 +25,7 @@
 #include "components/MonophonicFilter.hpp"
 #include "components/MidiFilter.hpp"
 #include "components/Sequencer.hpp"
+#include "components/Components.hpp"
 #include "components/BiquadFilter.hpp"
 
 #endif // __HPP_ALL_COMPONENTS_

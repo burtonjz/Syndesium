@@ -25,12 +25,13 @@
 class BiquadFilter : public BaseModule, public BaseModulator {
 private:
     double sampleRate_ ;
-    std::array<double,2> lastInputs_ ;
-    std::array<double,2> lastOutputs_ ;
+    double state1_ ;
+    double state2_ ;
     std::array<double,5> coefficients_ ;
 
     void calculateCoefficients();
-    inline double getCurrentOutput(double x0, double x1, double x2, double y1, double y2) const ;
+    inline double getCurrentOutput(double input);
+    inline double getCurrentOutput(double input, double& s1, double& s2) const ;
 
 public:
     BiquadFilter(ComponentId id, BiquadFilterConfig cfg);
