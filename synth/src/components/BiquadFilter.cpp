@@ -11,7 +11,8 @@ BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     BaseModule(),
     BaseModulator(),
     state1_(0.0),
-    state2_(0.0)
+    state2_(0.0),
+    dirty_(false)
 {
     parameters_->add<ParameterType::FILTER_TYPE>(cfg.filterType, false);
     parameters_->add<ParameterType::FREQUENCY>(cfg.frequency, true);
@@ -20,7 +21,15 @@ BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     parameters_->add<ParameterType::BANDWIDTH>(cfg.bandwidth,true);
     parameters_->add<ParameterType::SHELF>(cfg.shelfSlope,true);
 
+    parameters_->getParameter(ParameterType::FREQUENCY)->addListener(this);
+    parameters_->getParameter(ParameterType::Q_FACTOR)->addListener(this);
+    parameters_->getParameter(ParameterType::BANDWIDTH)->addListener(this);
+    parameters_->getParameter(ParameterType::SHELF)->addListener(this);
+    parameters_->getParameter(ParameterType::DBGAIN)->addListener(this);
+
     sampleRate_ = Config::get<double>("audio.sample_rate").value();
+
+    calculateCoefficients(); // prime the filter
 }
 
 // see https://webaudio.github.io/Audio-EQ-Cookbook/audio-eq-cookbook.html
@@ -140,5 +149,12 @@ void BiquadFilter::calculateSample(){
 
 void BiquadFilter::tick(){
     BaseModule::tick();
-    calculateCoefficients();
+    if ( dirty_ ){
+        calculateCoefficients();
+        dirty_ = false ;
+    }
 }
+
+void BiquadFilter::onParameterChanged([[maybe_unused]] ParameterType p){
+    dirty_ = true ;
+} 

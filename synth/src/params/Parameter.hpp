@@ -19,9 +19,11 @@
 #define __PARAMETER_HPP_
 
 #include "types/ParameterType.hpp"
+#include "params/ParameterListener.hpp"
 #include "core/BaseModulator.hpp"
 #include <spdlog/spdlog.h>
 #include <variant>
+#include <vector>
 
 // forward declaration
 template <ParameterType typ> class Parameter ;
@@ -37,6 +39,8 @@ protected:
     bool hasDepth_ ;
     bool depthInitialized_ ;
     
+    std::vector<ParameterListener*> listeners_ ;
+
 public:
     ParameterBase(
         ParameterType typ, 
@@ -87,6 +91,20 @@ public:
     virtual void resetValue() = 0 ;
     virtual void modulate() = 0 ;
     virtual Parameter<ParameterType::DEPTH>* getDepth(){ return nullptr ;}
+
+    void addListener(ParameterListener* listener){
+        if (listener) listeners_.push_back(listener);
+    }
+
+    void removeListener(ParameterListener* listener){
+        listeners_.erase(std::remove(listeners_.begin(), listeners_.end(), listener), listeners_.end());
+    }
+
+    void notifyListeners(){
+        for (auto* listener : listeners_ ){
+            listener->onParameterChanged(type_);
+        }
+    }
 
 };
 
@@ -268,7 +286,10 @@ class Parameter : public ParameterBase {
 
     private:
         void setInstantaneousValue(ValueType v){
-            instantaneousValue_ = v ;
+            if ( v != instantaneousValue_ ){
+                instantaneousValue_ = v ;
+                notifyListeners();
+            }
         }
 };
 

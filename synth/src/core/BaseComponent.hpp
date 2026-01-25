@@ -21,6 +21,7 @@
 #include "types/ParameterType.hpp"
 #include "types/ComponentType.hpp"
 #include "params/ModulationParameter.hpp"
+#include "params/ParameterListener.hpp"
 
 #include <nlohmann/json.hpp>
 #include <unordered_set>
@@ -34,7 +35,7 @@ class BaseModule ;
 using json = nlohmann::json ;
 using ComponentId = int ;
 
-class BaseComponent {
+class BaseComponent : public ParameterListener {
 protected:
     ComponentId id_ ;
     ComponentType type_ ;

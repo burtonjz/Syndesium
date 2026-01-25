@@ -29,10 +29,7 @@ private:
     double state2_ ;
     std::array<double,5> coefficients_ ;
 
-    void calculateCoefficients();
-    inline double getCurrentOutput(double input);
-    inline double getCurrentOutput(double input, double& s1, double& s2) const ;
-
+    bool dirty_ ;
 public:
     BiquadFilter(ComponentId id, BiquadFilterConfig cfg);
 
@@ -40,6 +37,13 @@ public:
 
     void calculateSample() override ;
     void tick() override ;
+    void onParameterChanged(ParameterType p) override ;
+
+private:
+    void calculateCoefficients();
+    inline double getCurrentOutput(double input);
+    inline double getCurrentOutput(double input, double& s1, double& s2) const ;
+
 };
 
 #endif // __BIQUAD_FILTER_HPP_
