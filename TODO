@@ -1,6 +1,4 @@
-TO DO
-
-UI
+UI:
 - FUNCTIONALITY/FLOW
   - Midi Control Mapping 
     - Dockable parameters and allow users to map them to Midi Control signals 
@@ -29,16 +27,13 @@ UI
     - Ensure when the sequencer status knob is toggled, that it immediately sends note off signals for any active note (or don't allow toggling during run)
 
 
-BACKEND
+BACKEND:
 - COMPONENT IMPROVEMENTS
   - [POLYPHONIC] OSCILLATOR
     - add hard sync feature between two oscillators 
     - Phase syncing to minimize wave interference?
   - BiquadFilter
-    - Caching of coefficients
-    - Allow "listening" to parameter changes so that we only recalculate on change
     - interpolate coefficients (lerp) with smoothing factor
-    - update to Direct Form 2
 - COMPONENTS TO ADD
   - Arpeggiator
   - Pitchbend support
@@ -52,7 +47,7 @@ BACKEND
   - Mixer (with different mixing strategies so this can support ring modulation, for example)
   - Bitcrusher
 
-ONE DAY...:
+ONE DAY:
 - Envelope that supports drawing curve
 - Custom Wavetable Drawing
 - export custom synths to VST or LV2 or whatever
