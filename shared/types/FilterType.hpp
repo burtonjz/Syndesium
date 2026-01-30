@@ -33,6 +33,7 @@ public:
         PeakingBell,
         LowShelf,
         HighShelf,
+        AllPass,
         N
     };
 
@@ -49,6 +50,7 @@ public:
         else if ( name == "PeakingBell" ) filterType_ = PeakingBell ;
         else if ( name == "LowShelf" )    filterType_ = LowShelf ;
         else if ( name == "HighShelf" )   filterType_ =  HighShelf ;
+        else if ( name == "AllPass" )     filterType_ =  AllPass ;
         else throw std::invalid_argument("Unknown filter type: " + std::string(name));
     }
 
@@ -67,6 +69,7 @@ public:
         case PeakingBell: return "PeakingBell" ;
         case LowShelf:    return "LowShelf" ;
         case HighShelf:   return  "HighShelf" ;
+        case AllPass:     return "AllPass" ;
         default:          return "" ;
         };
     }
@@ -83,7 +86,8 @@ public:
             "BandStop",
             "PeakingBell",
             "LowShelf",
-            "HighShelf"
+            "HighShelf",
+            "AllPass"
         } ;
     }
 

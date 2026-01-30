@@ -121,6 +121,16 @@ void BiquadFilter::calculateCoefficients(){
         a1 = 2.0 * ((A - 1.0) - (A + 1.0) * cos_w0 );
         a2 = (A + 1.0) - (A - 1.0) * cos_w0 - 2.0 * std::sqrt(A) * alpha ;
         break ;
+    case FilterType::AllPass:
+        Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
+        alpha = sin_w0 / ( 2.0 * Q );
+        b0 = 1.0 - alpha ;
+        b1 = -2.0 * cos_w0 ;
+        b2 = 1.0 + alpha ;
+        a0 = b2 ;
+        a1 = b1 ;
+        a2 = b0 ;
+        break ;
     default:
         throw std::runtime_error("unknown filter type configured");
     }
