@@ -73,8 +73,9 @@ void PolyOscillator::clearBuffer(){
 }
 
 void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
-    if ( rePress && children_.find(anote->note.getMidiNote())){
-        Oscillator* osc = children_[anote->note.getMidiNote()] ;
+    auto it = children_.find(anote->note.getMidiNote());
+    if ( rePress && it != children_.end() ){
+        Oscillator* osc = it->second ;
         if ( osc ){
             osc->setFrequency(anote->note.getFrequency());
             osc->setAmplitude(anote->note.getMidiVelocity() / 127.0 );
