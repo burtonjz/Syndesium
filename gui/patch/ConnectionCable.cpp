@@ -77,7 +77,7 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
     if (fromSocket_ == socket) return false ;
     
     // Can't connect sockets from the same container widget
-    if (fromSocket_->getParent() == socket->getParent()) return false ;
+    // if (fromSocket_->getParent() == socket->getParent()) return false ;
     
     // Must be compatible types
     SocketType fromType = fromSocket_->getType();
