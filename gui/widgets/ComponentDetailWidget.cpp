@@ -27,6 +27,7 @@
 #include "core/ApiClient.hpp"
 #include "core/Theme.hpp"
 
+#include "widgets/ParameterWidget.hpp"
 #include "widgets/PianoRollWidget.hpp"
 #include "widgets/SwitchWidget.hpp"
 
@@ -92,6 +93,8 @@ QWidget* ComponentDetailWidget::createParameterWidget(ParameterType p){
         return createFilterTypeWidget();
     case ParameterType::STATUS:
         return createStatusWidget();
+    case ParameterType::DELAY:
+        return new DelayWidget();
     default:
         // most things will just be dials
         return createSpinWidget(p);
@@ -228,14 +231,7 @@ void ComponentDetailWidget::setupLayout(){
 
     for ( auto p : descriptor_.controllableParameters ){
         QWidget* w = parameterWidgets_[p];
-        QHBoxLayout* row = new QHBoxLayout();
-        std::string name = GET_PARAMETER_TRAIT_MEMBER(p, name);
-        QString labelText = QString::fromStdString(name);
-        QLabel* label = new QLabel(labelText, this);
-
-        row->addWidget(label);
-        row->addWidget(w);
-        parameterLayout->addLayout(row);
+        parameterLayout->addWidget(w);
     }
 
     mainLayout->addLayout(parameterLayout);
@@ -268,22 +264,48 @@ void ComponentDetailWidget::onCloseButtonClicked(){
 
 void ComponentDetailWidget::onValueChange(){
     auto widget = dynamic_cast<QWidget*>(sender());
-    
     auto it = std::find(parameterWidgets_.begin(), parameterWidgets_.end(), widget);
+    
     if ( it == parameterWidgets_.end() ) return ;
     
     ParameterType p = it.key();
     ParameterValue v ;
-    if ( auto cb = dynamic_cast<QComboBox*>(it.value())){
-        v = cb->itemData(cb->currentIndex()).value<uint8_t>();
-    } else if ( auto sb = dynamic_cast<QDoubleSpinBox*>(it.value())){
-        v = sb->value();
-    } else if ( auto st = dynamic_cast<SwitchWidget*>(it.value())){
-        v = st->isChecked();
-    } else {
-        return ;
-    }
 
+    if ( auto pWidget = dynamic_cast<ParameterWidget*>(it.value())){
+        v = pWidget->getValue();
+    } else {
+        switch(p){
+        case ParameterType::WAVEFORM:
+        case ParameterType::FILTER_TYPE:
+        {
+            if ( auto cb = dynamic_cast<QComboBox*>(it.value())){
+                v = cb->itemData(cb->currentIndex()).value<uint8_t>();
+            } else {
+                qWarning("widget type is malformed. cannot update value");
+                return ;
+            }
+            break ;
+        }
+        case ParameterType::STATUS:
+        {
+            if ( auto st = dynamic_cast<SwitchWidget*>(it.value())){
+                v = st->isChecked();
+            } else {
+                qWarning("widget type is malformed. cannot update value");
+                return ;
+            }
+            break ;
+        }
+        default:
+            if ( auto sb = dynamic_cast<QDoubleSpinBox*>(it.value())){
+                v = sb->value();
+            } else {
+                qWarning("widget type is malformed. cannot update value");
+                return ;
+            }
+            break ;
+    }}
+    
     pendingChanges_[p] = v ;
     parameterChangedTimer_->start();
 }

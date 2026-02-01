@@ -28,12 +28,12 @@ class Delay ;
 
 // define default configuration
 struct DelayConfig {
-    double delay_time = 0.5 ;
+    size_t delay = 0 ;
     int max_delay_sec = 4.0 ;
-    double gain = 0.7 ;
+    double gain = 1.0 ;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DelayConfig, delay_time, max_delay_sec, gain) // macro to serialize/deserialize json <-> structs
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DelayConfig, delay, max_delay_sec, gain) // macro to serialize/deserialize json <-> structs
 
 template <> struct ComponentTypeTraits<ComponentType::Delay>{ 
     using type = Delay ;

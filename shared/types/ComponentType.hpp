@@ -29,7 +29,7 @@
     X(Sequencer) \
     X(MonophonicFilter) \
     X(Delay) \
-    X(Gain)
+    X(Multiply) \
 
 /**
  * @brief enumeration of modulation source classes

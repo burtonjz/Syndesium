@@ -19,16 +19,16 @@
 #define GAIN_COMPONENT_HPP_
 
 #include "core/BaseModule.hpp"
-#include "configs/GainConfig.hpp"
+#include "configs/MultiplyConfig.hpp"
 #include "params/ParameterMap.hpp"
 
-class Gain : public BaseModule {
+class Multiply : public BaseModule {
 public:
-    Gain(ComponentId id, GainConfig cfg):
-        BaseComponent(id,ComponentType::Gain),
+    Multiply(ComponentId id, MultiplyConfig cfg):
+        BaseComponent(id,ComponentType::Multiply),
         BaseModule()
     {
-        parameters_->add<ParameterType::GAIN>(cfg.gain, true);
+        parameters_->add<ParameterType::SCALAR>(cfg.scalar, true);
     }
 
     void calculateSample(){
@@ -37,8 +37,8 @@ public:
             input += m->getCurrentSample();
         }
 
-        double gain = parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue() ;
-        buffer_[bufferIndex_] = input * gain ;
+        double scalar = parameters_->getParameter<ParameterType::SCALAR>()->getInstantaneousValue() ;
+        buffer_[bufferIndex_] = input * scalar ;
     }
 };
 

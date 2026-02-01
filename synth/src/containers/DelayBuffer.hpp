@@ -37,28 +37,9 @@ public:
         writePos_ = (writePos_ + 1) % capacity_ ;
     }
 
-    float read(float delay) const {
-        // cubic interpolation
-        size_t delayInt = static_cast<size_t>(delay);
-        float frac = delay - delayInt;
-        
-        size_t pos0 = (writePos_ + capacity_ - delayInt + 1) % capacity_ ;  
-        size_t pos1 = (writePos_ + capacity_ - delayInt) % capacity_ ;      
-        size_t pos2 = (writePos_ + capacity_ - delayInt - 1) % capacity_ ;  
-        size_t pos3 = (writePos_ + capacity_ - delayInt - 2) % capacity_ ;  
-        
-        float x0 = buffer_[pos0];
-        float x1 = buffer_[pos1];
-        float x2 = buffer_[pos2];
-        float x3 = buffer_[pos3];
-        
-        // Hermite interpolation
-        float c0 = x1 ;
-        float c1 = 0.5f * (x2 - x0);
-        float c2 = x0 - 2.5f * x1 + 2.0f * x2 - 0.5f * x3 ;
-        float c3 = 0.5f * (x3 - x0) + 1.5f * (x1 - x2);
-        
-        return ((c3 * frac + c2) * frac + c1) * frac + c0 ;
+    float read(size_t delay) const {
+        size_t idx = (buffer_.size() - 1 - (delay % buffer_.size())) % buffer_.size();
+        return buffer_[idx] ;
     }
 
     void setCapacity(size_t cap){

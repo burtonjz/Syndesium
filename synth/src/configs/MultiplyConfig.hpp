@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GAIN_CONFIG_HPP_
-#define GAIN_CONFIG_HPP_
+#ifndef MULTIPLY_CONFIG_HPP_
+#define MULTIPLY_CONFIG_HPP_
 
 #include "types/ComponentType.hpp"
 #include <nlohmann/json.hpp>
@@ -24,18 +24,18 @@
 using json = nlohmann::json ;
 
 // forward declare class
-class Gain ;
+class Multiply ;
 
 // define default configuration
-struct GainConfig {
-    double gain = 0.7 ;
+struct MultiplyConfig {
+    double scalar = 1.0 ;
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GainConfig, gain) // macro to serialize/deserialize json <-> structs
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(MultiplyConfig, scalar) // macro to serialize/deserialize json <-> structs
 
-template <> struct ComponentTypeTraits<ComponentType::Gain>{ 
-    using type = Gain ;
-    using config = GainConfig ;
+template <> struct ComponentTypeTraits<ComponentType::Multiply>{ 
+    using type = Multiply ;
+    using config = MultiplyConfig ;
 };
 
-#endif // GAIN_CONFIG_HPP_
+#endif // MULTIPLY_CONFIG_HPP_

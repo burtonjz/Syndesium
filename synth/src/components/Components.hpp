@@ -23,10 +23,10 @@
 #include "components/Oscillator.hpp"
 #include "components/ADSREnvelope.hpp"
 #include "components/MonophonicFilter.hpp"
+#include "components/Multiply.hpp"
 #include "components/Delay.hpp"
 #include "components/MidiFilter.hpp"
 #include "components/Sequencer.hpp"
-#include "components/Gain.hpp"
 #include "components/BiquadFilter.hpp"
 
 #endif // __HPP_ALL_COMPONENTS_

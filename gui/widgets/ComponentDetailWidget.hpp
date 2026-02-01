@@ -67,6 +67,7 @@ private:
     QWidget* createWaveformWidget();
     QWidget* createFilterTypeWidget();
     QWidget* createStatusWidget();
+
     QWidget* createSpinWidget(ParameterType p);
 
     QWidget* createIndependentCollection(CollectionDescriptor cd);

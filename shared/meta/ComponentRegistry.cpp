@@ -158,8 +158,8 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             {
                 "Delay",
                 ComponentType::Delay,
-                {ParameterType::DURATION, ParameterType::GAIN},
-                {ParameterType::DURATION, ParameterType::GAIN},
+                {ParameterType::DELAY, ParameterType::GAIN},
+                {ParameterType::DELAY, ParameterType::GAIN},
                 {},
                 1,
                 1,
@@ -169,12 +169,12 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
             }
         },
         {
-            ComponentType::Gain,
+            ComponentType::Multiply,
             {
-                "Gain",
-                ComponentType::Gain,
-                {ParameterType::GAIN},
-                {ParameterType::GAIN},
+                "Multiply",
+                ComponentType::Multiply,
+                {ParameterType::SCALAR},
+                {ParameterType::SCALAR},
                 {},
                 1,
                 1,

@@ -37,6 +37,8 @@ To add a ParameterType, the following is required:
 
 // X-Macro for generating dispatch functions (see synth/src/params/ParameterMap.cpp for examples)
 #define PARAMETER_TYPE_LIST \
+    X(SCALAR) \
+    X(DELAY) \
     X(DEPTH) \
     X(STATUS) \
     X(WAVEFORM) \
@@ -96,6 +98,27 @@ enum class ModulationStrategy {
 
 // Parameter Traits access
 template <ParameterType Type> struct ParameterTraits ;
+
+
+template <> struct ParameterTraits<ParameterType::SCALAR>{
+    using ValueType = float ;
+    static constexpr std::string name = "scalar" ;
+    static constexpr float minimum = -1.0 ;
+    static constexpr float maximum = 1.0 ;
+    static constexpr float defaultValue = 1.0 ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
+    static constexpr double uiStepPrecision = .001 ;
+};
+
+template <> struct ParameterTraits<ParameterType::DELAY>{
+    using ValueType = int ; // number of samples
+    static constexpr std::string name = "delay" ;
+    static constexpr float minimum = 0 ;
+    static constexpr float maximum = std::numeric_limits<float>::max() ;
+    static constexpr float defaultValue = 0 ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
+    static constexpr double uiStepPrecision = 1 ;
+};
 
 template <> struct ParameterTraits<ParameterType::DEPTH>{
     using ValueType = float ;
