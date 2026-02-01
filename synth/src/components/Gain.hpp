@@ -15,30 +15,35 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef DELAY_CONFIG_HPP_
-#define DELAY_CONFIG_HPP_
+#ifndef GAIN_COMPONENT_HPP_
+#define GAIN_COMPONENT_HPP_
 
-#include "types/ComponentType.hpp"
-#include <nlohmann/json.hpp>
+#include "core/BaseModule.hpp"
+#include "configs/GainConfig.hpp"
+#include "params/ParameterMap.hpp"
 
-using json = nlohmann::json ;
+class Gain : public BaseModule {
+public:
+    Gain(ComponentId id, GainConfig cfg):
+        BaseComponent(id,ComponentType::Gain),
+        BaseModule()
+    {
+        parameters_->add<ParameterType::GAIN>(cfg.gain, true);
+    }
 
-// forward declare class
-class Delay ;
+    void calculateSample(){
+        double input = 0 ;
+        for (auto m : getInputs()){
+            input += m->getCurrentSample();
+        }
 
-// define default configuration
-struct DelayConfig {
-    double delay_time = 0.5 ;
-    int max_delay_sec = 4.0 ;
-    double gain = 0.7 ;
+        double gain = parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue() ;
+        buffer_[bufferIndex_] = input * gain ;
+    }
 };
 
-NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DelayConfig, delay_time, max_delay_sec, gain) // macro to serialize/deserialize json <-> structs
 
-template <> struct ComponentTypeTraits<ComponentType::Delay>{ 
-    using type = Delay ;
-    using config = DelayConfig ;
-};
+#endif // GAIN_COMPONENT_HPP_
 
 
-#endif // DELAY_CONFIG_HPP_
+

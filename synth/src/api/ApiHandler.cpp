@@ -479,7 +479,9 @@ json ApiHandler::setParameter(int sock, const json& request){
         return sendApiResponse(sock, response, "Component not found");
     }
 
-    if ( c->getParameters()->setValueDispatch(param, response["value"]) ){
+    bool setSuccess = c->getParameters()->setValueDispatch(param, response["value"]);
+    response["value"] = c->getParameters()->getValueDispatch(param); // feed the value back to the client (due to limiting or other behaviors)
+    if ( setSuccess ){
         return sendApiResponse(sock,response);
     } else {
         return sendApiResponse(sock,response, "Error setting component parameter." );

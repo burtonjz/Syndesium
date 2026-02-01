@@ -167,6 +167,21 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 0,
                 false
             }
+        },
+        {
+            ComponentType::Gain,
+            {
+                "Gain",
+                ComponentType::Gain,
+                {ParameterType::GAIN},
+                {ParameterType::GAIN},
+                {},
+                1,
+                1,
+                0,
+                0,
+                false
+            }
         }
     };
 

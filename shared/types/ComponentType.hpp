@@ -28,7 +28,8 @@
     X(MidiFilter) \
     X(Sequencer) \
     X(MonophonicFilter) \
-    X(Delay)
+    X(Delay) \
+    X(Gain)
 
 /**
  * @brief enumeration of modulation source classes

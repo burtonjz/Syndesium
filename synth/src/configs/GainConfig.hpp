@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,18 +15,27 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_COMPONENTS_
-#define __HPP_ALL_COMPONENTS_
+#ifndef GAIN_CONFIG_HPP_
+#define GAIN_CONFIG_HPP_
 
-#include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
-#include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Delay.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
-#include "components/Gain.hpp"
-#include "components/BiquadFilter.hpp"
+#include "types/ComponentType.hpp"
+#include <nlohmann/json.hpp>
 
-#endif // __HPP_ALL_COMPONENTS_
+using json = nlohmann::json ;
+
+// forward declare class
+class Gain ;
+
+// define default configuration
+struct GainConfig {
+    double gain = 0.7 ;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(GainConfig, gain) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::Gain>{ 
+    using type = Gain ;
+    using config = GainConfig ;
+};
+
+#endif // GAIN_CONFIG_HPP_
