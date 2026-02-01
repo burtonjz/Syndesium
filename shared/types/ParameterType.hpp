@@ -30,45 +30,10 @@ using ParameterValue = std::variant<bool, uint8_t, int, float, double>;
 
 /*
 To add a ParameterType, the following is required:
-1. add it to the enum class
-2. add it to the X-Macro 
-3. Define the specialized ParameterTraits struct
+1. add it to the X Macro PARAMETER_TYPE_LIST
+2. Define the specialized ParameterTraits struct
 
 */ 
-
-/**
- * @brief types of parameters that might exist within any given module
- * 
-*/
-enum class ParameterType: uint8_t {
-    DEPTH,
-    STATUS,
-    WAVEFORM,
-    FREQUENCY,
-    AMPLITUDE,
-    GAIN,
-    DBGAIN,
-    PHASE,
-    PAN,
-    DETUNE,
-    ATTACK,
-    DECAY,
-    SUSTAIN,
-    RELEASE,
-    FILTER_TYPE,
-    CUTOFF,
-    BANDWIDTH,
-    SHELF,
-    Q_FACTOR,
-    BPM,
-    MIDI_VALUE,
-    VELOCITY,
-    START_POSITION,
-    DURATION,
-    SCALE_NOTE,
-    SCALE_TYPE,
-    N_PARAMETERS
-};
 
 // X-Macro for generating dispatch functions (see synth/src/params/ParameterMap.cpp for examples)
 #define PARAMETER_TYPE_LIST \
@@ -98,6 +63,18 @@ enum class ParameterType: uint8_t {
     X(DURATION) \
     X(SCALE_NOTE) \
     X(SCALE_TYPE) \
+
+/**
+ * @brief types of parameters that might exist within any given module
+ * 
+*/
+enum class ParameterType: uint8_t {
+    #define X(name) \
+        name,
+        PARAMETER_TYPE_LIST
+    #undef X
+    N_PARAMETERS
+};
 
 constexpr int N_PARAMETER_TYPES = static_cast<int>(ParameterType::N_PARAMETERS) ;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,17 +15,21 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_COMPONENTS_
-#define __HPP_ALL_COMPONENTS_
+#ifndef DELAY_HPP_
+#define DELAY_HPP_
 
-#include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
-#include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Delay.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
-#include "components/BiquadFilter.hpp"
+#include "core/BaseModule.hpp"
+#include "containers/DelayBuffer.hpp"
+#include "configs/DelayConfig.hpp"
 
-#endif // __HPP_ALL_COMPONENTS_
+class Delay : public BaseModule {
+private:
+    DelayBuffer delay_ ;
+
+public:
+    Delay(ComponentId id, DelayConfig cfg);
+
+    void calculateSample() override ;
+};
+
+#endif // DELAY_HPP_

@@ -23,16 +23,17 @@ def extract_component_types(componentFile):
     with open(componentFile, "r") as f:
         content = f.read()
 
-    pattern = r'enum\s+class\s+ComponentType\s*\{([^}]*)\}'
-    matches = re.search(pattern, content, re.DOTALL)
-
+    # Find the COMPONENT_TYPE_LIST macro definition
+    pattern = r'#define\s+COMPONENT_TYPE_LIST\s+((?:.*?\\\n)*.*?)(?:\n(?!.*\\)|$)'
+    matches = re.search(pattern, content, re.MULTILINE)
+        
     if not matches:
         raise ValueError("Could not find 'enum class ComponentType' in file")
     
-    enum_body = matches.group(1)
-    components = re.findall(r'\b([A-Za-z_][A-Za-z0-9_]*)\b', enum_body)
+    body = matches.group(1)
+    components = re.findall(r'X\((\w+)\)', body)
 
-    return [ c for c in components if c not in ("Unknown", "N_COMPONENTS")]
+    return [ c for c in components ]
 
     
 def generate_component_config():

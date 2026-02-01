@@ -18,23 +18,6 @@
 #ifndef __COMPONENT_TYPE_HPP_
 #define __COMPONENT_TYPE_HPP_
 
-/**
- * @brief enumeration of modulation source classes
- * 
-*/
-enum class ComponentType {
-    Oscillator,
-    PolyOscillator,
-    BiquadFilter,
-    LinearFader,
-    ADSREnvelope,
-    MidiFilter,
-    Sequencer,
-    MonophonicFilter,
-    Unknown,
-    N_COMPONENTS
-};
-
 // X-Macro for components
 #define COMPONENT_TYPE_LIST \
     X(Oscillator) \
@@ -44,7 +27,23 @@ enum class ComponentType {
     X(ADSREnvelope) \
     X(MidiFilter) \
     X(Sequencer) \
-    X(MonophonicFilter) 
+    X(MonophonicFilter) \
+    X(Delay)
+
+/**
+ * @brief enumeration of modulation source classes
+ * 
+*/
+enum class ComponentType {
+    #define X(name) \
+        name,
+    COMPONENT_TYPE_LIST
+    #undef X
+    Unknown,
+    N_COMPONENTS
+};
+
+
 
 constexpr int N_COMPONENT_TYPES = static_cast<int>(ComponentType::N_COMPONENTS) - 1 ;
 

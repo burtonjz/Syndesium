@@ -29,7 +29,7 @@
 
 class BaseModule : public virtual BaseComponent {
 protected:
-    double  sampleRate_ ;
+    double sampleRate_ ;
     std::size_t size_ ;
     std::unordered_set<BaseModule*> signalInputs_ ;
     std::unordered_set<BaseModule*> signalOutputs_ ;

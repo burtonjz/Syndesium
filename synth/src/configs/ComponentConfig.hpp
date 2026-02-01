@@ -28,6 +28,7 @@
 #include "configs/MidiFilterConfig.hpp"
 #include "configs/SequencerConfig.hpp"
 #include "configs/MonophonicFilterConfig.hpp"
+#include "configs/DelayConfig.hpp"
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json ;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,17 +15,30 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __HPP_ALL_COMPONENTS_
-#define __HPP_ALL_COMPONENTS_
+#ifndef DELAY_CONFIG_HPP_
+#define DELAY_CONFIG_HPP_
 
-#include "components/PolyOscillator.hpp"
-#include "components/LinearFader.hpp"
-#include "components/Oscillator.hpp"
-#include "components/ADSREnvelope.hpp"
-#include "components/MonophonicFilter.hpp"
-#include "components/Delay.hpp"
-#include "components/MidiFilter.hpp"
-#include "components/Sequencer.hpp"
-#include "components/BiquadFilter.hpp"
+#include "types/ComponentType.hpp"
+#include <nlohmann/json.hpp>
 
-#endif // __HPP_ALL_COMPONENTS_
+using json = nlohmann::json ;
+
+// forward declare class
+class Delay ;
+
+// define default configuration
+struct DelayConfig {
+    double delay_time = 0.5 ;
+    int max_delay_sec = 4.0 ;
+    double gain = 0.7 ;
+};
+
+NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(DelayConfig, delay_time, max_delay_sec) // macro to serialize/deserialize json <-> structs
+
+template <> struct ComponentTypeTraits<ComponentType::Delay>{ 
+    using type = Delay ;
+    using config = DelayConfig ;
+};
+
+
+#endif // DELAY_CONFIG_HPP_

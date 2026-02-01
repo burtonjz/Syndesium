@@ -1,5 +1,4 @@
 #include "BiquadFilter.hpp"
-#include "config/Config.hpp"
 #include "core/BaseComponent.hpp"
 #include "params/ParameterMap.hpp"
 #include "types/FilterType.hpp"
@@ -27,8 +26,6 @@ BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     parameters_->getParameter(ParameterType::Q_FACTOR)->addListener(this);
     parameters_->getParameter(ParameterType::BANDWIDTH)->addListener(this);
     parameters_->getParameter(ParameterType::SHELF)->addListener(this);
-
-    sampleRate_ = Config::get<double>("audio.sample_rate").value();
 
     calculateCoefficients(); // prime the filter
 }

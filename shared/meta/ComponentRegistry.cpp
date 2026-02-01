@@ -152,6 +152,21 @@ const std::unordered_map<ComponentType, ComponentDescriptor>& ComponentRegistry:
                 false
             }
             
+        },
+        {
+            ComponentType::Delay,
+            {
+                "Delay",
+                ComponentType::Delay,
+                {ParameterType::DURATION, ParameterType::GAIN},
+                {ParameterType::DURATION, ParameterType::GAIN},
+                {},
+                1,
+                1,
+                0,
+                0,
+                false
+            }
         }
     };
 

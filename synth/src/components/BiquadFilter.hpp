@@ -24,7 +24,6 @@
 
 class BiquadFilter : public BaseModule, public BaseModulator {
 private:
-    double sampleRate_ ;
     double state1_ ;
     double state2_ ;
     std::array<double,5> coefficients_ ;
