@@ -83,7 +83,7 @@ void DelayWidget::setupUI(){
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
     
     // widget label
-    label_ = new QLabel("Delay Time");
+    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, name)));
     label_->setAlignment(Qt::AlignCenter);
     layout->addWidget(label_);
 
@@ -115,6 +115,7 @@ void DelayWidget::setupUI(){
     unitLayout->addStretch();
     
     layout->addWidget(unitContainer);
+    layout->addStretch();
 }
 
 void DelayWidget::connectSignals(){
@@ -184,7 +185,7 @@ WaveformWidget::WaveformWidget(QWidget* parent):
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
     // label
-    label_ = new QLabel("Waveform");
+    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, name)));
     layout->addWidget(label_);
 
     // populate waveforms
@@ -200,6 +201,7 @@ WaveformWidget::WaveformWidget(QWidget* parent):
         waveforms_->setCurrentIndex(idx);
     } 
     layout->addWidget(waveforms_);
+    layout->addStretch();
 
     // connections
     connect(waveforms_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
@@ -244,7 +246,7 @@ FilterTypeWidget::FilterTypeWidget(QWidget* parent):
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
     // label
-    label_ = new QLabel("Filter Type");
+    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(ParameterType::FILTER_TYPE, name)));
     layout->addWidget(label_);
 
     // populate types
@@ -259,7 +261,9 @@ FilterTypeWidget::FilterTypeWidget(QWidget* parent):
     if ( idx != -1 ){
         type_->setCurrentIndex(idx);
     } 
+
     layout->addWidget(type_);
+    layout->addStretch();
 
     // connections
     connect(type_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
@@ -304,8 +308,9 @@ StatusWidget::StatusWidget(QWidget* parent):
     layout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
     // label
-    label_ = new QLabel("Status");
+    label_ = new QLabel(QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(ParameterType::STATUS, name)));
     layout->addWidget(label_);
+    layout->addStretch();
 
     // create status toggle
     toggle_ = new SwitchWidget(this);
@@ -405,6 +410,7 @@ void SliderWidget::setupUI(){
     slider_->setMaximum(scaleByPrecision(GET_PARAMETER_TRAIT_MEMBER(param_,maximum)));  
     slider_->setEnabled(true);
     layout->addWidget(slider_);
+    layout->addStretch();
 
     // initialize to default value via dispatch
     switch(param_){
