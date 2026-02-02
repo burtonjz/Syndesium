@@ -19,6 +19,7 @@
 #define PARAMETER_WIDGET_HPP_
 
 #include "types/ParameterType.hpp"
+#include "widgets/SwitchWidget.hpp"
 
 
 #include <QWidget>
@@ -65,6 +66,64 @@ private:
     void updateDisplay();
 };
 
+class WaveformWidget : public ParameterWidget {
+private:
+    QLabel* label_ ;
+    QComboBox* waveforms_ ;
 
+public:
+    explicit WaveformWidget(QWidget* parent = nullptr);
+
+    ParameterValue getValue() const override ;
+    void setValue(const ParameterValue& value) override ;
+
+};
+
+class FilterTypeWidget : public ParameterWidget {
+private:
+    QLabel* label_ ;
+    QComboBox* type_ ;
+
+public:
+    explicit FilterTypeWidget(QWidget* parent = nullptr);
+
+    ParameterValue getValue() const override ;
+    void setValue(const ParameterValue& value) override ;
+
+};
+
+class StatusWidget : public ParameterWidget {
+private:
+    QLabel* label_ ;
+    SwitchWidget* toggle_ ;
+
+public:
+    explicit StatusWidget(QWidget* parent = nullptr);
+
+    ParameterValue getValue() const override ;
+    void setValue(const ParameterValue& value) override ;
+
+};
+
+class SliderWidget : public ParameterWidget {
+private:
+    ParameterType param_ ;
+    size_t precision_ ; // number of decimals
+    QLabel* label_ ;
+    QSlider* slider_ ;
+    QLabel* valueLabel_ ;
+
+public:
+    explicit SliderWidget(ParameterType p, QWidget* parent = nullptr);
+
+    ParameterValue getValue() const override ;
+    void setValue(const ParameterValue& value) override ;
+
+private:
+    void setupUI();
+    void connectSignals();
+    void updateDisplay();
+    int scaleByPrecision(double v) const ;
+};
 
 #endif // PARAMETER_WIDGET_HPP_

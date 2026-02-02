@@ -22,14 +22,11 @@
 #include "types/CollectionType.hpp"
 #include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
-#include "types/Waveform.hpp"
-#include "types/FilterType.hpp"
 #include "core/ApiClient.hpp"
 #include "core/Theme.hpp"
 
 #include "widgets/ParameterWidget.hpp"
 #include "widgets/PianoRollWidget.hpp"
-#include "widgets/SwitchWidget.hpp"
 
 #include <QJsonObject>
 #include <QEvent>
@@ -88,16 +85,16 @@ ComponentType ComponentDetailWidget::getType() const {
 QWidget* ComponentDetailWidget::createParameterWidget(ParameterType p){
     switch(p){
     case ParameterType::WAVEFORM:
-        return createWaveformWidget();
+        return new WaveformWidget(this);
     case ParameterType::FILTER_TYPE:
-        return createFilterTypeWidget();
+        return new FilterTypeWidget(this);
     case ParameterType::STATUS:
-        return createStatusWidget();
+        return new StatusWidget(this);
     case ParameterType::DELAY:
-        return new DelayWidget();
+        return new DelayWidget(this);
     default:
-        // most things will just be dials
-        return createSpinWidget(p);
+        // use generic slider
+        return new SliderWidget(p, this);
     }
 }
 
@@ -123,61 +120,6 @@ QWidget* ComponentDetailWidget::createCollectionWidget(CollectionDescriptor cd){
             return nullptr ;
         }
     }}
-}
-
-QWidget* ComponentDetailWidget::createWaveformWidget(){
-    // populate combo box with available waveforms
-    auto w = new QComboBox(this);
-    for ( auto wf : Waveform::getWaveforms()){
-        Waveform wave = Waveform(wf);
-        w->addItem(QString::fromStdString(wave.toString()),wave.to_uint8());
-    }
-
-    // set the current waveform to default
-    int index = w->findData(GET_PARAMETER_TRAIT_MEMBER(ParameterType::WAVEFORM, defaultValue));
-    if ( index != -1 ){
-        w->setCurrentIndex(index);
-    } 
-
-    connect(w, &QComboBox::currentTextChanged, this, &ComponentDetailWidget::onValueChange);
-    return w ;
-}
-
-QWidget* ComponentDetailWidget::createFilterTypeWidget(){
-    auto w = new QComboBox(this);
-    for ( auto ft : FilterType::getFilterTypes()){
-        FilterType f = FilterType(ft);
-        w->addItem(QString::fromStdString(f.toString()),f.to_uint8());
-    }
-
-    // set the current waveform to default
-    int index = w->findData(GET_PARAMETER_TRAIT_MEMBER(ParameterType::FILTER_TYPE, defaultValue));
-    if ( index != -1 ){
-        w->setCurrentIndex(index);
-    } 
-
-    connect(w, &QComboBox::currentTextChanged, this, &ComponentDetailWidget::onValueChange);
-    return w ;
-}
-
-QWidget* ComponentDetailWidget::createStatusWidget(){
-    auto w = new SwitchWidget(this);
-    w->setChecked(true);
-    connect(w, &QAbstractButton::toggled, this, &ComponentDetailWidget::onValueChange);
-    return w ;
-}
-
-QWidget* ComponentDetailWidget::createSpinWidget(ParameterType p){
-    auto w = new QDoubleSpinBox(this);
-    
-    auto step = GET_PARAMETER_TRAIT_MEMBER(p, uiStepPrecision);
-    w->setRange(GET_PARAMETER_TRAIT_MEMBER(p, minimum), GET_PARAMETER_TRAIT_MEMBER(p, maximum));
-    w->setSingleStep(step);
-    w->setValue(GET_PARAMETER_TRAIT_MEMBER(p, defaultValue));
-
-    connect(w, &QDoubleSpinBox::valueChanged, this, &ComponentDetailWidget::onValueChange);
-
-    return w ;
 }
 
 QWidget* ComponentDetailWidget::createIndependentCollection(CollectionDescriptor cd){
@@ -274,37 +216,9 @@ void ComponentDetailWidget::onValueChange(){
     if ( auto pWidget = dynamic_cast<ParameterWidget*>(it.value())){
         v = pWidget->getValue();
     } else {
-        switch(p){
-        case ParameterType::WAVEFORM:
-        case ParameterType::FILTER_TYPE:
-        {
-            if ( auto cb = dynamic_cast<QComboBox*>(it.value())){
-                v = cb->itemData(cb->currentIndex()).value<uint8_t>();
-            } else {
-                qWarning("widget type is malformed. cannot update value");
-                return ;
-            }
-            break ;
-        }
-        case ParameterType::STATUS:
-        {
-            if ( auto st = dynamic_cast<SwitchWidget*>(it.value())){
-                v = st->isChecked();
-            } else {
-                qWarning("widget type is malformed. cannot update value");
-                return ;
-            }
-            break ;
-        }
-        default:
-            if ( auto sb = dynamic_cast<QDoubleSpinBox*>(it.value())){
-                v = sb->value();
-            } else {
-                qWarning("widget type is malformed. cannot update value");
-                return ;
-            }
-            break ;
-    }}
+        qWarning() << "invalid QWidget stored for parameter of type " << GET_PARAMETER_TRAIT_MEMBER(p,name) ;
+        return ;
+    }
     
     pendingChanges_[p] = v ;
     parameterChangedTimer_->start();

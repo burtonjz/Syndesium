@@ -107,7 +107,7 @@ template <> struct ParameterTraits<ParameterType::SCALAR>{
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
-    static constexpr double uiStepPrecision = .001 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::DELAY>{
@@ -117,7 +117,7 @@ template <> struct ParameterTraits<ParameterType::DELAY>{
     static constexpr float maximum = std::numeric_limits<float>::max() ;
     static constexpr float defaultValue = 0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
-    static constexpr double uiStepPrecision = 1 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::DEPTH>{
@@ -127,7 +127,7 @@ template <> struct ParameterTraits<ParameterType::DEPTH>{
     static constexpr float maximum = 5.0 ;
     static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = .01 ;
+    static constexpr size_t uiPrecision = 2 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::STATUS>{
@@ -137,7 +137,7 @@ template <> struct ParameterTraits<ParameterType::STATUS>{
     static constexpr float maximum = 1 ;
     static constexpr float defaultValue = 1 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 1.0 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::WAVEFORM>{
@@ -147,7 +147,7 @@ template <> struct ParameterTraits<ParameterType::WAVEFORM>{
     static constexpr float maximum = Waveform::N ;
     static constexpr float defaultValue = Waveform::SINE ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 1.0 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::FREQUENCY>{
@@ -157,7 +157,7 @@ template <> struct ParameterTraits<ParameterType::FREQUENCY>{
     static constexpr float maximum = 30000.0 ;
     static constexpr float defaultValue = 440.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 0.1 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
@@ -167,7 +167,7 @@ template <> struct ParameterTraits<ParameterType::AMPLITUDE>{
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC ;
-    static constexpr double uiStepPrecision = .01 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::GAIN>{
@@ -177,7 +177,7 @@ template <> struct ParameterTraits<ParameterType::GAIN>{
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC;
-    static constexpr double uiStepPrecision = .01 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::DBGAIN>{
@@ -187,7 +187,7 @@ template <> struct ParameterTraits<ParameterType::DBGAIN>{
     static constexpr float maximum = 24.0 ;
     static constexpr float defaultValue = 0.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE;
-    static constexpr double uiStepPrecision = 0.1 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::PHASE>{
@@ -197,7 +197,7 @@ template <> struct ParameterTraits<ParameterType::PHASE>{
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
-    static constexpr double uiStepPrecision = .01 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::PAN>{
@@ -207,7 +207,7 @@ template <> struct ParameterTraits<ParameterType::PAN>{
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 0.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
-    static constexpr double uiStepPrecision = .01 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::DETUNE>{
@@ -217,7 +217,7 @@ template <> struct ParameterTraits<ParameterType::DETUNE>{
     static constexpr float maximum = 1250.0f ;
     static constexpr float defaultValue = 0.0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 0.1 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::ATTACK>{
@@ -227,7 +227,7 @@ template <> struct ParameterTraits<ParameterType::ATTACK>{
     static constexpr float maximum = 4.00 ;
     static constexpr float defaultValue = 0.01 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 0.01 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::DECAY>{
@@ -237,7 +237,7 @@ template <> struct ParameterTraits<ParameterType::DECAY>{
     static constexpr float maximum = 4.0 ;
     static constexpr float defaultValue = 0.01 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 0.01 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::SUSTAIN>{
@@ -247,7 +247,7 @@ template <> struct ParameterTraits<ParameterType::SUSTAIN>{
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 0.8 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
-    static constexpr double uiStepPrecision = 0.01 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::RELEASE>{
@@ -257,7 +257,7 @@ template <> struct ParameterTraits<ParameterType::RELEASE>{
     static constexpr float maximum = 4.0 ;
     static constexpr float defaultValue = 0.01 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 0.01 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
@@ -267,7 +267,7 @@ template <> struct ParameterTraits<ParameterType::FILTER_TYPE>{
     static constexpr float maximum = FilterType::N ;
     static constexpr float defaultValue = FilterType::LowPass ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 1.0 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::CUTOFF>{
@@ -277,7 +277,7 @@ template <> struct ParameterTraits<ParameterType::CUTOFF>{
     static constexpr float maximum = 30000.0f ;
     static constexpr float defaultValue = 20000.0f ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 1.0 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::BANDWIDTH>{
@@ -287,7 +287,7 @@ template <> struct ParameterTraits<ParameterType::BANDWIDTH>{
     static constexpr float maximum = 4.0f ;
     static constexpr float defaultValue = 2.0f ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 0.1 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::SHELF>{
@@ -297,7 +297,7 @@ template <> struct ParameterTraits<ParameterType::SHELF>{
     static constexpr float maximum = 2.0f ;
     static constexpr float defaultValue = 1.0f ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 0.1 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
@@ -307,7 +307,7 @@ template <> struct ParameterTraits<ParameterType::Q_FACTOR>{
     static constexpr float maximum = 10.0f ;
     static constexpr float defaultValue = 0.5f ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::EXPONENTIAL ;
-    static constexpr double uiStepPrecision = 0.1 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::BPM>{
@@ -317,7 +317,7 @@ template <> struct ParameterTraits<ParameterType::BPM>{
     static constexpr float maximum = 300 ;
     static constexpr float defaultValue = 120 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::MULTIPLICATIVE ;
-    static constexpr double uiStepPrecision = 0.1 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::MIDI_VALUE>{
@@ -327,7 +327,7 @@ template <> struct ParameterTraits<ParameterType::MIDI_VALUE>{
     static constexpr float maximum = 127 ;
     static constexpr float defaultValue = 69 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 0.1 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::VELOCITY>{
@@ -337,7 +337,7 @@ template <> struct ParameterTraits<ParameterType::VELOCITY>{
     static constexpr float maximum = 127 ;
     static constexpr float defaultValue = 100 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 1 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::START_POSITION>{
@@ -347,7 +347,7 @@ template <> struct ParameterTraits<ParameterType::START_POSITION>{
     static constexpr float maximum = 64 ;
     static constexpr float defaultValue = 0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 0.125 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::DURATION>{
@@ -357,7 +357,7 @@ template <> struct ParameterTraits<ParameterType::DURATION>{
     static constexpr float maximum = 64 ;
     static constexpr float defaultValue = 1 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 0.125 ;
+    static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::SCALE_NOTE>{
@@ -367,7 +367,7 @@ template <> struct ParameterTraits<ParameterType::SCALE_NOTE>{
     static constexpr float maximum = ScaleNote::N ;
     static constexpr float defaultValue = ScaleNote::C ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 1 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
 
 template <> struct ParameterTraits<ParameterType::SCALE_TYPE>{
@@ -377,7 +377,7 @@ template <> struct ParameterTraits<ParameterType::SCALE_TYPE>{
     static constexpr float maximum = ScaleType::N ;
     static constexpr float defaultValue = ScaleType::MAJOR ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
-    static constexpr double uiStepPrecision = 1 ;
+    static constexpr size_t uiPrecision = 0 ; // num decimals
 };
   
 /*

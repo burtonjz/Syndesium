@@ -64,12 +64,6 @@ protected:
     QWidget* createCollectionWidget(CollectionDescriptor cd);
 
 private:
-    QWidget* createWaveformWidget();
-    QWidget* createFilterTypeWidget();
-    QWidget* createStatusWidget();
-
-    QWidget* createSpinWidget(ParameterType p);
-
     QWidget* createIndependentCollection(CollectionDescriptor cd);
     QWidget* createGroupedCollection(CollectionDescriptor cd);
     QWidget* createSynchronizedCollection(CollectionDescriptor cd);
@@ -87,8 +81,10 @@ signals:
 
 private slots:
     void onCloseButtonClicked();
-    void onValueChange();
     void flushPendingChanges();
+
+public slots:
+    void onValueChange();
 };
 
 
