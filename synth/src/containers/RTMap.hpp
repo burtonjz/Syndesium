@@ -22,6 +22,23 @@
 #include <stdexcept>
 #include <utility>
 
+// Compatibility macros for non-GCC compilers
+#ifndef _GLIBCXX17_CONSTEXPR
+    #if __cplusplus >= 201703L
+        #define _GLIBCXX17_CONSTEXPR constexpr
+    #else
+        #define _GLIBCXX17_CONSTEXPR
+    #endif
+#endif
+
+#ifndef _GLIBCXX_NODISCARD
+    #if __cplusplus >= 201703L
+        #define _GLIBCXX_NODISCARD [[nodiscard]]
+    #else
+        #define _GLIBCXX_NODISCARD
+    #endif
+#endif
+
 /**
  *  @brief A realtime safe partial implementation of the std::map container 
  *  based on std::array. RTMap is made up of (key,value) pairs, which can be 

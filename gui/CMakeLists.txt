@@ -13,7 +13,6 @@ file(GLOB SRC_HPP ${CMAKE_CURRENT_SOURCE_DIR}/*.hpp ${CMAKE_CURRENT_SOURCE_DIR}/
 file(GLOB SRC_UI  ${CMAKE_CURRENT_SOURCE_DIR}/*.ui  ${CMAKE_CURRENT_SOURCE_DIR}/*/*.ui )
 
 qt_add_executable(gui
-    WIN32 MACOSX_BUNDLE
     ${SRC_CPP}
     ${SRC_HPP}
     ${SRC_UI}

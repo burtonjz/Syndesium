@@ -64,6 +64,13 @@ file(GLOB SRC "${SRC_DIR}/*.cpp" "${SRC_DIR}/*/*.cpp")
 
 add_executable(synth ${SRC} ${SRC_DIR}/configs/ComponentConfig.hpp ${SRC_DIR}/components/Components.hpp)
 
+if(APPLE)
+    set_target_properties(synth PROPERTIES
+        BUILD_RPATH "/opt/homebrew/lib"
+        INSTALL_RPATH "/opt/homebrew/lib"
+    )
+endif()
+
 # Make sure the config is generated before building
 add_dependencies(synth generate_configs)
 add_dependencies(synth generate_components)
@@ -84,9 +91,14 @@ target_link_libraries(synth PRIVATE
     m
 )
 
-target_link_options(synth PRIVATE
-    -Wl,-Bstatic
-    -Wl,-Bdynamic
-    -Wl,--as-needed
-    -pthread
-)
+target_link_options(synth PRIVATE -pthread)
+
+if(UNIX AND NOT APPLE)
+    # Linux-specific linker flags
+    target_link_options(synth PRIVATE
+        -Wl,-Bstatic
+        -Wl,-Bdynamic
+        -Wl,--as-needed
+    )
+endif()
+

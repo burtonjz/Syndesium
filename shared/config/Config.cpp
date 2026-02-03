@@ -21,11 +21,25 @@
 #include <string_view>
 #include <mutex>
 
+#ifdef __APPLE__
+    #include <mach-o/dyld.h>
+#endif
+
 std::string getExecutableDir(){ // TODO: this only works for linux currently
     char result[PATH_MAX];
+#ifdef __APPLE__
+    uint32_t size = sizeof(result);
+    if (_NSGetExecutablePath(result, &size) != 0) {
+        return {};
+    }
+    return std::filesystem::path(std::string(result)).parent_path().string();
+#else // LINUX
     ssize_t count = readlink("/proc/self/exe", result, PATH_MAX);
-    if (count == -1) return {};
+    if (count == -1) {
+        return {};
+    }
     return std::filesystem::path(std::string(result, count)).parent_path().string();
+#endif
 }
 
 std::string Config::configPath_ = std::filesystem::path(getExecutableDir()) / ".." / "shared" / "config.json" ;
