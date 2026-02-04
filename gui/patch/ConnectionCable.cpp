@@ -234,10 +234,16 @@ QPainterPath ConnectionCable::createAdaptiveBezierPath(const QPointF& start, con
     qreal dist = QLineF(start, end).length();
     qreal forwardProgress = QPointF::dotProduct(start_dv, delta);
     qreal cycleStrength = std::min(std::max(0.0, -forwardProgress / dist), 1.0);
+
     qreal stemLength = std::max(
         Theme::CABLE_STEM_LENGTH_MAX, 
         dist * Theme::CABLE_STEM_LENGTH_FACTOR
     );
+
+    // vertical doesn't need as long of a stem
+    if ( start_dv.x() == 0.0 ){
+        stemLength *= 0.5 ;
+    }
 
     if ( cycleStrength > Theme::CABLE_CYCLE_THRESHOLD ){
         // two - segment curve for cycling connections
@@ -290,30 +296,41 @@ QPainterPath ConnectionCable::createAdaptiveBezierPath(const QPointF& start, con
         path.cubicTo(pos2, pos3, end);
     }
 
-    // lastly, add an arrow on the draw path
-	const qreal arrowSize = Theme::CABLE_ARROW_SIZE ;
-    const qreal arrowWidth = Theme::CABLE_ARROW_WIDTH ; // radians
-
-    qreal arrowAngle = path.angleAtPercent(0.5) * M_PI / 180.0 ;
-    if ( fromSocket_->isInput() ){
-        arrowAngle = arrowAngle + M_PI ;
-    }
-    
-    
-	const QPointF arrowTip= path.pointAtPercent(0.5);
-    QPointF baseLeft = arrowTip - QPointF(
-        std::sin((arrowAngle + arrowWidth )) * arrowSize,
-        std::cos((arrowAngle + arrowWidth )) * arrowSize
-    );
-    QPointF baseRight = arrowTip - QPointF(
-        std::sin((arrowAngle + M_PI - arrowWidth )) * arrowSize,
-        std::cos((arrowAngle + M_PI - arrowWidth )) * arrowSize
-    );
-
-    qDebug() << "ArrowAngle=" << arrowAngle << "Arrow Dimensions=[" << arrowTip << "," << baseLeft << ", " << baseRight ;
-    path.addPolygon(QPolygonF({arrowTip, baseLeft, baseRight, arrowTip}));
+    // add arrows to path
+    drawCableArrow(path, 0.5);
 
     return path;
+}
+
+void ConnectionCable::drawCableArrow(QPainterPath& path, qreal atPercent){
+    const qreal height = Theme::CABLE_ARROW_HEIGHT ;
+    const qreal width = Theme::CABLE_ARROW_BASE_WIDTH ; 
+
+    const qreal angle = path.angleAtPercent(atPercent) * M_PI / 180.0 ;
+    const QPointF midpoint = path.pointAtPercent(atPercent);
+
+    // arrow direction based on input vs output direction
+    QPointF baseMid, tip ;
+    const QPointF heightVector = QPointF(
+        std::sin(angle + M_PI_2) * height / 2,
+        std::cos(angle + M_PI_2) * height / 2  
+    );
+    if ( fromSocket_->isOutput() ){
+        tip = midpoint + heightVector ;
+        baseMid = midpoint - heightVector ;
+    } else {
+        baseMid = midpoint + heightVector ;
+        tip = midpoint - heightVector ;
+    }
+
+    QPointF dv = normalizePoint(heightVector);
+    QPointF perp(-dv.y(), dv.x());
+
+    const qreal width2 = width / 2 ;
+    const QPointF base1 = baseMid + perp * width2 ;
+    const QPointF base2 = baseMid - perp * width2 ;
+
+    path.addPolygon(QPolygonF({tip, base1, base2, tip}));
 }
 
 QPointF ConnectionCable::getSocketDirectionVector(SocketWidget* socket){

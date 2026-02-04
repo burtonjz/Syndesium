@@ -122,8 +122,8 @@ public:
     static constexpr qreal CABLE_STEM_LENGTH_MAX = 120.0 ;
     static constexpr qreal CABLE_STEM_LENGTH_FACTOR = 0.6 ;
     static constexpr qreal CABLE_CYCLE_THRESHOLD = 0.0 ;
-    static constexpr qreal CABLE_ARROW_SIZE = 12.0 ;
-    static constexpr qreal CABLE_ARROW_WIDTH = M_PI / 2.25 ; // radians
+    static constexpr qreal CABLE_ARROW_HEIGHT = 12.0 ;
+    static constexpr qreal CABLE_ARROW_BASE_WIDTH = 6.0 ; 
 
     static constexpr qreal COMPONENT_DETAIL_WIDGET_SPACING = 10 ;
     static constexpr qreal COMPONENT_DETAIL_WIDGET_WIDTH = 120 ;

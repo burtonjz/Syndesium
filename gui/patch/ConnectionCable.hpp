@@ -70,6 +70,7 @@ private:
      */
     QPainterPath createAdaptiveBezierPath(const QPointF& start, const QPointF& end);
 
+    void drawCableArrow(QPainterPath& path, qreal atPercent);
     QPointF getSocketDirectionVector(SocketWidget* sock);
     QPointF normalizePoint(const QPointF& p) const ;
 
