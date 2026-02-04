@@ -123,7 +123,7 @@ void ConnectionCable::updatePath(){
         endPoint = endpoint_ ;
     }
     
-    QPainterPath newPath = createBezierPath(startPoint, endPoint);
+    QPainterPath newPath = createAdaptiveBezierPath(startPoint, endPoint);
     setPath(newPath);
     
     // Update pen color
@@ -222,3 +222,144 @@ void ConnectionCable::paint(QPainter *painter, const QStyleOptionGraphicsItem *o
     // Draw the main cable
     QGraphicsPathItem::paint(painter, option, widget);
 }
+
+QPainterPath ConnectionCable::createAdaptiveBezierPath(const QPointF& start, const QPointF& end){
+    QPainterPath path;
+    path.moveTo(start);
+
+    const QPointF start_dv = getSocketDirectionVector(getFromSocket());
+    const QPointF end_dv   = -start_dv ; // always opposite side socket as start
+
+    QPointF delta = end - start;
+    qreal dist = QLineF(start, end).length();
+    qreal forwardProgress = QPointF::dotProduct(start_dv, delta);
+    qreal cycleStrength = std::min(std::max(0.0, -forwardProgress / dist), 1.0);
+    qreal stemLength = std::max(
+        Theme::CABLE_STEM_LENGTH_MAX, 
+        dist * Theme::CABLE_STEM_LENGTH_FACTOR
+    );
+
+    if ( cycleStrength > Theme::CABLE_CYCLE_THRESHOLD ){
+        // two - segment curve for cycling connections
+        QPointF flexDirection ;
+        if ( std::abs(start_dv.x()) > std::abs(start_dv.y()) ){
+            flexDirection = QPointF(0,1); // horizontal socket, bulge down
+        } else {
+            flexDirection = QPointF(1, 0); // vertical socket, bulge right
+        }
+
+        qreal flexStrength = std::max(
+            Theme::CABLE_SIDE_BEND_MAX,
+            dist * Theme::CABLE_SIDE_BEND_FACTOR
+        );
+
+        // define control points for both curves
+        const QPointF cp1 = start + start_dv * stemLength ;
+        const QPointF cp4 = end + end_dv * stemLength ;
+        QPointF cp2, cp3, midpoint ;
+
+        if ( start_dv.y() == 0 ){ // horizontal socket
+            // set midpoint based on vertical distance
+            if ( std::abs(end.y() - start.y()) > stemLength ){
+                midpoint = (start + end) * 0.5 ; // s-curve
+            } else {
+                midpoint = (start + end) * 0.5 + flexDirection * flexStrength ; // flex out
+            }
+            // force horizontal midpoint tangent
+            cp2 = QPointF(cp1.x(), midpoint.y());
+            cp3 = QPointF(cp4.x(), midpoint.y());
+        } else { // vertical socket
+            // set midpoint based on horizontal distance
+            if ( std::abs(end.x() - start.x()) > stemLength ){
+                midpoint = (start + end) * 0.5 ; // s-curve
+            } else {
+                midpoint = (start + end) * 0.5 + flexDirection * flexStrength ;
+            }
+            // force vertical midpoint tangent
+            cp2 = QPointF(midpoint.x(), cp1.y());
+            cp3 = QPointF(midpoint.x(), cp4.y());
+        }
+
+        path.cubicTo(cp1, cp2, midpoint);
+        path.cubicTo(cp3, cp4, end);
+    } else {
+        // normal single bezier curve
+        QPointF pos2 = start + start_dv * stemLength ;
+        QPointF pos3 = end + end_dv * stemLength ;
+        
+        path.cubicTo(pos2, pos3, end);
+    }
+
+    // lastly, add an arrow on the draw path
+	const qreal arrowSize = Theme::CABLE_ARROW_SIZE ;
+    const qreal arrowWidth = Theme::CABLE_ARROW_WIDTH ; // radians
+
+    qreal arrowAngle = path.angleAtPercent(0.5) * M_PI / 180.0 ;
+    if ( fromSocket_->isInput() ){
+        arrowAngle = arrowAngle + M_PI ;
+    }
+    
+    
+	const QPointF arrowTip= path.pointAtPercent(0.5);
+    QPointF baseLeft = arrowTip - QPointF(
+        std::sin((arrowAngle + arrowWidth )) * arrowSize,
+        std::cos((arrowAngle + arrowWidth )) * arrowSize
+    );
+    QPointF baseRight = arrowTip - QPointF(
+        std::sin((arrowAngle + M_PI - arrowWidth )) * arrowSize,
+        std::cos((arrowAngle + M_PI - arrowWidth )) * arrowSize
+    );
+
+    qDebug() << "ArrowAngle=" << arrowAngle << "Arrow Dimensions=[" << arrowTip << "," << baseLeft << ", " << baseRight ;
+    path.addPolygon(QPolygonF({arrowTip, baseLeft, baseRight, arrowTip}));
+
+    return path;
+}
+
+QPointF ConnectionCable::getSocketDirectionVector(SocketWidget* socket){
+    if ( ! socket ) return QPointF(0.0,0.0);
+    
+    switch(socket->getType()){
+        case SocketType::SignalInbound: // left
+        case SocketType::MidiInbound: 
+            return QPointF(-1.0, 0);
+        case SocketType::SignalOutbound: // right
+        case SocketType::MidiOutbound:
+            return QPointF(1.0, 0);
+        case SocketType::ModulationInbound: // bottom
+            return QPointF(0, 1.0);
+        case SocketType::ModulationOutbound: // top
+            return QPointF(0, -1.0);
+        default:
+            return QPointF(0.0,0.0);
+    }
+}
+
+QPointF ConnectionCable::normalizePoint(const QPointF& p) const {
+    qreal len = std::sqrt(p.x() * p.x() + p.y() * p.y() );
+    return len > 0 ? QPointF(p.x() / len, p.y() / len) : QPointF(0,0);
+}
+
+// std::vector<QRectF> ConnectionCable::getRelevantObstacles(const QPointF& start, const QPointF& end){
+//     std::vector<QRectF> bounds ;
+
+//     if ( !scene() ) return bounds ;
+
+//     QRectF searchArea(start, end);
+//     searchArea = searchArea.normalized();
+
+//     auto buf = Theme::CABLE_BOUNDING_BUFFER ;
+//     searchArea.adjust(-buf, -buf, buf, buf);
+
+//     const auto items = scene()->items(searchArea, Qt::IntersectsItemBoundingRect);
+//     bounds.reserve(items.size());
+
+//     for ( auto* item : items ){
+//         if ( item->type() == SocketContainerWidget::Type ){
+//             bounds.push_back(item->sceneBoundingRect());
+//             qDebug() << "found obstacle: " << item ;
+//         }
+//     }
+
+//     return bounds ;
+// }

@@ -145,7 +145,7 @@ void SpectrumAnalyzerWidget::resizeEvent(QResizeEvent *event) {
 }
 
 void SpectrumAnalyzerWidget::drawGrid(QPainter &painter) {
-    painter.setPen(Theme::COMPONENT_BORDER);
+    painter.setPen(Theme::ANALYZER_GRID_COLOR);
     
     int plotWidth = width() - Theme::ANALYZER_MARGIN_LEFT - Theme::ANALYZER_MARGIN_RIGHT ;
     int plotHeight = height() - Theme::ANALYZER_MARGIN_TOP - Theme::ANALYZER_MARGIN_BOTTOM ;
@@ -197,7 +197,7 @@ void SpectrumAnalyzerWidget::drawSpectrum(QPainter &painter) {
     }
     
     // Draw the spectrum line
-    painter.setPen(QPen(Theme::ACCENT_COLOR, 2));
+    painter.setPen(QPen(Theme::ANALYZER_LINE_COLOR, 2));
     painter.drawPath(path);
 }
 

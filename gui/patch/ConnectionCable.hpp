@@ -61,8 +61,17 @@ protected:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget *widget ) override ;
 
 private:
-    QPainterPath createBezierPath(const QPointF& start, const QPointF& end);
     QColor getCableColor() const ;
+
+    QPainterPath createBezierPath(const QPointF& start, const QPointF& end); // legacy
+
+    /**
+     * @brief draw the adapted bezier path
+     */
+    QPainterPath createAdaptiveBezierPath(const QPointF& start, const QPointF& end);
+
+    QPointF getSocketDirectionVector(SocketWidget* sock);
+    QPointF normalizePoint(const QPointF& p) const ;
 
 };
 

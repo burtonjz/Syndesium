@@ -100,8 +100,8 @@ void GraphPanel::createContextMenuActions(){
 }
 
 void GraphPanel::addComponent(int id, ComponentType type){
-    auto* component = new ComponentWidget(id, type);
-    auto* detail = new ComponentDetailWidget(id,type, this);
+    auto component = new ComponentWidget(id, type);
+    auto detail = new ComponentDetailWidget(id,type, this);
 
     widgets_.push_back(component);
     details_.push_back(detail);

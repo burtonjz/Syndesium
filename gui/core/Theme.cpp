@@ -19,57 +19,75 @@
 #include <qcolor.h>
 #include <qpalette.h>
 
-const QColor Theme::GRAPH_GRID_COLOR = QColor(50,50,50);
+/*
+==================== PALETTE ===================
+Just trying my best using https://coolors.co
 
-// Cable colors
-const QColor Theme::CABLE_SHADOW = QColor(0, 0, 0, 50);
-const QColor Theme::CABLE_AUDIO = QColor(100, 255, 150); 
-const QColor Theme::CABLE_MODULATION = QColor(255, 107, 107);
-const QColor Theme::CABLE_MIDI = QColor(100, 200, 255);
+Background: 22, 26, 30 // carbon black
+Border: 58, 68, 74 // charcoal blue
+Grid: 38, 44, 48 // jet black
+Text: 245, 237, 240 // lavender blush
+Accent: 242, 129, 35 // vivid tangerine
 
-// Socket colors
-const QColor Theme::SOCKET_AUDIO = QColor(100, 255, 150); 
-const QColor Theme::SOCKET_MODULATION = QColor(255, 107, 107);
-const QColor Theme::SOCKET_MIDI = QColor(100, 200, 255);
-const QColor Theme::SOCKET_AUDIO_LIGHT = Theme::SOCKET_AUDIO.lighter(150);
-const QColor Theme::SOCKET_MODULATION_LIGHT = Theme::SOCKET_MODULATION.lighter(150);
-const QColor Theme::SOCKET_MIDI_LIGHT = Theme::SOCKET_MIDI.lighter(150);
+Audio: 135, 179, 141 // muted teal
+Modulation: 185, 49, 79 // rosewood
+Midi: 132, 169, 192 // steel blue
+*/
+
+// Main Panel Colors
+const QColor Theme::BACKGROUND_DARK = QColor(22, 26, 30);  
+const QColor Theme::BACKGROUND_MEDIUM = QColor(32, 38, 42);  
+const QColor Theme::BACKGROUND_LIGHT = QColor(42, 48, 52);  
+const QColor Theme::TEXT_PRIMARY = QColor(245, 237, 240);
+const QColor Theme::TEXT_SECONDARY = QColor(160, 165, 168);  
+const QColor Theme::ACCENT_COLOR = QColor(213, 137, 54);  
+const QColor Theme::MODULATION_ACTIVE = QColor(180, 85, 110);  
+const QColor Theme::GRAPH_GRID_COLOR = QColor(38, 44, 48);
 
 // Component colors
-const QColor Theme::COMPONENT_BORDER = QColor(100, 100, 100);
-const QColor Theme::COMPONENT_BORDER_SELECTED = QColor(220, 220, 220);
-const QColor Theme::COMPONENT_BACKGROUND = QColor(45, 45, 45);
-const QColor Theme::COMPONENT_BACKGROUND_HOVER = QColor(55, 55, 55);
-const QColor Theme::COMPONENT_TEXT = QColor(250,250,250);
+const QColor Theme::COMPONENT_BACKGROUND = QColor(42, 52, 58, 180); 
+const QColor Theme::COMPONENT_BORDER = QColor(58, 68, 74);  
+const QColor Theme::COMPONENT_BORDER_SELECTED = QColor(245, 237, 240);  
+const QColor Theme::COMPONENT_BACKGROUND_HOVER = QColor(52, 62, 68, 200);
+const QColor Theme::COMPONENT_TEXT = QColor(245, 237, 240);
 
-// UI colors
-const QColor Theme::BACKGROUND_DARK = QColor(25, 25, 25);
-const QColor Theme::BACKGROUND_MEDIUM = QColor(53, 53, 53);
-const QColor Theme::BACKGROUND_LIGHT = QColor(70, 70, 70);
-const QColor Theme::TEXT_PRIMARY = QColor(255, 255, 255);
-const QColor Theme::TEXT_SECONDARY = QColor(180, 180, 180);
-const QColor Theme::ACCENT_COLOR = QColor(100, 200, 255);
-const QColor Theme::MODULATION_ACTIVE = QColor(255, 107, 107);
+// Cable colors - warmer and more saturated
+const QColor Theme::CABLE_SHADOW = QColor(0, 0, 0, 60);
+const QColor Theme::CABLE_AUDIO = QColor(135, 179, 141);  
+const QColor Theme::CABLE_MODULATION = QColor(185, 49, 79); 
+const QColor Theme::CABLE_MIDI = QColor(132, 169, 192); 
+
+// Socket colors - match cables
+const QColor Theme::SOCKET_AUDIO = QColor(135, 179, 141);
+const QColor Theme::SOCKET_MODULATION = QColor(185, 49, 79);
+const QColor Theme::SOCKET_MIDI = QColor(132, 169, 192);
+const QColor Theme::SOCKET_AUDIO_LIGHT = Theme::SOCKET_AUDIO.lighter(140);
+const QColor Theme::SOCKET_MODULATION_LIGHT = Theme::SOCKET_MODULATION.lighter(140);
+const QColor Theme::SOCKET_MIDI_LIGHT = Theme::SOCKET_MIDI.lighter(140);
 
 // Piano Roll
-const QColor Theme::PIANO_ROLL_KEY_WHITE = QColor(240,240,240);
-const QColor Theme::PIANO_ROLL_KEY_BLACK = QColor(20,20,20);
-const QColor Theme::PIANO_ROLL_KEY_BORDER = QColor(100,100,100);
-const QColor Theme::PIANO_ROLL_KEY_LABEL = QColor(30,30,30);   
-const QColor Theme::PIANO_ROLL_NOTE_COLOR = QColor(100,150,255,200);   
-const QColor Theme::PIANO_ROLL_NOTE_SELECTED_COLOR = QColor(100,255,150,150);   
-const QColor Theme::PIANO_ROLL_NOTE_BORDER = QColor(70, 200, 120);   
-const QColor Theme::PIANO_ROLL_BACKGROUND = QColor(50, 25, 25);
-const QColor Theme::PIANO_ROLL_GRID_PRIMARY = QColor(200,200,200);
-const QColor Theme::PIANO_ROLL_GRID_SECONDARY = QColor(100,100,100);
+const QColor Theme::PIANO_ROLL_KEY_WHITE = QColor(220, 218, 215);  
+const QColor Theme::PIANO_ROLL_KEY_BLACK = QColor(32, 38, 42);
+const QColor Theme::PIANO_ROLL_KEY_BORDER = QColor(75, 82, 88);
+const QColor Theme::PIANO_ROLL_KEY_LABEL = QColor(32, 38, 42);
+const QColor Theme::PIANO_ROLL_NOTE_COLOR = QColor(135, 175, 155, 180);  
+const QColor Theme::PIANO_ROLL_NOTE_SELECTED_COLOR = QColor(220, 155, 85, 200);  
+const QColor Theme::PIANO_ROLL_NOTE_BORDER = QColor(115, 155, 135);
+const QColor Theme::PIANO_ROLL_BACKGROUND = QColor(28, 32, 36);
+const QColor Theme::PIANO_ROLL_GRID_PRIMARY = QColor(65, 72, 78);
+const QColor Theme::PIANO_ROLL_GRID_SECONDARY = QColor(42, 48, 52);
 
-const QColor Theme::SWITCH_WIDGET_ON_COLOR = QColor(0, 150, 136);      // Teal - good as is
-const QColor Theme::SWITCH_WIDGET_OFF_COLOR = QColor(60, 60, 60);      // Dark gray track
-const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_ON = QColor(255, 255, 255);   // White thumb when on
-const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_OFF = QColor(189, 189, 189);  // Light gray thumb when off
-const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR = QColor(40, 40, 40);      // Very dark gray when disabled
+// switch button
+const QColor Theme::SWITCH_WIDGET_ON_COLOR = QColor(135, 175, 155);
+const QColor Theme::SWITCH_WIDGET_OFF_COLOR = QColor(45, 52, 56);
+const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_ON = QColor(245, 237, 240);
+const QColor Theme::SWITCH_WIDGET_THUMB_COLOR_OFF = QColor(130, 135, 138);
+const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR = QColor(38, 44, 48);
 
-const QColor Theme::ANALYZER_BACKGROUND_COLOR = QColor(20,20,20);
+// spectrum analyzer
+const QColor Theme::ANALYZER_BACKGROUND_COLOR = QColor(22, 26, 30);
+const QColor Theme::ANALYZER_GRID_COLOR = QColor(38, 44, 48);
+const QColor Theme::ANALYZER_LINE_COLOR = QColor(135, 175, 155);
 
 void Theme::applyDarkTheme() {
 
@@ -95,6 +113,7 @@ void Theme::applyDarkTheme() {
     QWidget {
         font-size: 11pt;
     }
+    
     QMessageBox {
         background-color: %2;
         color: %5;

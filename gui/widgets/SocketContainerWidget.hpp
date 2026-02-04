@@ -48,6 +48,9 @@ public:
     explicit SocketContainerWidget(QString name, QGraphicsItem* parent = nullptr);
     virtual ~SocketContainerWidget();
 
+    enum { Type = UserType + 1 };
+    int type() const override { return Type; }
+    
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr ) override ;
 

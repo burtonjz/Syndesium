@@ -45,6 +45,9 @@ private:
 public:
     SocketWidget(SocketSpec spec, SocketContainerWidget* parent = nullptr);
 
+    enum { Type = UserType + 2 };
+    int type() const override { return Type; }
+
     // QGraphicsItem interface
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override ;

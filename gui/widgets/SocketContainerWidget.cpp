@@ -39,6 +39,7 @@ SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent
     titleText_->setDefaultTextColor(Theme::Theme::COMPONENT_TEXT);
     titleText_->setPos(Theme::COMPONENT_TEXT_PADDING,Theme::COMPONENT_TEXT_PADDING);
     titleText_->setTextWidth(Theme::COMPONENT_WIDTH - Theme::COMPONENT_TEXT_PADDING * 2);
+
 }
 
 SocketContainerWidget::~SocketContainerWidget(){

@@ -81,6 +81,8 @@ public:
     static const QColor SWITCH_WIDGET_DISABLED_COLOR ;
 
     static const QColor ANALYZER_BACKGROUND_COLOR ;
+    static const QColor ANALYZER_LINE_COLOR ;
+    static const QColor ANALYZER_GRID_COLOR ;
 
 
     // Modulation indicator
@@ -114,6 +116,14 @@ public:
     static constexpr qreal COMPONENT_HIGHLIGHT_WIDTH = 3.0 ;
     static constexpr qreal SOCKET_WIDGET_SPACING = 15.0 ;
     static constexpr qreal SOCKET_WIDGET_RADIUS = 6.0 ;
+
+    static constexpr qreal CABLE_SIDE_BEND_FACTOR = 0.5 ; 
+    static constexpr qreal CABLE_SIDE_BEND_MAX = 100.0 ; 
+    static constexpr qreal CABLE_STEM_LENGTH_MAX = 120.0 ;
+    static constexpr qreal CABLE_STEM_LENGTH_FACTOR = 0.6 ;
+    static constexpr qreal CABLE_CYCLE_THRESHOLD = 0.0 ;
+    static constexpr qreal CABLE_ARROW_SIZE = 12.0 ;
+    static constexpr qreal CABLE_ARROW_WIDTH = M_PI / 2.25 ; // radians
 
     static constexpr qreal COMPONENT_DETAIL_WIDGET_SPACING = 10 ;
     static constexpr qreal COMPONENT_DETAIL_WIDGET_WIDTH = 120 ;
