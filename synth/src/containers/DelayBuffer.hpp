@@ -38,7 +38,10 @@ public:
     }
 
     float read(size_t delay) const {
-        size_t idx = (buffer_.size() - 1 - (delay % buffer_.size())) % buffer_.size();
+        if ( delay >= capacity_ ){
+            delay = capacity_ - 1 ;
+        }
+        size_t idx = (writePos_ + capacity_ - delay) % capacity_ ;
         return buffer_[idx] ;
     }
 
