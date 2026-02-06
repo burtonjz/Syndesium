@@ -27,6 +27,10 @@ SocketWidget::SocketWidget(SocketSpec spec, SocketContainerWidget* parent):
     spec_(spec),
     parent_(parent)
 {
+    if ( spec.idx.has_value() ){
+        setData(Qt::UserRole, QVariant::fromValue(spec.idx.value()));
+    }
+    
     setFlag(QGraphicsItem::ItemIsSelectable, false);
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::LeftButton);

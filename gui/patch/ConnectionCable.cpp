@@ -135,12 +135,30 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
     
     auto outboundSocket = getOutboundSocket();
     auto inboundSocket = getInboundSocket();
+    ComponentWidget* inboundComponent = nullptr ;
+    ComponentWidget* outboundComponent = nullptr ;
+    
+    if ( inboundSocket ) 
+        inboundComponent = dynamic_cast<ComponentWidget*>(inboundSocket->getParent());
 
-    auto outboundComponent = dynamic_cast<ComponentWidget*>(outboundSocket->getParent());
-    auto inboundComponent = dynamic_cast<ComponentWidget*>(inboundSocket->getParent());
+    if ( outboundSocket ) 
+        outboundComponent = dynamic_cast<ComponentWidget*>(outboundSocket->getParent());
 
-    if ( inboundComponent ) r.inboundID = inboundComponent->getID() ;
-    if ( outboundComponent ) r.outboundID = outboundComponent->getID() ;
+
+    if ( inboundComponent ){
+        r.inboundID = inboundComponent->getID();
+        if ( inboundSocket->getType() == SocketType::SignalInbound ){
+            r.inboundIdx = inboundSocket->data(Qt::UserRole).value<size_t>();
+        }
+    }
+
+    if ( outboundComponent ){
+        r.outboundID = outboundComponent->getID() ;
+        if ( outboundSocket->getType() == SocketType::SignalOutbound ){
+            r.outboundIdx = outboundSocket->data(Qt::UserRole).value<size_t>();
+        }
+    } 
+    
     r.inboundSocket = inboundSocket->getType();
     r.outboundSocket = outboundSocket->getType();
     if ( inboundSocket->getType() == SocketType::ModulationInbound ){

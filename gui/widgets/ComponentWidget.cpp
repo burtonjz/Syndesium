@@ -37,7 +37,7 @@ ComponentWidget::ComponentWidget(int id, ComponentType type, QGraphicsItem* pare
     }
 
     for (int i = 0; i < descriptor_.numAudioInputs; ++i){
-        specs.push_back({SocketType::SignalInbound, QString("Audio Input %1").arg(i+1)});
+        specs.push_back({SocketType::SignalInbound, QString("Audio Input %1").arg(i+1), i});
     }
 
     for (int i = 0; i < descriptor_.numMidiInputs; ++i){
@@ -45,7 +45,7 @@ ComponentWidget::ComponentWidget(int id, ComponentType type, QGraphicsItem* pare
     }
 
     for (int i = 0; i < descriptor_.numAudioOutputs; ++i){
-        specs.push_back({SocketType::SignalOutbound, QString("Audio Output %1").arg(i+1)});
+        specs.push_back({SocketType::SignalOutbound, QString("Audio Output %1").arg(i+1), i});
     }
 
     for (int i = 0; i < descriptor_.numMidiOutputs; ++i){

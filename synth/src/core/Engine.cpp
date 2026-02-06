@@ -616,19 +616,19 @@ bool Engine::handleSignalConnection(ConnectionRequest request){
     // if the destination is an external endpoint
     if ( ! request.inboundID.has_value() ){
         if ( request.remove ){
-            signalController.unregisterSink(outbound);
+            signalController.unregisterSink(outbound, request.outboundIdx.value());
             return true ;
         }
-        signalController.registerSink(outbound);
+        signalController.registerSink(outbound, request.outboundIdx.value());
         return true ;
     }
     
     if ( request.remove ){
-        signalController.disconnect(outbound, inbound);
+        signalController.disconnect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
         return true ;
     }
 
-    signalController.connect(outbound, inbound);
+    signalController.connect(outbound, request.outboundIdx.value(), inbound, request.inboundIdx.value());
     return true ;
 }
 
@@ -640,37 +640,49 @@ std::vector<ConnectionRequest> Engine::getComponentSignalConnections(ComponentId
     if ( !module ) return v ;
     
     // check if module is a sink
-    for ( auto s : signalController.getSinks()){
-        if ( s == module ){
+    for ( const auto& conn : signalController.getSinks()){
+        if ( module == conn.module ){
             ConnectionRequest req ;
             req.outboundID = id ;
+            req.outboundIdx = conn.index ;
             req.inboundSocket = SocketType::SignalInbound ;
             req.outboundSocket = SocketType::SignalOutbound ;
             v.push_back(req);
         }
     }
 
-    for ( auto m : module->getInputs() ){
-        if ( m ){
-            ConnectionRequest req ;
-            req.inboundID = id ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            req.outboundID = m->getId() ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-            v.push_back(req);
+    // signal inputs
+    for ( size_t i = 0; i < module->getNumInputs(); ++i ){
+        for ( const auto& conn : module->getInputs(i) ){
+            if ( conn.module ){
+                ConnectionRequest req ;
+                req.inboundID = id ;
+                req.inboundIdx = i ;
+                req.inboundSocket = SocketType::SignalInbound ;
+                req.outboundID = conn.module->getId() ;
+                req.outboundIdx = conn.index ;
+                req.outboundSocket = SocketType::SignalOutbound ;
+                v.push_back(req);
+            }
+        }    
+    }
+    
+    // signal outputs
+    for ( size_t i = 0; i < module->getNumOutputs(); ++i ){
+        for ( const auto& conn : module->getOutputs(i) ){
+            if ( conn.module ){
+                ConnectionRequest req ;
+                req.inboundID = conn.module->getId() ;
+                req.inboundIdx = conn.index ;
+                req.inboundSocket = SocketType::SignalInbound ;
+                req.outboundID = id ;
+                req.outboundIdx = i ;
+                req.outboundSocket = SocketType::SignalOutbound ;
+                v.push_back(req);
+            }
         }
     }
-
-    for ( auto m : module->getOutputs() ){
-        if ( m ){
-            ConnectionRequest req ;
-            req.inboundID = m->getId() ;
-            req.inboundSocket = SocketType::SignalInbound ;
-            req.outboundID = id ;
-            req.outboundSocket = SocketType::SignalOutbound ;
-            v.push_back(req);
-        }
-    }
+    
 
     return v ;
 }
@@ -753,8 +765,8 @@ json Engine::serialize() const {
     output["components"] = componentManager.serializeComponents();
 
     // get audio sinks
-    for ( auto m : signalController.getSinks() ){
-        output["AudioSinks"].push_back(m->getId());
+    for ( const auto& conn : signalController.getSinks() ){
+        output["AudioSinks"].push_back(conn);
     }
 
     // get root midi devices

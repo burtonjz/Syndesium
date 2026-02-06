@@ -31,7 +31,7 @@
 
 PolyOscillator::PolyOscillator(ComponentId id, PolyOscillatorConfig cfg):
     BaseComponent(id, ComponentType::PolyOscillator),
-    BaseModule(),
+    BaseModule(0,1),
     MidiEventListener(),
     children_(),
     modulators_{},
@@ -51,10 +51,12 @@ bool PolyOscillator::isGenerative() const {
 }
 
 void PolyOscillator::calculateSample(){
+    double v = 0.0 ;
     childPool_.forEachActive([&](Oscillator& obj, std::size_t index){
         obj.calculateSample();
-        buffer_[index] += obj.data()[index];
+        v += obj.data()[index];
     }, bufferIndex_);
+    setBufferValue(0, v);
 }
 
 void PolyOscillator::tick(){
@@ -65,7 +67,7 @@ void PolyOscillator::tick(){
 }
 
 void PolyOscillator::clearBuffer(){
-    std::fill(buffer_.get(), buffer_.get() + size_, 0.0);
+    BaseModule::clearBuffer();
     // now clear children
     childPool_.forEachActive([](Oscillator& obj){
         obj.clearBuffer();

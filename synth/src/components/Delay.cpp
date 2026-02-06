@@ -21,7 +21,7 @@
 
 Delay::Delay(ComponentId id, DelayConfig cfg):
     BaseComponent(id, ComponentType::Delay),
-    BaseModule(),
+    BaseModule(1,1),
     delay_(cfg.max_delay_sec * Config::get<int>("audio.sample_rate").value())
 {
     parameters_->add<ParameterType::DELAY>(cfg.delay,true,0,cfg.max_delay_sec * sampleRate_);
@@ -30,14 +30,11 @@ Delay::Delay(ComponentId id, DelayConfig cfg):
 }
 
 void Delay::calculateSample(){
-    double input = 0 ;
-    for (auto m : getInputs()){
-        input += m->getCurrentSample();
-    }
+    double input = aggregateInputs(0);
     delay_.write(input);
 
     size_t delay = parameters_->getParameter<ParameterType::DELAY>()->getInstantaneousValue() ; // in samples
     double gain = parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue() ;
 
-    buffer_[bufferIndex_] = delay_.read(delay) * gain ;
+    setBufferValue(0, delay_.read(delay) * gain) ;
 }

@@ -38,10 +38,12 @@ public:
     explicit ConnectionManager(QGraphicsScene* scene, QObject* parent = nullptr);
 
     // UI creating a connection
-    void startConnection(SocketWidget* fromSocket);
+    void startDragConnection(SocketWidget* fromSocket);
     void updateDragConnection(const QPointF& scenePos);
-    void finishConnection(const QPointF& scenePos);
-    ConnectionRequest finishConnection(SocketWidget* toWidget);
+    void finishDragConnection(const QPointF& scenePos);
+    
+    // backend confirmed successful connection
+    void loadConnection(SocketWidget* outbound, SocketWidget* inbound);
 
     void cancelConnection();
 

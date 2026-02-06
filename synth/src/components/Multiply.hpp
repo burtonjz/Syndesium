@@ -26,19 +26,16 @@ class Multiply : public BaseModule {
 public:
     Multiply(ComponentId id, MultiplyConfig cfg):
         BaseComponent(id,ComponentType::Multiply),
-        BaseModule()
+        BaseModule(1,1)
     {
         parameters_->add<ParameterType::SCALAR>(cfg.scalar, true);
     }
 
     void calculateSample(){
-        double input = 0 ;
-        for (auto m : getInputs()){
-            input += m->getCurrentSample();
-        }
+        double input = aggregateInputs(0);
 
         double scalar = parameters_->getParameter<ParameterType::SCALAR>()->getInstantaneousValue() ;
-        buffer_[bufferIndex_] = input * scalar ;
+        setBufferValue(0, input * scalar) ;
     }
 };
 

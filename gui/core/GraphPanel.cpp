@@ -21,6 +21,7 @@
 #include "meta/ComponentDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "patch/ConnectionManager.hpp"
+#include "util/util.hpp"
 #include "widgets/ComponentDetailWidget.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "widgets/ComponentWidget.hpp"
@@ -145,6 +146,7 @@ void GraphPanel::removeComponent(int id){
 void GraphPanel::addAudioOutput(){
     audioOut_ = new SocketContainerWidget("Audio Output Device");
     audioOut_->createSockets({{SocketType::SignalInbound, "Audio In"}});
+    audioOut_->setData(Qt::UserRole, 0); // output index
     scene_->addItem(audioOut_);
 
     widgets_.push_back(audioOut_);
@@ -218,28 +220,35 @@ QJsonArray GraphPanel::getComponentPositions() const {
 }
 
 void GraphPanel::loadConnection(const QJsonObject& request){
-    int inboundId = request["inbound"]["id"].toInt(-1);
-    int outboundId = request["outbound"]["id"].toInt(-1);
-    SocketType inboundType = static_cast<SocketType>(request["inbound"]["socketType"].toInt());
-    SocketType outboundType = static_cast<SocketType>(request["outbound"]["socketType"].toInt());
+    ConnectionRequest conn = Util::QJsonObjectToNlohmann(request) ;
+
+    if ( !conn.valid() ){
+        qWarning() << "Connection failed: Json is not a valid ConnectionRequest." ;
+        return ;
+    }
 
     SocketContainerWidget* inboundWidget = nullptr ;
     SocketContainerWidget* outboundWidget = nullptr ;
 
-    if ( inboundId == -1 && inboundType == SocketType::SignalInbound ){
+    if ( !conn.inboundID.has_value() && conn.inboundSocket == SocketType::SignalInbound ){
         inboundWidget = audioOut_ ;
     } else {
-        inboundWidget = getWidget(inboundId);
+        inboundWidget = getWidget(conn.inboundID.value());
     }
 
-    if ( outboundId == -1 && outboundType == SocketType::MidiOutbound){
+    if ( !conn.outboundID.has_value() && conn.outboundSocket == SocketType::MidiOutbound ){
         outboundWidget = midiIn_ ;
     } else {
-        outboundWidget = getWidget(outboundId);
+        outboundWidget = getWidget(conn.outboundID.value());
     }
 
-    if ( ! inboundWidget || ! outboundWidget ){
-        qWarning() << "Json connection not successfully loaded: invalid connection request" ;
+    if ( ! inboundWidget ){
+        qWarning() << "Connection Failed: Could not find component with ID = " << conn.inboundID.value() ;
+        return ;
+    }
+
+    if ( ! outboundWidget ){
+        qWarning() << "Connection Failed: Could not find component with ID = " << conn.outboundID.value() ;
         return ;
     }
 
@@ -247,21 +256,27 @@ void GraphPanel::loadConnection(const QJsonObject& request){
     SocketWidget* inboundSocket ;
     SocketWidget* outboundSocket ;
 
-    if ( inboundType == SocketType::ModulationInbound ){
+    if ( conn.inboundSocket == SocketType::ModulationInbound ){
         ParameterType modulatedParam = static_cast<ParameterType>(request["inbound"]["parameter"].toInt());
-        inboundSocket = getWidgetSocket(inboundWidget, inboundType, modulatedParam);
-        outboundSocket = getWidgetSocket(outboundWidget, outboundType);
+        inboundSocket = getWidgetSocket(inboundWidget, conn.inboundSocket, modulatedParam);
+        outboundSocket = getWidgetSocket(outboundWidget, conn.outboundSocket);
+    } else if ( conn.inboundSocket == SocketType::SignalInbound ){
+        if ( conn.inboundID.has_value() ){ 
+            inboundSocket = getWidgetSocket(inboundWidget, conn.inboundSocket, conn.inboundIdx.value());
+        } else { // otherwise, it's the audioOut
+            inboundSocket = getWidgetSocket(inboundWidget, conn.inboundSocket, static_cast<size_t>(0));
+        }
+        outboundSocket = getWidgetSocket(outboundWidget, conn.outboundSocket, conn.outboundIdx.value());
     } else {
-        inboundSocket = getWidgetSocket(inboundWidget, inboundType);
-        outboundSocket = getWidgetSocket(outboundWidget, outboundType);
+        inboundSocket = getWidgetSocket(inboundWidget, conn.inboundSocket);
+        outboundSocket = getWidgetSocket(outboundWidget, conn.outboundSocket);
     }
     
     if ( ! inboundSocket || ! outboundSocket ){
         qWarning() << "Json connection not successfully loaded: sockets not found" ;
     }
     
-    connectionManager_->startConnection(outboundSocket);
-    connectionManager_->finishConnection(inboundSocket);
+    connectionManager_->loadConnection(outboundSocket, inboundSocket);
 }
 
 void GraphPanel::loadPositions(const QJsonObject& request){
@@ -283,7 +298,10 @@ void GraphPanel::loadPositions(const QJsonObject& request){
 }
 
 
-SocketWidget* GraphPanel::getWidgetSocket(SocketContainerWidget* w, SocketType t, ParameterType p){
+SocketWidget* GraphPanel::getWidgetSocket(
+        SocketContainerWidget* w, SocketType t, 
+        std::variant<std::monostate, size_t, ParameterType> selector 
+){
     if (!w){
         qWarning() << "invalid widget specified." ;
         return nullptr ;
@@ -292,7 +310,13 @@ SocketWidget* GraphPanel::getWidgetSocket(SocketContainerWidget* w, SocketType t
     for ( auto s : w->getSockets() ){
         if ( s->getType() == t ){
             if ( t == SocketType::ModulationInbound ){
+                ParameterType p = std::get<ParameterType>(selector);
                 if ( p == parameterFromString(s->getName().toStdString())){
+                    return s ;
+                }
+            } else if ( t == SocketType:: SignalInbound || t == SocketType::SignalOutbound ) {
+                size_t index = std::get<size_t>(selector);
+                if ( index == s->data(Qt::UserRole).value<size_t>() ){
                     return s ;
                 }
             } else {
@@ -359,7 +383,7 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
     if ( event->button() == Qt::LeftButton ){
         if ( SocketWidget* w = connectionManager_->findSocketAt(scenePos) ){
             isDraggingConnection_ = true ;
-            connectionManager_->startConnection(w);
+            connectionManager_->startDragConnection(w);
             event->accept();
             return ;
         }
@@ -390,7 +414,7 @@ void GraphPanel::mouseReleaseEvent(QMouseEvent* event){
 
     if (event->button() == Qt::LeftButton && isDraggingConnection_ ) {
         isDraggingConnection_ = false;
-        connectionManager_->finishConnection(scenePos);
+        connectionManager_->finishDragConnection(scenePos);
         event->accept();
         return ;
     }

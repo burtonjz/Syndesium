@@ -7,7 +7,7 @@
 
 BiquadFilter::BiquadFilter(ComponentId id, BiquadFilterConfig cfg):
     BaseComponent(id, ComponentType::BiquadFilter),
-    BaseModule(),
+    BaseModule(1,1),
     BaseModulator(),
     state1_(0.0),
     state2_(0.0),
@@ -173,12 +173,9 @@ double BiquadFilter::modulate(double value, ModulationData* mData) const {
 }
 
 void BiquadFilter::calculateSample(){
-    double input = 0 ;
-    for (auto m : getInputs()){
-        input += m->getCurrentSample();
-    }
+    double input = aggregateInputs(0);
 
-    buffer_[bufferIndex_] = getCurrentOutput(input, state1_, state2_);
+    setBufferValue(0, getCurrentOutput(input, state1_, state2_));
 }
 
 void BiquadFilter::tick(){

@@ -30,7 +30,9 @@ struct ConnectionRequest {
     SocketType inboundSocket ;
     SocketType outboundSocket ;
     std::optional<int> inboundID ;
+    std::optional<size_t> inboundIdx ; // audio only
     std::optional<int> outboundID ;
+    std::optional<size_t> outboundIdx ; // audio only
     std::optional<ParameterType> inboundParameter ;
     bool remove = false ;
 
@@ -38,8 +40,33 @@ struct ConnectionRequest {
         return inboundSocket == other.inboundSocket &&
                outboundSocket == other.outboundSocket &&
                inboundID == other.inboundID &&
+               inboundIdx == other.inboundIdx &&
                outboundID == other.outboundID &&
+               outboundIdx == other.outboundIdx &&
                inboundParameter == other.inboundParameter ;
+    }
+
+    bool valid() const {
+        bool t = true ;
+        switch(inboundSocket){
+        case SocketType::SignalInbound:
+            t = t && outboundSocket == SocketType::SignalOutbound ;
+            t = t && inboundID.has_value() == inboundIdx.has_value();
+            t = t && outboundID.has_value() == outboundIdx.has_value();
+            break ;
+        case SocketType::MidiInbound:
+            t = t && outboundSocket == SocketType::MidiOutbound ;
+            break ;
+        case SocketType::ModulationInbound:
+            t = t && outboundSocket == SocketType::ModulationOutbound ;
+            t = t && inboundParameter.has_value() ;
+            break ;
+        default:
+            t = false ;
+            break ;
+        }
+
+        return t ;
     }
 };
 
@@ -55,7 +82,9 @@ inline void to_json(json& j, const ConnectionRequest& req){
     j["inbound"]["socketType"] = req.inboundSocket ;
     j["outbound"]["socketType"] = req.outboundSocket ;
     if ( req.inboundID.has_value() ) j["inbound"]["id"] = req.inboundID.value();
+    if ( req.inboundIdx.has_value() ) j["inbound"]["index"] = req.inboundIdx.value();
     if ( req.outboundID.has_value() ) j["outbound"]["id"] = req.outboundID.value();
+    if ( req.outboundIdx.has_value() ) j["outbound"]["index"] = req.outboundIdx.value();
     if ( req.inboundParameter.has_value() ) j["inbound"]["parameter"] = req.inboundParameter.value();
 }
 
@@ -63,7 +92,9 @@ inline void from_json(const json& j, ConnectionRequest& req){
     req.inboundSocket = static_cast<SocketType>(j["inbound"]["socketType"]);
     req.outboundSocket = static_cast<SocketType>(j["outbound"]["socketType"]);
     if ( j["inbound"].contains("id")) req.inboundID = j["inbound"]["id"];
+    if ( j["inbound"].contains("index")) req.inboundIdx = j["inbound"]["index"];
     if ( j["outbound"].contains("id")) req.outboundID = j["outbound"]["id"];
+    if ( j["outbound"].contains("index")) req.outboundIdx = j["outbound"]["index"];
     if ( j["inbound"].contains("parameter")) req.inboundParameter = static_cast<ParameterType>(j["inbound"]["parameter"]);
     if ( j["action"] == "create_connection" ){
         req.remove = false ;

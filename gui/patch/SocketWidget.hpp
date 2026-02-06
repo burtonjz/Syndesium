@@ -30,6 +30,7 @@ class SocketContainerWidget ; // forward declaration
 struct SocketSpec {
     SocketType type ;
     QString name ;
+    std::optional<size_t> idx ;
 };
 
 class SocketWidget : public QGraphicsObject {

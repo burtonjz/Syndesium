@@ -80,7 +80,10 @@ public:
 
     SocketContainerWidget* getWidget(int ComponentId) const ;
     ComponentDetailWidget* getDetailWidget(int componentId) const ;
-    SocketWidget* getWidgetSocket(SocketContainerWidget* w, SocketType t, ParameterType p = ParameterType::N_PARAMETERS );
+    SocketWidget* getWidgetSocket(
+        SocketContainerWidget* w, SocketType t, 
+        std::variant<std::monostate, size_t, ParameterType> selector = std::monostate{} 
+    );
 
 protected:
     void keyPressEvent(QKeyEvent* event) override ;

@@ -29,7 +29,7 @@
 // through modules
 class SignalChain {
 private:
-    std::unordered_set<BaseModule*> outputNodes_ ;
+    std::unordered_set<SignalConnection, ConnectionHash> outputNodes_ ;
     std::vector<BaseModule*> topologicalOrder_ ;
     std::unordered_set<BaseModule*> visited_  ;
 
@@ -45,20 +45,29 @@ public:
         return topologicalOrder_ ;
     }
 
-    const std::unordered_set<BaseModule*>& getSinks() const {
+    const std::unordered_set<SignalConnection, ConnectionHash>& getSinks() const {
         return outputNodes_ ;
     }
 
-    void addSink(BaseModule* output){
+    void addSink(BaseModule* output, size_t index){
         if (!output){
             SPDLOG_WARN("Not adding a nullptr as a sink.");
             return ;
         }
-        outputNodes_.insert(output);
+        if ( index > output->getNumOutputs() ){
+            SPDLOG_WARN("output index out of bounds for module. Cannot add requested sink.");
+            return ;
+        }
+        outputNodes_.insert({output, index});
     }
 
-    void removeSink(BaseModule* output){
-        outputNodes_.erase(output);
+    void removeSink(BaseModule* output, size_t index){
+        if ( !output || index > output->getNumOutputs() ){
+            SPDLOG_WARN("output index out of bounds for specified module. Cannot remove sink.");
+            return ; 
+        }
+
+        outputNodes_.erase({output, index});
     }
 
     void calculateTopologicalOrder(){
@@ -66,8 +75,8 @@ public:
         topologicalOrder_.clear();
         
         // global post-order depth-first search
-        for (BaseModule* m : outputNodes_ ){
-            topologicalSort(m, visited_, topologicalOrder_);
+        for ( const auto& conn : outputNodes_ ){
+            topologicalSort(conn.module, visited_, topologicalOrder_);
         }
     }
 
@@ -101,10 +110,12 @@ private:
         }
 
         // Now process normal signal chain
-        for (BaseModule* m : module->getInputs()){
-            topologicalSort(m, visited, result);
+        for ( size_t i = 0; i < module->getNumInputs(); ++i ){
+            for ( const auto& conn : module->getInputs(i)){
+                topologicalSort(conn.module, visited, result);
+            }
         }
-
+        
         result.push_back(module); // post-order traversal (only insert once all inputs are  visited)
     }
 

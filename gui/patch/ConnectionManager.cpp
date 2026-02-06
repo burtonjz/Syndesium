@@ -38,7 +38,7 @@ ConnectionManager::ConnectionManager(QGraphicsScene* scene, QObject* parent):
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &ConnectionManager::onApiDataReceived);
 }
 
-void ConnectionManager::startConnection(SocketWidget* fromSocket){
+void ConnectionManager::startDragConnection(SocketWidget* fromSocket){
     if (!fromSocket) return ;
     
     fromSocket->grabMouse();
@@ -52,65 +52,62 @@ void ConnectionManager::updateDragConnection(const QPointF& scenePos){
     if (dragConnection_) dragConnection_->setEndpoint(scenePos) ;
 }
 
-void ConnectionManager::finishConnection(const QPointF& scenePos){
-    SocketWidget* toSocket = findSocketAt(scenePos);
-
-    auto request = finishConnection(toSocket);
-    sendConnectionApiRequest(request);    
-}
-
-ConnectionRequest ConnectionManager::finishConnection(SocketWidget* toSocket){
-    if (!dragConnection_ || !dragFromSocket_) {
-        qWarning() << "from connection not specified. This shouldn't happen!" ;
-        ConnectionRequest req ;
-        req.inboundID = -1 ;
-        req.outboundID = -1 ;
-        return req ;
+void ConnectionManager::finishDragConnection(const QPointF& scenePos){
+    ConnectionRequest request ;
+    
+    if ( !dragConnection_ || !dragFromSocket_ ){
+        qWarning() << "drag connection not available. Unable to finish drag.";
+        return ;
     }
 
     dragFromSocket_->ungrabMouse();
-    
-    if (!toSocket){
-        qWarning() << "invalid toSocket specified." ;
-        cancelConnection();
-        ConnectionRequest req ;
-        req.inboundID = -1 ;
-        req.outboundID = -1 ;
-        return req ;
-    }
 
-    if ( ! canConnect(dragFromSocket_, toSocket)){
-        qWarning() << "invalid socket combination. Sockets cannot be connected" ;
+    SocketWidget* toSocket = findSocketAt(scenePos);
+    if ( !toSocket ){
+        qInfo() << "No socket endpoint specified for drag cable. Cancelling connection." ;
         cancelConnection();
-        ConnectionRequest req ;
-        req.inboundID = -1 ;
-        req.outboundID = -1 ;
-        return req ;
+        return ;
     }
-
-    // Complete the connection
     dragConnection_->setToSocket(toSocket);
 
-    // connect to position changes
-    SocketContainerWidget* fromWidget = dragFromSocket_->getParent();
-    SocketContainerWidget* toWidget = toSocket->getParent();
+    request = dragConnection_->toConnectionRequest();
 
-    connect(fromWidget, &SocketContainerWidget::positionChanged, 
+    if ( !request.valid() ){
+        qWarning() << "Invalid connection request created. Cancelling connection.";
+        cancelConnection();
+    }
+
+    sendConnectionApiRequest(request);    
+
+    // cleanup temporary drag cable
+    scene_->removeItem(dragConnection_);
+    delete dragConnection_ ;
+    dragConnection_ = nullptr ;
+    dragFromSocket_ = nullptr ;
+}
+
+void ConnectionManager::loadConnection(SocketWidget* outbound, SocketWidget* inbound){
+    ConnectionCable* cable = new ConnectionCable(outbound, inbound);
+
+    if ( getCable(cable->toConnectionRequest()) ){
+        qInfo() << "Cable: " << cable << "is an already existing connection. Will not load connection." ;
+        delete cable ;
+    }
+    
+    // connect to position changes
+    SocketContainerWidget* obWidget = outbound->getParent();
+    SocketContainerWidget* ibWidget = inbound->getParent();
+
+    connect(obWidget, &SocketContainerWidget::positionChanged, 
         this, &ConnectionManager::onWidgetPositionChanged);
-    connect(toWidget, &SocketContainerWidget::positionChanged, 
+    connect(ibWidget, &SocketContainerWidget::positionChanged, 
         this, &ConnectionManager::onWidgetPositionChanged);
 
     // set connection cable layering
-    dragConnection_->setZValue(std::max(fromWidget->zValue(), toWidget->zValue()) - 0.1);
+    cable->setZValue(std::max(outbound->zValue(), inbound->zValue()) - 0.1);
 
-    // add connection to map
-    connections_.push_back(dragConnection_);
-    auto request = dragConnection_->toConnectionRequest();
-
-    dragConnection_ = nullptr ;
-    dragFromSocket_ = nullptr ;
-
-    return request ;
+    scene_->addItem(cable);
+    connections_.push_back(cable);
 }
 
 void ConnectionManager::cancelConnection(){
@@ -199,15 +196,27 @@ ConnectionCable* ConnectionManager::getCable(ConnectionRequest request) const {
 }
 
 void ConnectionManager::removeCable(ConnectionCable* cable){
-    if (cable){
-        if ( cable->scene() ){
-            cable->scene()->removeItem(cable);
-        }
-        scene_->removeItem(cable);
-        connections_.erase(std::remove(connections_.begin(), connections_.end(), cable), connections_.end());
-        delete cable ;
-        emit wasModified();
+    if ( !cable ){
+        qWarning() << "removeCable called with a null cable.";
+        return ;
+    } 
+
+    qDebug() << "removing cable:" << cable << "from scene:" << cable->scene();
+
+    if ( cable->scene() ){
+        cable->scene()->removeItem(cable);
+        qDebug() << "cable removed from scene." ;
     }
+
+    connections_.erase(
+        std::remove(connections_.begin(), connections_.end(), cable), 
+        connections_.end()
+    );
+
+    qDebug() << "cable deleted, remaining connections:" << connections_ ;
+
+    delete cable ;
+    emit wasModified();
 }
 
 void ConnectionManager::onApiDataReceived(const QJsonObject &json){

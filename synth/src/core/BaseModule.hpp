@@ -27,27 +27,52 @@
 #include "core/BaseComponent.hpp"
 #include "config/Config.hpp"
 
+#include <nlohmann/json.hpp>
+using json = nlohmann::json ;
+
+struct SignalConnection {
+    BaseModule* module ; // connecting module
+    size_t index ; // buffer index 
+
+    bool operator==(const SignalConnection& other) const {
+        return module == other.module && index == other.index ;
+    }
+};
+struct ConnectionHash {
+    std::size_t operator()(const SignalConnection& conn) const {
+        return std::hash<BaseModule*>()(conn.module) ^ (std::hash<size_t>()(conn.index) << 1);
+    }
+};
+
 class BaseModule : public virtual BaseComponent {
 protected:
-    double sampleRate_ ;
-    std::size_t size_ ;
-    std::unordered_set<BaseModule*> signalInputs_ ;
-    std::unordered_set<BaseModule*> signalOutputs_ ;
-    std::unique_ptr<double[]> buffer_ ;
     size_t bufferIndex_ ;
-    
+    size_t nInputs_ ;
+    size_t nOutputs_ ;
+
+    double sampleRate_ ;
+    std::size_t bufferSize_ ;
+
+    std::vector<std::unordered_set<SignalConnection, ConnectionHash>> signalInputs_ ;
+    std::vector<std::unordered_set<SignalConnection, ConnectionHash>> signalOutputs_ ;
+    std::vector<std::unique_ptr<double[]>> buffers_ ;
 
 public:
-    BaseModule():
-        bufferIndex_(0)
+    BaseModule(size_t in, size_t out):
+        bufferIndex_(0),
+        nInputs_(in),
+        nOutputs_(out),
+        signalInputs_(in),
+        signalOutputs_(out),
+        buffers_(out)
     {
         Config::load();
-        double sampleRate = Config::get<double>("audio.sample_rate").value();
-        size_t bufferSize = Config::get<size_t>("audio.buffer_size").value();
+        sampleRate_ = Config::get<double>("audio.sample_rate").value();
+        bufferSize_ = Config::get<size_t>("audio.buffer_size").value();
 
-        sampleRate_ = sampleRate ;
-        size_ = bufferSize ;
-        buffer_ = std::make_unique<double[]>(size_) ;
+        for ( size_t i = 0; i < out; ++i){
+            buffers_[i] = std::make_unique<double[]>(bufferSize_);
+        }
     }
     
     virtual ~BaseModule() = default ;
@@ -58,49 +83,85 @@ public:
     
     virtual void calculateSample(){}
 
-    double getCurrentSample() const {
-        return buffer_[bufferIndex_];
+    double getCurrentSample(size_t output) const {
+        assert( output < nOutputs_ );
+        return buffers_[output][bufferIndex_];
     }
 
     virtual void clearBuffer(){
-        std::fill(buffer_.get(), buffer_.get() + size_, 0.0);
+        for ( auto& buf : buffers_ ){
+            std::fill(buf.get(), buf.get() + bufferSize_, 0.0);
+        }
     }
 
-    const double* data() const {
-        return buffer_.get() ;
+    const double* data(size_t output = 0) const {
+        assert( output < nOutputs_ );
+        return buffers_[output].get() ;
     }
 
     std::size_t size() const {
-        return size_ ;
+        return bufferSize_ ;
     }
 
-    void connectInput(BaseModule* source){
-        signalInputs_.insert(source);
-        source->signalOutputs_.insert(this);
+    size_t getNumInputs() const {
+        return nInputs_ ;
     }
 
-    void disconnectInput(BaseModule* source){
-        signalInputs_.erase(source);
-        source->signalInputs_.erase(this);
+    size_t getNumOutputs() const {
+        return nOutputs_ ;
     }
 
-    const std::unordered_set<BaseModule*>& getInputs() const {    
-        return signalInputs_ ;
+    void connectInput(BaseModule* source, size_t input, size_t sourceOutput){
+        assert( output < nInputs_ );
+        assert( sourceOutput < source->nOutputs_ );
+        signalInputs_[input].insert({source, sourceOutput});
+        source->signalOutputs_[sourceOutput].insert({this, input});
     }
 
-    const std::unordered_set<BaseModule*>& getOutputs() const {
-        return signalOutputs_ ;
+    void disconnectInput(BaseModule* source, size_t input, size_t sourceOutput){
+        assert ( input < nInputs_ );
+        assert ( sourceOutput < source->nOutputs_ );
+        signalInputs_[input].erase({source, sourceOutput});
+        source->signalOutputs_[sourceOutput].erase({this, input});
+    }
+
+    const std::unordered_set<SignalConnection, ConnectionHash>& getInputs(size_t inp) const {    
+        assert( inp < nInputs_ );
+        return signalInputs_[inp] ;
+    }
+
+    const std::unordered_set<SignalConnection, ConnectionHash>& getOutputs(size_t out) const {
+        assert( out < nOutputs_ );
+        return signalOutputs_[out] ;
     }
 
     virtual void tick(){
-        bufferIndex_ = std::fmod(bufferIndex_ + 1, size_);
+        bufferIndex_ = std::fmod(bufferIndex_ + 1, bufferSize_);
     }
 
     virtual bool isGenerative() const { return false; }
     virtual bool isPolyphonic() const { return false; }
-
-protected:
     
+protected:
+    double aggregateInputs(size_t idx) const {
+        assert( idx < nInputs_ );
+        double sum = 0.0 ;
+        for ( const auto& conn : signalInputs_[idx] ){
+            sum += conn.module->getCurrentSample(conn.index);
+        }
+        return sum ;
+    }
+
+    void setBufferValue(size_t idx, double val){
+        assert( idx < nOutputs_ );
+        buffers_[idx][bufferIndex_] = val ;
+    }
+};
+
+
+inline void to_json(json& j, const SignalConnection& conn){
+    j["componentId"] = conn.module->getId() ;
+    j["index"] = conn.index ;
 };
 
 #endif // __MODULE_HPP_

@@ -413,6 +413,11 @@ json ApiHandler::createConnection(int sock, const json& request){
     }
 
     ConnectionRequest req = response.get<ConnectionRequest>() ;
+
+    if ( ! req.valid() ){
+        return sendApiResponse(sock, response, "Invalid connection request.");
+    }
+
     if ( routeConnectionRequest(req)){
         return sendApiResponse(sock,response);
     } else {
@@ -433,6 +438,10 @@ json ApiHandler::removeConnection(int sock, const json& request){
     ConnectionRequest req = response.get<ConnectionRequest>() ;
     req.remove = true ;
 
+    if ( ! req.valid() ){
+        return sendApiResponse(sock, response, "Invalid connection request.");
+    }
+    
     if ( routeConnectionRequest(req)){
         return sendApiResponse(sock,response);
     } else {

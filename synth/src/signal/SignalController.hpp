@@ -33,31 +33,31 @@ public:
     {}
 
     // signal chain functions
-    void connect(BaseModule* from, BaseModule* to){
+    void connect(BaseModule* from, size_t fromIndex, BaseModule* to, size_t toIndex){
         if (!from) return ;
         if (!to) return ;
-        to->connectInput(from);
+        to->connectInput(from,fromIndex, toIndex);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void disconnect(BaseModule* from, BaseModule* to){
+    void disconnect(BaseModule* from, size_t fromIndex, BaseModule* to, size_t toIndex){
         if (!from) return ;
         if (!to) return ;
-        to->disconnectInput(from);
+        to->disconnectInput(from, fromIndex, toIndex);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void registerSink(BaseModule* output){
-        signalChain_.addSink(output);
+    void registerSink(BaseModule* output, size_t index){
+        signalChain_.addSink(output, index);
         signalChain_.calculateTopologicalOrder();
     }
 
-    void unregisterSink(BaseModule* output){
-        signalChain_.removeSink(output);
+    void unregisterSink(BaseModule* output, size_t index){
+        signalChain_.removeSink(output, index);
         signalChain_.calculateTopologicalOrder();
     }
 
-    const std::unordered_set<BaseModule*>& getSinks() const {
+    const std::unordered_set<SignalConnection, ConnectionHash>& getSinks() const {
         return signalChain_.getSinks() ;
     }
 
@@ -70,9 +70,11 @@ public:
             mod->tick();
             mod->calculateSample();
 
-            // if it's a sink, add it to the output
-            if ( sinks.count(mod) ){
-                output += mod->getCurrentSample() ;
+            // if an output index is a sink, add it to the final output
+            for ( size_t i = 0; i < mod->getNumOutputs(); ++i ){
+                if ( sinks.count({mod,i}) ){
+                    output += mod->getCurrentSample(i) ;
+                }
             }
         }
 

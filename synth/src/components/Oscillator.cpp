@@ -25,7 +25,7 @@
 
 Oscillator::Oscillator(ComponentId id, OscillatorConfig cfg):
     BaseComponent(id, ComponentType::Oscillator),
-    BaseModule(),
+    BaseModule(0,1),
     phase_(0),
     increment_(0)
 {
@@ -40,7 +40,7 @@ Oscillator::Oscillator(ComponentId id, OscillatorConfig cfg):
 
 Oscillator::Oscillator(ParameterMap& parent, double frequency):
     BaseComponent(-1, ComponentType::Oscillator),
-    BaseModule(),
+    BaseModule(0,1),
     phase_(0),
     increment_(0)
 {
@@ -76,11 +76,11 @@ void Oscillator::calculateSample(){
     auto gain = parameters_->getParameter<ParameterType::GAIN>()->getInstantaneousValue();
 
     sample *= amplitude * gain ;
-    buffer_[bufferIndex_] = sample ;
+    setBufferValue(0,sample) ;
 }
 
 double Oscillator::modulate([[maybe_unused]] double value, [[maybe_unused]] ModulationData* mdat ) const {
-    return getCurrentSample() ;
+    return getCurrentSample(0) ;
 }
 
 void Oscillator::tick(){
