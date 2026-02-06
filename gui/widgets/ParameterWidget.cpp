@@ -88,7 +88,7 @@ void DelayWidget::setupUI(){
     layout->addWidget(label_);
 
     // value label
-    valueLabel_ = new QLabel("0 samples");
+    valueLabel_ = new EditableLabel("0 samples");
     valueLabel_->setAlignment(Qt::AlignCenter);
     layout->addWidget(valueLabel_);
     
@@ -105,7 +105,7 @@ void DelayWidget::setupUI(){
     QHBoxLayout* unitLayout = new QHBoxLayout(unitContainer);
     unitLayout->setContentsMargins(0, 0, 0, 0);
     
-    QLabel* unitLabel = new QLabel("Unit:");
+    EditableLabel* unitLabel = new EditableLabel("Unit:");
     unitCombo_ = new QComboBox();
     unitCombo_->addItem("samples");
     unitCombo_->addItem("ms");
@@ -400,7 +400,7 @@ void SliderWidget::setupUI(){
     layout->addWidget(label_);
 
     // value label
-    valueLabel_ = new QLabel();
+    valueLabel_ = new EditableLabel("");
     valueLabel_->setAlignment(Qt::AlignCenter);
     layout->addWidget(valueLabel_);
     

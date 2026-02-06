@@ -20,7 +20,7 @@
 
 #include "types/ParameterType.hpp"
 #include "widgets/SwitchWidget.hpp"
-
+#include "widgets/EditableLabel.hpp"
 
 #include <QWidget>
 #include <QLabel>
@@ -50,7 +50,7 @@ private:
     QLabel* label_ ;
     QSlider* slider_ ;
     QComboBox* unitCombo_ ;
-    QLabel* valueLabel_ ;
+    EditableLabel* valueLabel_ ;
     double sampleRate_ ;
 
 public:
@@ -111,7 +111,7 @@ private:
     size_t precision_ ; // number of decimals
     QLabel* label_ ;
     QSlider* slider_ ;
-    QLabel* valueLabel_ ;
+    EditableLabel* valueLabel_ ;
 
 public:
     explicit SliderWidget(ParameterType p, QWidget* parent = nullptr);
