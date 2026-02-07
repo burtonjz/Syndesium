@@ -26,6 +26,7 @@
 #include <cmath>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
+#include <QInputDialog>
 
 /*
 =========================================
@@ -37,7 +38,11 @@ DelayWidget::DelayWidget(QWidget* parent):
     label_(nullptr),
     slider_(nullptr),
     unitCombo_(nullptr),
-    valueLabel_(nullptr)
+    valueLabel_(nullptr),
+    minSamples_(0),
+    maxSamples_(0),
+    minMs_(0),
+    maxMs_(0)
 {
     sampleRate_ = Config::get<double>("audio.sample_rate").value();
     setupUI();
@@ -47,7 +52,8 @@ DelayWidget::DelayWidget(QWidget* parent):
 
 ParameterValue DelayWidget::getValue() const {
     QString unit = unitCombo_->currentText();
-    if (unit == "ms") { 
+
+    if ( unitCombo_->currentText() == "ms") { 
             return static_cast<int>(slider_->value() / 1000.0f * sampleRate_);
     } else {
         return static_cast<int>(slider_->value());
@@ -62,10 +68,13 @@ void DelayWidget::setValue(const ParameterValue& value){
     setValue(samples);
 }
 
-void DelayWidget::setValue(size_t samples){
+void DelayWidget::setValue(size_t samples, bool block){
     QString unit = unitCombo_->currentText();
-    QSignalBlocker blocker(slider_);
 
+    if ( block ){
+        QSignalBlocker blocker(slider_);
+    }
+    
     if (unit == "ms") { 
         slider_->setValue((samples / sampleRate_) * 1000.0f) ;
     } else {
@@ -73,6 +82,38 @@ void DelayWidget::setValue(size_t samples){
     }
 
     updateDisplay();
+}
+
+void DelayWidget::mouseDoubleClickEvent(QMouseEvent* event){
+    bool ok ;
+    QString unit = unitCombo_->currentText() ;
+ 
+    auto s2v = [this](int val){
+        if ( unitCombo_->currentText() == "ms" ){
+            return static_cast<int>(val / 1000.0f);
+        } else {
+            return static_cast<int>(val);
+        }
+    };
+
+    double val ;
+    val = QInputDialog::getInt(
+        this, "Set Delay", unit,
+        slider_->value(),
+        slider_->minimum()  , 
+        slider_->maximum()  ,
+        1, &ok, Qt::WindowFlags()
+    );
+
+    if ( ! ok ) return ;
+
+    qDebug() << "input returning value = " << val ;
+
+    if ( unit == "ms" ){
+        setValue(val / 1000.0 * sampleRate_, false);
+    } else {
+        setValue(val, false);
+    }
 }
 
 void DelayWidget::setupUI(){
@@ -88,14 +129,21 @@ void DelayWidget::setupUI(){
     layout->addWidget(label_);
 
     // value label
-    valueLabel_ = new EditableLabel("0 samples");
+    valueLabel_ = new QLabel("0 samples");
     valueLabel_->setAlignment(Qt::AlignCenter);
     layout->addWidget(valueLabel_);
     
     // value slider
+    minSamples_ = GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, minimum);
+    minMs_ = minSamples_ / sampleRate_ * 1000 ;
+
+    maxSamples_ = GET_PARAMETER_TRAIT_MEMBER(ParameterType::DELAY, maximum);
+    maxMs_ = maxSamples_ / sampleRate_ * 1000 ;
+
+    qDebug() << "samples: " << minSamples_ << ", " << maxSamples_ << "(time ms = " << minMs_ << ", " << maxMs_ << ")" ;
     slider_ = new QSlider(Qt::Horizontal);
-    slider_->setMinimum(0);
-    slider_->setMaximum(sampleRate_);  
+    slider_->setMinimum(minSamples_);
+    slider_->setMaximum(maxSamples_);  
     slider_->setValue(0);
     slider_->setEnabled(true);
     layout->addWidget(slider_);
@@ -105,7 +153,7 @@ void DelayWidget::setupUI(){
     QHBoxLayout* unitLayout = new QHBoxLayout(unitContainer);
     unitLayout->setContentsMargins(0, 0, 0, 0);
     
-    EditableLabel* unitLabel = new EditableLabel("Unit:");
+    QLabel* unitLabel = new QLabel("Unit:");
     unitCombo_ = new QComboBox();
     unitCombo_->addItem("samples");
     unitCombo_->addItem("ms");
@@ -145,11 +193,12 @@ void DelayWidget::connectSignals(){
 
         // Update slider for new unit
         if (newUnit == "ms") {
-            slider_->setMaximum(4000); 
+            slider_->setMaximum(maxMs_); 
+            slider_->setMinimum(minMs_);
             setValue(samples);
         } else {
-            int maxSamples = sampleRate ; 
-            slider_->setMaximum(maxSamples);
+            slider_->setMinimum(minSamples_);
+            slider_->setMaximum(maxSamples_);
             slider_->setValue(samples);  
         }
     });
@@ -389,6 +438,34 @@ void SliderWidget::setValue(const ParameterValue& value){
     }
 }
 
+void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
+    bool ok ;
+    auto s2v = [this](int v){ return v * std::pow(10, -1.0 * precision_);};
+    
+    double value = QInputDialog::getDouble(
+        this, "Set" + QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(param_, name)),
+        "value:", s2v(slider_->value()),
+        s2v(slider_->minimum()), s2v(slider_->maximum()), precision_, &ok,
+        Qt::WindowFlags(), s2v(1)
+    );
+
+    if ( ok ){
+        switch(param_){
+            #define X(name) \
+                case ParameterType::name: \
+                    setValue(static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(value)); \
+                    break ; 
+                PARAMETER_TYPE_LIST
+            #undef X
+            default:
+                qWarning() << "Parameter of type " << 
+                    GET_PARAMETER_TRAIT_MEMBER(param_, name) 
+                    << " is not in enum. This shouldn't happen." ;
+                break ;
+        }
+    }
+}
+
 void SliderWidget::setupUI(){
     QVBoxLayout* layout = new QVBoxLayout(this);
     layout->setContentsMargins(0, 0, 0, 0);
@@ -400,7 +477,7 @@ void SliderWidget::setupUI(){
     layout->addWidget(label_);
 
     // value label
-    valueLabel_ = new EditableLabel("");
+    valueLabel_ = new QLabel();
     valueLabel_->setAlignment(Qt::AlignCenter);
     layout->addWidget(valueLabel_);
     

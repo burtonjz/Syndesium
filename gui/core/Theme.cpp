@@ -114,6 +114,13 @@ void Theme::applyDarkTheme() {
         font-size: 11pt;
     }
     
+    QLineEdit {
+        background-color: %2 ;
+        color: %5;
+        border: 1px solid ;
+        padding: 2px ;
+    }
+    
     QMessageBox {
         background-color: %2;
         color: %5;

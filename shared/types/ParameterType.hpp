@@ -22,6 +22,7 @@
 #include "types/Waveform.hpp"
 #include "types/ScaleType.hpp"
 #include "types/ScaleNote.hpp"
+#include "config/Config.hpp"
 
 #include <variant>
 #include <cstdint>
@@ -114,7 +115,7 @@ template <> struct ParameterTraits<ParameterType::DELAY>{
     using ValueType = int ; // number of samples
     static constexpr std::string name = "delay" ;
     static constexpr float minimum = 0 ;
-    static constexpr float maximum = std::numeric_limits<float>::max() ;
+    static constexpr float maximum = 48000 * 4.0 ;
     static constexpr float defaultValue = 0 ;
     static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
     static constexpr size_t uiPrecision = 0 ; // num decimals

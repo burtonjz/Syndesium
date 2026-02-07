@@ -20,7 +20,6 @@
 
 #include "types/ParameterType.hpp"
 #include "widgets/SwitchWidget.hpp"
-#include "widgets/EditableLabel.hpp"
 
 #include <QWidget>
 #include <QLabel>
@@ -50,20 +49,28 @@ private:
     QLabel* label_ ;
     QSlider* slider_ ;
     QComboBox* unitCombo_ ;
-    EditableLabel* valueLabel_ ;
+    QLabel* valueLabel_ ;
     double sampleRate_ ;
+    int minSamples_ ;
+    int minMs_ ;
+    int maxSamples_ ;
+    int maxMs_ ;
 
 public:
     explicit DelayWidget(QWidget* parent = nullptr);
 
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value) override ;
-    void setValue(size_t samples);
+    void setValue(size_t samples, bool block = true);
 
+protected:
+    void mouseDoubleClickEvent(QMouseEvent* event) override ;
+    
 private:
     void setupUI();
     void connectSignals();
     void updateDisplay();
+    size_t value2sample(int val) const ;
 };
 
 class WaveformWidget : public ParameterWidget {
@@ -111,13 +118,16 @@ private:
     size_t precision_ ; // number of decimals
     QLabel* label_ ;
     QSlider* slider_ ;
-    EditableLabel* valueLabel_ ;
+    QLabel* valueLabel_ ;
 
 public:
     explicit SliderWidget(ParameterType p, QWidget* parent = nullptr);
 
     ParameterValue getValue() const override ;
     void setValue(const ParameterValue& value) override ;
+
+protected:
+    void mouseDoubleClickEvent(QMouseEvent* event) override ;
 
 private:
     void setupUI();
