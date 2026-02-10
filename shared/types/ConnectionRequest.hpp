@@ -81,9 +81,9 @@ inline void to_json(json& j, const ConnectionRequest& req){
     j["outbound"];
     j["inbound"]["socketType"] = req.inboundSocket ;
     j["outbound"]["socketType"] = req.outboundSocket ;
-    if ( req.inboundID.has_value() ) j["inbound"]["id"] = req.inboundID.value();
+    if ( req.inboundID.has_value() ) j["inbound"]["componentId"] = req.inboundID.value();
     if ( req.inboundIdx.has_value() ) j["inbound"]["index"] = req.inboundIdx.value();
-    if ( req.outboundID.has_value() ) j["outbound"]["id"] = req.outboundID.value();
+    if ( req.outboundID.has_value() ) j["outbound"]["componentId"] = req.outboundID.value();
     if ( req.outboundIdx.has_value() ) j["outbound"]["index"] = req.outboundIdx.value();
     if ( req.inboundParameter.has_value() ) j["inbound"]["parameter"] = req.inboundParameter.value();
 }
@@ -91,9 +91,9 @@ inline void to_json(json& j, const ConnectionRequest& req){
 inline void from_json(const json& j, ConnectionRequest& req){
     req.inboundSocket = static_cast<SocketType>(j["inbound"]["socketType"]);
     req.outboundSocket = static_cast<SocketType>(j["outbound"]["socketType"]);
-    if ( j["inbound"].contains("id")) req.inboundID = j["inbound"]["id"];
+    if ( j["inbound"].contains("componentId")) req.inboundID = j["inbound"]["componentId"];
     if ( j["inbound"].contains("index")) req.inboundIdx = j["inbound"]["index"];
-    if ( j["outbound"].contains("id")) req.outboundID = j["outbound"]["id"];
+    if ( j["outbound"].contains("componentId")) req.outboundID = j["outbound"]["componentId"];
     if ( j["outbound"].contains("index")) req.outboundIdx = j["outbound"]["index"];
     if ( j["inbound"].contains("parameter")) req.inboundParameter = static_cast<ParameterType>(j["inbound"]["parameter"]);
     if ( j["action"] == "create_connection" ){

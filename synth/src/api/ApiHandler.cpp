@@ -404,15 +404,13 @@ json ApiHandler::removeComponent(int sock, const json& request){
 
 json ApiHandler::createConnection(int sock, const json& request){
     json response = request ;
+    ConnectionRequest req ;
 
     try {
-        response.at("inbound");
-        response.at("outbound");
+        req = response.get<ConnectionRequest>() ;
     } catch (const std::exception& e){
         return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
     }
-
-    ConnectionRequest req = response.get<ConnectionRequest>() ;
 
     if ( ! req.valid() ){
         return sendApiResponse(sock, response, "Invalid connection request.");
@@ -921,27 +919,18 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
         return false ;
     }
 
-    json request ;
-    json connectionResponse ;
-    json inbound ;
-    json outbound ;
-    for ( const auto& id : config["AudioSinks"] ){
-        request["action"] = "create_connection" ;
-        inbound["socketType"] = SocketType::SignalInbound ;
-        outbound["socketType"] = SocketType::SignalOutbound ;
-        outbound["id"] = id ;
+    for ( const auto& sink : config["AudioSinks"] ){
+        ConnectionRequest req ;
+        req.inboundSocket = SocketType::SignalInbound ;
+        req.outboundSocket = SocketType::SignalOutbound ;        
+        req.outboundID = sink["componentId"];
+        req.outboundIdx = sink["index"];
         
-        request["inbound"] = inbound ;
-        request["outbound"] = outbound ;
-        connectionResponse = createConnection(sock, request);
+        const auto& connectionResponse = createConnection(sock, req);
         if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
             SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
             return false ;
         }
-
-        request.clear();
-        inbound.clear();
-        outbound.clear();
     }
 
     // now rootMidiHandlers
@@ -954,23 +943,16 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
     }
 
     for ( const auto& id : config["rootMidiHandlers"] ){
-        request["action"] = "create_connection" ;
-        inbound["socketType"] = SocketType::MidiInbound ;
-        outbound["socketType"] = SocketType::MidiOutbound ;
-        inbound["id"] = id ;
-
-        request["inbound"] = inbound ;
-        request["outbound"] = outbound ;
-
-        connectionResponse = createConnection(sock, request);
+        ConnectionRequest req ;
+        req.inboundSocket = SocketType::MidiInbound ;
+        req.outboundSocket = SocketType::MidiOutbound ;
+        req.inboundID = id ;
+        
+        const auto& connectionResponse = createConnection(sock, req);
         if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
             SPDLOG_WARN("error requestion connection: {}", connectionResponse.dump());
             return false ;
         }
-
-        request.clear();
-        inbound.clear();
-        outbound.clear();
     }
 
     // lastly, component to component connections
@@ -981,12 +963,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
         return false ;
     }
 
-    json params ;
-    json midiListeners ;
-    json signalInputs ;
-    ComponentId id ;
 
-    
     for ( const auto& component : config["components"] ){
         if ( ! component.is_object() ){
             SPDLOG_WARN("component is not in expected format: {}", component.dump()) ;
@@ -994,9 +971,10 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
         }
 
         try {
-            id = component["id"] ;
-            params = component["parameters"];
-            assert(params.is_object() && "parameters is not in the correct format.");
+            component.at("id");
+            component.at("parameters");
+            component.at("type");
+            assert(components.at("parameters").is_object() && "parameters is not in the correct format.");
         } catch (const std::exception& e){
             SPDLOG_ERROR("Error processing json components object: {}", std::string(e.what()));
             return false ;
@@ -1004,80 +982,57 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
 
         // audio connections
         if ( component.contains("signalInputs") && component["signalInputs"].is_array() ){
-            for ( const auto& outboundId : component["signalInputs"] ) {
-                request["action"] = "create_connection" ;
+            for ( size_t inboundIdx = 0 ; inboundIdx < component["signalInputs"].size(); ++inboundIdx ){
+                for ( const auto& outbound : component["signalInputs"][inboundIdx] ){
+                    ConnectionRequest req ;
+                    req.inboundID = component["id"];
+                    req.inboundIdx = inboundIdx ;
+                    req.inboundSocket = SocketType::SignalInbound ;
+                    req.outboundID = outbound["componentId"];
+                    req.outboundIdx = outbound["index"];
+                    req.outboundSocket = SocketType::SignalOutbound ;
 
-                inbound["id"] = id ;
-                inbound["socketType"] = SocketType::SignalInbound ;
-
-                outbound["id"] = outboundId ;
-                outbound["socketType"] = SocketType::SignalOutbound ;
-
-                request["inbound"] = inbound ;
-                request["outbound"] = outbound ;
-
-                connectionResponse = createConnection(sock, request);
-                if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
-                    SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
-                    return false ;
+                    const auto& connectionResponse = createConnection(sock, req);
+                    if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
+                        SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
+                        return false ;
+                    }
                 }
-
-                request.clear();
-                inbound.clear();
-                outbound.clear();
             }
         }
 
         // midi connections
         if ( component.contains("midiListeners") && component["midiListeners"].is_array()){
             for ( const auto& inboundId : component["midiListeners"] ){
-                request["action"] = "create_connection" ;
-
-                inbound["id"] = inboundId ;
-                inbound["socketType"] = SocketType::MidiInbound ;
+                ConnectionRequest req ;
+                req.inboundID = inboundId ;
+                req.inboundSocket = SocketType::MidiInbound ;
+                req.outboundID = component["id"] ;
+                req.outboundSocket = SocketType::MidiOutbound ;
                 
-                outbound["id"] = id ;
-                outbound["socketType"] = SocketType::MidiOutbound ;
-
-                request["inbound"] = inbound ;
-                request["outbound"] = outbound ;
-
-                connectionResponse = createConnection(sock, request);
+                const auto& connectionResponse = createConnection(sock, req);
                 if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
                     SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
                     return false ;
                 }
-
-                request.clear();
-                inbound.clear();
-                outbound.clear();
             }
         }
 
         // modulation connections
-        for ( const auto& [p, data] : params.items() ){
+        for ( const auto& [p, data] : component["parameters"].items() ){
             if ( data.contains("modulatorId") ){
-                request["action"] = "create_connection" ;
-
-                inbound["id"] = id ;
-                inbound["socketType"] = SocketType::ModulationInbound ;
-                inbound["parameter"] = parameterFromString(p);
-
-                outbound["id"] = data["modulatorId"];
-                outbound["socketType"] = SocketType::ModulationOutbound ;
+                ConnectionRequest req ;
+                req.inboundID = component["id"] ;
+                req.inboundSocket = SocketType::ModulationInbound ;
+                req.inboundParameter = parameterFromString(p);
+                req.outboundID = data["modulatorId"];
+                req.outboundSocket = SocketType::ModulationOutbound ;
                 
-                request["inbound"] = inbound ;
-                request["outbound"] = outbound ;
-
-                connectionResponse = createConnection(sock, request);
+                const auto& connectionResponse = createConnection(sock, req);
                 if ( ! connectionResponse.contains("status") || connectionResponse["status"] != "success" ){
                     SPDLOG_WARN("error requesting connection: {}", connectionResponse.dump());
                     return false ;
                 }
-
-                request.clear();
-                inbound.clear();
-                outbound.clear();
             }
         }
     }
@@ -1086,12 +1041,11 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
 
 }
 
-
 void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMap){
-    std::vector<std::string> keys = {"id", "ComponentId", "signalInputs", "rootMidiHandlers", "midiListeners", "modulatorId", "AudioSinks"};
     if ( j.is_object() ) {
-        for ( const auto& key : keys ) {
-            // single values
+        // Update known ID fields in objects
+        std::vector<std::string> idKeys = {"id", "ComponentId", "componentId", "modulatorId"};
+        for ( const auto& key : idKeys ) {
             if ( j.contains(key) && j[key].is_number_integer() ) {
                 int currentId = j[key];
                 auto it = idMap.find(currentId);
@@ -1099,9 +1053,12 @@ void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMa
                     j[key] = it->second; 
                 }
             }
-
-            // array values
-            if (j.contains(key) && j[key].is_array()) {
+        }
+        
+        // Handle known arrays that contain bare IDs
+        std::vector<std::string> idArrayKeys = {"rootMidiHandlers", "midiListeners"};
+        for ( const auto& key : idArrayKeys ) {
+            if ( j.contains(key) && j[key].is_array() ) {
                 for (auto& element : j[key]) {
                     if (element.is_number_integer()) {
                         int currentId = element;
@@ -1114,13 +1071,13 @@ void ApiHandler::loadUpdateIds(json& j, const std::unordered_map<int, int>& idMa
             }
         }
         
-        // recurse nested values
+        // Recurse into all values
         for ( auto& [key, value] : j.items() ) {
             loadUpdateIds(value, idMap);
         }
     }
     else if ( j.is_array() ) {
-        // recurse array elements
+        // Recurse into array elements
         for (auto& element : j) {
             loadUpdateIds(element, idMap);
         }

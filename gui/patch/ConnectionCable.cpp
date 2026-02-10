@@ -138,11 +138,19 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
     ComponentWidget* inboundComponent = nullptr ;
     ComponentWidget* outboundComponent = nullptr ;
     
-    if ( inboundSocket ) 
-        inboundComponent = dynamic_cast<ComponentWidget*>(inboundSocket->getParent());
-
-    if ( outboundSocket ) 
+    if ( inboundSocket ){
+        inboundComponent = dynamic_cast<ComponentWidget*>(inboundSocket->getParent());    
+        r.inboundSocket = inboundSocket->getType();
+        if ( inboundSocket->getType() == SocketType::ModulationInbound ){
+            r.inboundParameter = parameterFromString(inboundSocket->getName().toStdString()) ;
+        }
+    }
+        
+    if ( outboundSocket ){
         outboundComponent = dynamic_cast<ComponentWidget*>(outboundSocket->getParent());
+        r.outboundSocket = outboundSocket->getType();
+    }
+        
 
 
     if ( inboundComponent ){
@@ -158,12 +166,6 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
             r.outboundIdx = outboundSocket->data(Qt::UserRole).value<size_t>();
         }
     } 
-    
-    r.inboundSocket = inboundSocket->getType();
-    r.outboundSocket = outboundSocket->getType();
-    if ( inboundSocket->getType() == SocketType::ModulationInbound ){
-        r.inboundParameter = parameterFromString(inboundSocket->getName().toStdString()) ;
-    }
     
     return r ;
 };
@@ -308,14 +310,25 @@ QPainterPath ConnectionCable::createAdaptiveBezierPath(const QPointF& start, con
         path.cubicTo(cp3, cp4, end);
     } else {
         // normal single bezier curve
-        QPointF pos2 = start + start_dv * stemLength ;
-        QPointF pos3 = end + end_dv * stemLength ;
-        
-        path.cubicTo(pos2, pos3, end);
+        qreal controlOffset = std::max(
+            Theme::CABLE_SIDE_BEND_MAX, 
+            std::abs(delta.x()) * Theme::CABLE_SIDE_BEND_FACTOR 
+        );
+
+        QPointF cp1, cp2 ;
+        if ( delta.x() >= 0 ){
+            cp1 = start + QPointF(controlOffset, 0);
+            cp2 = end - QPointF(controlOffset, 0);
+        } else {
+            cp1 = start - QPointF(controlOffset, 0);
+            cp2 = end + QPointF(controlOffset, 0);
+        }
+
+        path.cubicTo(cp1, cp2, end);
     }
 
     // add arrows to path
-    drawCableArrow(path, 0.5);
+    drawCableArrow(path, 0.45);
 
     return path;
 }

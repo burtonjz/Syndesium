@@ -118,8 +118,8 @@ public:
     static constexpr qreal SOCKET_WIDGET_RADIUS = 6.0 ;
 
     static constexpr qreal CABLE_SIDE_BEND_FACTOR = 0.5 ; 
-    static constexpr qreal CABLE_SIDE_BEND_MAX = 100.0 ; 
-    static constexpr qreal CABLE_STEM_LENGTH_MAX = 120.0 ;
+    static constexpr qreal CABLE_SIDE_BEND_MAX = 70.0 ; 
+    static constexpr qreal CABLE_STEM_LENGTH_MAX = 80.0 ;
     static constexpr qreal CABLE_STEM_LENGTH_FACTOR = 0.6 ;
     static constexpr qreal CABLE_CYCLE_THRESHOLD = 0.0 ;
     static constexpr qreal CABLE_ARROW_HEIGHT = 12.0 ;

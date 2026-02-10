@@ -273,7 +273,17 @@ void GraphPanel::loadConnection(const QJsonObject& request){
     }
     
     if ( ! inboundSocket || ! outboundSocket ){
+        qWarning() << "Json connection not successfully loaded: sockets not found";
+        qWarning() << "  inboundSocket:" << (void*)inboundSocket 
+                << "inboundWidget:" << (void*)inboundWidget
+                << "inboundSocket type:" << (int)conn.inboundSocket
+                << "inboundIdx:" << (conn.inboundIdx.has_value() ? conn.inboundIdx.value() : -1);
+        qWarning() << "  outboundSocket:" << (void*)outboundSocket
+                << "outboundWidget:" << (void*)outboundWidget  
+                << "outboundSocket type:" << (int)conn.outboundSocket
+                << "outboundIdx:" << (conn.outboundIdx.has_value() ? conn.outboundIdx.value() : -1);
         qWarning() << "Json connection not successfully loaded: sockets not found" ;
+        return ;
     }
     
     connectionManager_->loadConnection(outboundSocket, inboundSocket);

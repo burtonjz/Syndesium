@@ -75,6 +75,7 @@ void ConnectionManager::finishDragConnection(const QPointF& scenePos){
     if ( !request.valid() ){
         qWarning() << "Invalid connection request created. Cancelling connection.";
         cancelConnection();
+        return ;
     }
 
     sendConnectionApiRequest(request);    

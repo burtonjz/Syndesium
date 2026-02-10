@@ -174,7 +174,7 @@ public:
             if ( module ){
                 for ( size_t i = 0; i < module->getNumInputs(); ++i ){
                     for ( const auto& conn : module->getInputs(i) ){
-                        componentConfig["signalInputs"].push_back(conn);
+                        componentConfig["signalInputs"][i].push_back(conn);
                     }
                 }
             }
