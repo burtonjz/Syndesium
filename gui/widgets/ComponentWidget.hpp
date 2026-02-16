@@ -26,7 +26,7 @@
 
 #include "widgets/SocketContainerWidget.hpp"
 #include "meta/ComponentDescriptor.hpp"
-#include "patch/SocketWidget.hpp"
+#include "widgets/SocketWidget.hpp"
 
 class ComponentWidget :  public SocketContainerWidget {
     Q_OBJECT
@@ -34,13 +34,16 @@ class ComponentWidget :  public SocketContainerWidget {
 private:
     int componentId_ ;
     ComponentDescriptor descriptor_ ;
-    
+    std::vector<SocketSpec> specs_ ;
+
 public:
     explicit ComponentWidget(int id, ComponentType type, QGraphicsItem* parent = nullptr);
     ~ComponentWidget() = default ;
 
     const ComponentDescriptor& getComponentDescriptor() const { return descriptor_ ; }
     const int getID() const { return componentId_ ; }
+
+    const std::vector<SocketSpec>& getSocketSpecs() const { return specs_ ; }
 };
 
 #endif // __UI_COMPONENT_WIDGET_HPP_

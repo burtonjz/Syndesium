@@ -15,8 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/Setup.hpp"
-#include "core/ApiClient.hpp"
+#include "app/Setup.hpp"
+#include "app/ModuleContext.hpp"
+#include "api/ApiClient.hpp"
 #include "ui_Setup.h"
 
 #include <QJsonArray>

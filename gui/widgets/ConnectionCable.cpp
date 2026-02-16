@@ -15,10 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "patch/ConnectionCable.hpp"
-#include "patch/SocketWidget.hpp"
+#include "widgets/ConnectionCable.hpp"
+#include "widgets/SocketWidget.hpp"
 #include "widgets/ComponentWidget.hpp"
-#include "core/Theme.hpp"
+#include "app/Theme.hpp"
 
 #include <QPainter>
 #include <QGraphicsScene>
@@ -56,17 +56,17 @@ SocketWidget* ConnectionCable::getOutboundSocket() const {
 }
 
 void ConnectionCable::setFromSocket(SocketWidget* socket){
-    fromSocket_ = socket;
+    fromSocket_ = socket ;
     updatePath();
 }
 
 void ConnectionCable::setToSocket(SocketWidget* socket){
-    toSocket_ = socket;
+    toSocket_ = socket ;
     updatePath();
 }
 
 void ConnectionCable::setEndpoint(const QPointF& point){
-    endpoint_  = point;
+    endpoint_  = point ;
     updatePath();
 }
 

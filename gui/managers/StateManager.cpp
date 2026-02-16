@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/StateManager.hpp"
+#include "managers/StateManager.hpp"
 
 StateManager::StateManager(QObject *parent)
     : QObject{parent} {

@@ -25,7 +25,7 @@
 #include <initializer_list>
 #include <vector>
 
-#include "patch/SocketWidget.hpp"
+#include "widgets/SocketWidget.hpp"
 
 class SocketContainerWidget :  public QGraphicsObject {
     Q_OBJECT
@@ -70,7 +70,6 @@ protected:
 signals:
     void positionChanged();
     void needsZUpdate();
-
 
 };
 

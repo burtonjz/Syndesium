@@ -85,8 +85,8 @@ ParameterType parameterFromString(std::string str);
 
 /* 
 every ParameterType will store a default modulation strategy
-based on the type of variable it is. This is overridable at the
-Parameter level. 
+based on the type of variable it is. This can be overridden in
+a Parameter instance. 
 */ 
 enum class ModulationStrategy {
     ADDITIVE,

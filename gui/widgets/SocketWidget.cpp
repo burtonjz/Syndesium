@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "patch/SocketWidget.hpp"
+#include "widgets/SocketWidget.hpp"
 #include "widgets/SocketContainerWidget.hpp"
-#include "core/Theme.hpp"
+#include "app/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <qgraphicsitem.h>

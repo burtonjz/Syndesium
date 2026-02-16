@@ -25,25 +25,28 @@
 #include <qjsonobject.h>
 #include <vector>
 
-#include "patch/ConnectionManager.hpp"
+#include "interfaces/ISocketLookup.hpp"
+#include "managers/ConnectionManager.hpp"
+#include "views/ConnectionRenderer.hpp"
 #include "widgets/SocketContainerWidget.hpp"
 #include "widgets/ComponentDetailWidget.hpp"
 
 class ComponentWidget ; // forward declaration
 
-class GraphPanel : public QGraphicsView {
+class GraphPanel : public QGraphicsView, public ISocketLookup {
     Q_OBJECT
 
 private:
     QGraphicsScene* scene_ ;
+    ConnectionRenderer* connectionRenderer_ ;
     ConnectionManager* connectionManager_ ;
-
-    // logic for managing socket hovers
-    bool isDraggingConnection_ = false ;
-    QPointer<SocketWidget> lastHovered_ = nullptr ;
 
     std::vector<SocketContainerWidget*> widgets_ ;
     std::vector<ComponentDetailWidget*> details_ ;
+    
+    // logic for managing socket hovers
+    bool isDraggingConnection_ = false ;
+    QPointer<SocketWidget> lastHovered_ = nullptr ;
 
     // context menu actions
     SocketWidget* clickedSocket_ ;
@@ -59,22 +62,13 @@ public:
 
     void addComponent(int id, ComponentType type);
     void removeComponent(int id);
+    void deleteSelectedComponents();
+
     void addAudioOutput();
     void addMidiInput();
     
-    void deleteSelectedComponents();
-
     QJsonArray getComponentPositions() const ;
 
-    /**
-     * @brief draw connection created via load API
-     * 
-     * because connections are drawn as they are created, we need
-     * an interface to draw out a connection that is loaded through the
-     * load API. 
-     * 
-     * @param request 
-     */
     void loadConnection(const QJsonObject& request); 
     void loadPositions(const QJsonObject& request);
 
@@ -84,6 +78,15 @@ public:
         SocketContainerWidget* w, SocketType t, 
         std::variant<std::monostate, size_t, ParameterType> selector = std::monostate{} 
     );
+
+    // ISocketLookup
+    SocketWidget* findSocket(
+        SocketType type,
+        std::optional<int> componentId = std::nullopt,
+        std::optional<size_t> idx = std::nullopt, 
+        std::optional<ParameterType> param = std::nullopt        
+    ) override ;
+    SocketWidget* findSocketAt(const QPointF& scenePos) override ;
 
 protected:
     void keyPressEvent(QKeyEvent* event) override ;

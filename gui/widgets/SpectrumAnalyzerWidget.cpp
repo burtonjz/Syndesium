@@ -16,7 +16,7 @@
  */
 
 #include "widgets/SpectrumAnalyzerWidget.hpp"
-#include "core/Theme.hpp"
+#include "app/Theme.hpp"
 #include "config/Config.hpp"
 #include <QPaintEvent>
 #include <QPainterPath>

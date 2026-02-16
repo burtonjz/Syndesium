@@ -22,8 +22,8 @@
 #include "types/CollectionType.hpp"
 #include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
-#include "core/ApiClient.hpp"
-#include "core/Theme.hpp"
+#include "api/ApiClient.hpp"
+#include "app/Theme.hpp"
 
 #include "widgets/ParameterWidget.hpp"
 #include "widgets/PianoRollWidget.hpp"

@@ -41,7 +41,6 @@ void BiquadFilter::calculateCoefficients(){
 
     switch(FilterType::from_uint8(parameters_->getParameter<ParameterType::FILTER_TYPE>()->getValue())){
     case FilterType::LowPass:
-        spdlog::debug("Calculating LowPass coefficients");
         Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
         alpha = sin_w0 / ( 2.0 * Q );
         b0 = (1.0 - cos_w0) / 2.0 ; // b0
@@ -52,7 +51,6 @@ void BiquadFilter::calculateCoefficients(){
         a2 = 1.0 - alpha ; // a2
         break ;
     case FilterType::HighPass:
-        spdlog::debug("Calculating HighPass coefficients");
         Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
         alpha = sin_w0 / ( 2.0 * Q);
         b0 = (1.0 + cos_w0) / 2.0 ;
@@ -63,7 +61,6 @@ void BiquadFilter::calculateCoefficients(){
         a2 = 1.0 - alpha ;
         break ;
     case FilterType::BandPass:
-        spdlog::debug("Calculating BandPass coefficients");
         Q = parameters_->getParameter<ParameterType::Q_FACTOR>()->getInstantaneousValue();
         alpha = sin_w0 / ( 2.0 * Q);
         b0 = alpha ;
@@ -95,7 +92,6 @@ void BiquadFilter::calculateCoefficients(){
         a2 = 1.0 - alpha / A;
         break;
     case FilterType::LowShelf:
-        spdlog::debug("Calculating LowShelf coefficients");
         S = parameters_->getParameter<ParameterType::SHELF>()->getInstantaneousValue() ;
         A = std::pow(10.0, parameters_->getParameter<ParameterType::DBGAIN>()->getInstantaneousValue() / 40.0 );
         alpha = (sin_w0 / 2.0) * std::sqrt((A + 1.0 / A) * ( 1.0 / S - 1.0 ) + 2.0 );
@@ -107,7 +103,6 @@ void BiquadFilter::calculateCoefficients(){
         a2 = (A + 1.0) + (A - 1.0) * cos_w0 - 2.0 * std::sqrt(A) * alpha ;
         break ;
     case FilterType::HighShelf:
-        spdlog::debug("Calculating HighShelf coefficients");
         S = parameters_->getParameter<ParameterType::SHELF>()->getInstantaneousValue() ;
         A = std::pow(10.0, parameters_->getParameter<ParameterType::DBGAIN>()->getInstantaneousValue() / 40.0 );
         alpha = (sin_w0 / 2.0) * std::sqrt((A + 1.0 / A) * ( 1.0 / S - 1.0 ) + 2.0 );

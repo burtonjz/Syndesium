@@ -15,12 +15,10 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "patch/ConnectionManager.hpp"
-#include "patch/ConnectionCable.hpp"
+#include "managers/ConnectionManager.hpp"
 #include "types/ConnectionRequest.hpp"
 #include "util/util.hpp"
-#include "widgets/SocketContainerWidget.hpp"
-#include "core/ApiClient.hpp"
+#include "api/ApiClient.hpp"
 
 #include <QGraphicsItem>
 #include <QDebug>
@@ -29,156 +27,46 @@
 #include <algorithm>
 #include <qjsonobject.h>
 
-ConnectionManager::ConnectionManager(QGraphicsScene* scene, QObject* parent): 
-    QObject(parent), 
-    scene_(scene), 
-    dragConnection_(nullptr), 
-    dragFromSocket_(nullptr)
+ConnectionManager::ConnectionManager(QObject* parent): 
+    QObject(parent)
 {
     connect(ApiClient::instance(), &ApiClient::dataReceived, this, &ConnectionManager::onApiDataReceived);
 }
 
-void ConnectionManager::startDragConnection(SocketWidget* fromSocket){
-    if (!fromSocket) return ;
-    
-    fromSocket->grabMouse();
-    dragFromSocket_ = fromSocket ;
-    dragConnection_ = new ConnectionCable(fromSocket);
-    scene_->addItem(dragConnection_);
-    dragConnection_->setZValue(1e6);
-}
-
-void ConnectionManager::updateDragConnection(const QPointF& scenePos){
-    if (dragConnection_) dragConnection_->setEndpoint(scenePos) ;
-}
-
-void ConnectionManager::finishDragConnection(const QPointF& scenePos){
-    ConnectionRequest request ;
-    
-    if ( !dragConnection_ || !dragFromSocket_ ){
-        qWarning() << "drag connection not available. Unable to finish drag.";
+void ConnectionManager::loadConnection(const ConnectionRequest& req){
+    if ( !req.valid() ){
+        qWarning() << "Connection failed: Json is not a valid ConnectionRequest." ;
         return ;
     }
 
-    dragFromSocket_->ungrabMouse();
-
-    SocketWidget* toSocket = findSocketAt(scenePos);
-    if ( !toSocket ){
-        qInfo() << "No socket endpoint specified for drag cable. Cancelling connection." ;
-        cancelConnection();
+    if ( connectionExists(req) ){
+        qWarning() << "Connection already exists. Will not load connection again.";
         return ;
     }
-    dragConnection_->setToSocket(toSocket);
+    
+    // make sure sockets are real before adding the connection
+    SocketWidget* inboundSocket = socketLookup_->findSocket(
+        req.inboundSocket, req.inboundID, req.inboundIdx, req.inboundParameter
+    );
+    SocketWidget* outboundSocket = socketLookup_->findSocket(
+        req.outboundSocket, req.outboundID, req.outboundIdx
+    );
 
-    request = dragConnection_->toConnectionRequest();
+    if ( ! inboundSocket || ! outboundSocket ){
+        qWarning() << "Json connection not successfully loaded: sockets not found";
+        return ;
+    }
 
-    if ( !request.valid() ){
+    emit connectionAdded(req);
+}
+
+void ConnectionManager::requestConnectionEvent(const ConnectionRequest& req){
+    if ( !req.valid() ){
         qWarning() << "Invalid connection request created. Cancelling connection.";
-        cancelConnection();
         return ;
     }
 
-    sendConnectionApiRequest(request);    
-
-    // cleanup temporary drag cable
-    scene_->removeItem(dragConnection_);
-    delete dragConnection_ ;
-    dragConnection_ = nullptr ;
-    dragFromSocket_ = nullptr ;
-}
-
-void ConnectionManager::loadConnection(SocketWidget* outbound, SocketWidget* inbound){
-    ConnectionCable* cable = new ConnectionCable(outbound, inbound);
-
-    if ( getCable(cable->toConnectionRequest()) ){
-        qInfo() << "Cable: " << cable << "is an already existing connection. Will not load connection." ;
-        delete cable ;
-    }
-    
-    // connect to position changes
-    SocketContainerWidget* obWidget = outbound->getParent();
-    SocketContainerWidget* ibWidget = inbound->getParent();
-
-    connect(obWidget, &SocketContainerWidget::positionChanged, 
-        this, &ConnectionManager::onWidgetPositionChanged);
-    connect(ibWidget, &SocketContainerWidget::positionChanged, 
-        this, &ConnectionManager::onWidgetPositionChanged);
-
-    // set connection cable layering
-    cable->setZValue(std::max(outbound->zValue(), inbound->zValue()) - 0.1);
-
-    scene_->addItem(cable);
-    connections_.push_back(cable);
-}
-
-void ConnectionManager::cancelConnection(){
-    if (dragConnection_) {
-        scene_->removeItem(dragConnection_);
-        delete dragConnection_ ;
-        dragConnection_ = nullptr;
-    }
-    dragFromSocket_ = nullptr;
-}
-
-SocketWidget* ConnectionManager::findSocketAt(const QPointF& scenePos) const {
-    QList<QGraphicsItem*> items = scene_->items(scenePos);
-    for (QGraphicsItem* item : items) {
-        if (SocketWidget* socket = dynamic_cast<SocketWidget*>(item)) {
-            return socket ;
-        }
-    }
-    return nullptr ;
-}
-
-bool ConnectionManager::canConnect(SocketWidget* from, SocketWidget* to) const {
-    if (!from || !to) return false;
-    
-    // Use the cable's compatibility check
-    ConnectionCable tempCable(from);
-    return tempCable.isCompatible(to);
-}
-
-bool ConnectionManager::hasConnection(SocketWidget* socket) const {
-    for ( auto c : connections_ ) {
-        if ( c->getFromSocket() == socket || c->getToSocket() == socket ) {
-            return true;
-        }
-    }
-    return false;
-}
-
-void ConnectionManager::requestRemoveConnection(ConnectionRequest req){
-    ConnectionCable* cable = getCable(req);
-    if ( !cable ){
-        qWarning() << "Unable to remove cable, not found." ;
-        return ;
-    }
-    req.remove = true ;
-    sendConnectionApiRequest(req);
-}
-
-void ConnectionManager::removeSocketConnections(SocketWidget* socket){
-    for (const auto& cable : connections_) {
-        if (cable->getFromSocket() == socket || cable->getToSocket() == socket) {
-            auto req = cable->toConnectionRequest();
-            req.remove = true ;
-            sendConnectionApiRequest(req);
-        }
-    }
-}
-
-void ConnectionManager::removeAllConnections(SocketContainerWidget* module){
-    for (SocketWidget* socket : module->getSockets()) {
-        removeSocketConnections(socket);
-    }
-}
-
-const std::vector<ConnectionCable*> ConnectionManager::getWidgetConnections(SocketContainerWidget* widget){
-    std::vector<ConnectionCable*> widgetCables ;
-    for (const auto& cable : connections_) {
-        if (cable->involvesWidget(widget)) widgetCables.push_back(cable);
-    }
-    return widgetCables ;
+    sendConnectionApiRequest(req);    
 }
 
 void ConnectionManager::sendConnectionApiRequest(ConnectionRequest req){
@@ -186,76 +74,35 @@ void ConnectionManager::sendConnectionApiRequest(ConnectionRequest req){
     ApiClient::instance()->sendMessage(obj);
 }
 
-ConnectionCable* ConnectionManager::getCable(ConnectionRequest request) const {
-    auto it = std::find_if(connections_.begin(), connections_.end(), [&request](const ConnectionCable* cable){
-        return *cable == request ;
+bool ConnectionManager::connectionExists(ConnectionRequest request) const {
+    auto it = std::find_if(connections_.begin(), connections_.end(), [&request](const ConnectionRequest& r){
+        return r == request ;
     });
 
-    if ( it == connections_.end() ) return nullptr ;
-
-    return *it ;
-}
-
-void ConnectionManager::removeCable(ConnectionCable* cable){
-    if ( !cable ){
-        qWarning() << "removeCable called with a null cable.";
-        return ;
-    } 
-
-    qDebug() << "removing cable:" << cable << "from scene:" << cable->scene();
-
-    if ( cable->scene() ){
-        cable->scene()->removeItem(cable);
-        qDebug() << "cable removed from scene." ;
-    }
-
-    connections_.erase(
-        std::remove(connections_.begin(), connections_.end(), cable), 
-        connections_.end()
-    );
-
-    qDebug() << "cable deleted, remaining connections:" << connections_ ;
-
-    delete cable ;
-    emit wasModified();
+    return it != connections_.end() ;
 }
 
 void ConnectionManager::onApiDataReceived(const QJsonObject &json){
     QString action = json["action"].toString();
     bool success = json["status"].toString() == "success" ;
 
-    if ( action == "create_connection" ){
-        if ( success ){
-            emit wasModified();
-        } else {
-            removeCable(getCable(Util::QJsonObjectToNlohmann(json)));
+    if ( action == "create_connection" && success ){
+        ConnectionRequest req = Util::QJsonObjectToNlohmann(json);
+        if ( connectionExists(req) ){
+            qWarning() << "requested connection already exists in connection manager. Will not add again.";
             return ;
         }
+        connections_.push_back(req);
+        emit connectionAdded(req);
     } 
 
     if ( action == "remove_connection" && success ){
-        ConnectionCable* cable = getCable(Util::QJsonObjectToNlohmann(json));
-
-        if ( !cable ){
-            qWarning() << "no cable found from json request " << json ;
+        ConnectionRequest req = Util::QJsonObjectToNlohmann(json);
+        if ( !connectionExists(req) ){
+            qWarning() << "requested connection is not present in connection manager. will not trigger removal.";
             return ;
         }
-
-        qInfo() << "removing cable connection: " << cable->toText() ;
-        
-        removeCable(cable);
+        connections_.erase(std::remove(connections_.begin(), connections_.end(), req), connections_.end());
+        emit connectionRemoved(req);
     }
-}
-
-void ConnectionManager::onWidgetPositionChanged(){
-    SocketContainerWidget* widget = dynamic_cast<SocketContainerWidget*>(sender());
-    if (!widget) return ;
-    
-    for (const auto& cable : connections_) {
-        if (cable->involvesWidget(widget)){
-            cable->updatePath();
-        }
-    }
-
-    emit wasModified() ;
 }

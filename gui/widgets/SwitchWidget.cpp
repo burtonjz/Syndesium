@@ -16,7 +16,7 @@
  */
 
 #include "widgets/SwitchWidget.hpp"
-#include "core/Theme.hpp"
+#include "app/Theme.hpp"
 
 #include <QPainter>
 #include <qevent.h>

@@ -16,8 +16,8 @@
  */
 
 #include "widgets/SocketContainerWidget.hpp"
-#include "patch/SocketWidget.hpp"
-#include "core/Theme.hpp"
+#include "widgets/SocketWidget.hpp"
+#include "app/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <qpoint.h>

@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/Theme.hpp"
+#include "app/Theme.hpp"
 #include <qcolor.h>
 #include <qpalette.h>
 

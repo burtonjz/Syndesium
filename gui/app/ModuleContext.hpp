@@ -18,8 +18,7 @@
 #ifndef __MODULE_CONTEXT_HPP_
 #define __MODULE_CONTEXT_HPP_
 
-#include "core/ApiClient.hpp"
-#include "core/StateManager.hpp"
+#include "managers/StateManager.hpp"
 
 struct ModuleContext {
     StateManager* state ;

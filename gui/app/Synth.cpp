@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/Synth.hpp"
-#include "core/GraphPanel.hpp"
-#include "core/ApiClient.hpp"
+#include "app/Synth.hpp"
+#include "views/GraphPanel.hpp"
+#include "api/ApiClient.hpp"
 #include "meta/ComponentRegistry.hpp"
 #include "types/ComponentType.hpp"
 #include "config/Config.hpp"
 #include "widgets/SpectrumAnalyzerWidget.hpp"
-#include "core/Theme.hpp"
+#include "app/Theme.hpp"
 
 #include "ui_Synth.h"
 

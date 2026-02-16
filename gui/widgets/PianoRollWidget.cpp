@@ -16,8 +16,8 @@
  */
 
 #include "widgets/PianoRollWidget.hpp"
-#include "core/Theme.hpp"
-#include "core/ApiClient.hpp"
+#include "app/Theme.hpp"
+#include "api/ApiClient.hpp"
 #include "types/CollectionType.hpp"
 #include "util/util.hpp"
 #include "widgets/NoteWidget.hpp"

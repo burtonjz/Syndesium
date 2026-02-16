@@ -20,8 +20,7 @@
 
 #include <QObject>
 
-class StateManager : public QObject
-{
+class StateManager : public QObject {
     Q_OBJECT
 
 private:

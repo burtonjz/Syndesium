@@ -17,7 +17,7 @@
 
 #include "widgets/ParameterWidget.hpp"
 #include "config/Config.hpp"
-#include "core/Theme.hpp"
+#include "app/Theme.hpp"
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"

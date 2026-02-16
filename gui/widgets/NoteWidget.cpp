@@ -17,7 +17,7 @@
 
 #include "widgets/NoteWidget.hpp"
 #include "widgets/PianoRollWidget.hpp"
-#include "core/Theme.hpp"
+#include "app/Theme.hpp"
 #include <QEvent>
 #include <QWidget>
 

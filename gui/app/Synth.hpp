@@ -27,9 +27,9 @@
 #include <qevent.h>
 #include <qtmetamacros.h>
 
-#include "core/ModuleContext.hpp"
-#include "core/GraphPanel.hpp"
-#include "core/Setup.hpp"
+#include "app/ModuleContext.hpp"
+#include "views/GraphPanel.hpp"
+#include "app/Setup.hpp"
 #include "widgets/SpectrumAnalyzerWidget.hpp"
 
 #include "ui_Synth.h"

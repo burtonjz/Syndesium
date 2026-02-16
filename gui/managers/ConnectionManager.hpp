@@ -18,58 +18,39 @@
 #ifndef __GUI_CONNECTION_MANAGER_HPP_
 #define __GUI_CONNECTION_MANAGER_HPP_
 
+#include "interfaces/ISocketLookup.hpp"
+#include "types/ConnectionRequest.hpp"
+
 #include <QObject>
 #include <QGraphicsScene>
 #include <vector>
 
-#include "patch/ConnectionCable.hpp"
-#include "patch/SocketWidget.hpp"
-#include "widgets/SocketContainerWidget.hpp"
-
 class ConnectionManager: public QObject {
     Q_OBJECT
 private:
-    QGraphicsScene* scene_ ;
-    std::vector<ConnectionCable*> connections_ ;
+    std::vector<ConnectionRequest> connections_ ;
+    ISocketLookup* socketLookup_ ;
 
-    ConnectionCable* dragConnection_ ;
-    SocketWidget* dragFromSocket_ ;
 public:
-    explicit ConnectionManager(QGraphicsScene* scene, QObject* parent = nullptr);
+    explicit ConnectionManager(QObject* parent = nullptr);
 
-    // UI creating a connection
-    void startDragConnection(SocketWidget* fromSocket);
-    void updateDragConnection(const QPointF& scenePos);
-    void finishDragConnection(const QPointF& scenePos);
-    
     // backend confirmed successful connection
-    void loadConnection(SocketWidget* outbound, SocketWidget* inbound);
-
-    void cancelConnection();
-
+    void loadConnection(const ConnectionRequest& req);
     bool hasConnection(SocketWidget* socket) const ;
-    
-    void requestRemoveConnection(ConnectionRequest req);
-    void removeSocketConnections(SocketWidget* socket);
-    void removeAllConnections(SocketContainerWidget* widget);
-
-    const std::vector<ConnectionCable*> getWidgetConnections(SocketContainerWidget* widget);
-
-    SocketWidget* findSocketAt(const QPointF& scenePos) const ;
+     
+    void requestConnectionEvent(const ConnectionRequest& req); // add or remove
 
 private:
-    bool canConnect(SocketWidget* from, SocketWidget* to) const ;
     void sendConnectionApiRequest(ConnectionRequest req);
 
-    ConnectionCable* getCable(ConnectionRequest req) const ;
-    void removeCable(ConnectionCable* request);
+    bool connectionExists(ConnectionRequest req) const ;
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
-    void onWidgetPositionChanged();
 
 signals:
-    void wasModified();
+    void connectionAdded(const ConnectionRequest& req);
+    void connectionRemoved(const ConnectionRequest& req);
 
 };
 

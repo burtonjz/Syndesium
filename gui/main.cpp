@@ -15,11 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "core/ApiClient.hpp"
-#include "core/StateManager.hpp"
-#include "core/ModuleContext.hpp"
-#include "core/Theme.hpp"
-#include "core/Synth.hpp"
+#include "api/ApiClient.hpp"
+#include "managers/StateManager.hpp"
+#include "app/ModuleContext.hpp"
+#include "app/Theme.hpp"
+#include "app/Synth.hpp"
 
 #include <QApplication>
 #include <qlogging.h>

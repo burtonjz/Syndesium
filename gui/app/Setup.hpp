@@ -18,10 +18,10 @@
 #ifndef UI_HPP
 #define UI_HPP
 
+#include "app/ModuleContext.hpp"
+
 #include <QWidget>
 #include <QComboBox>
-#include "core/ModuleContext.hpp"
-
 
 QT_BEGIN_NAMESPACE
 namespace Ui {class AudioMidiSetupWidget;}
