@@ -16,7 +16,7 @@
  */
 
 #include "managers/ConnectionManager.hpp"
-#include "types/ConnectionRequest.hpp"
+#include "requests/ConnectionRequest.hpp"
 #include "util/util.hpp"
 #include "api/ApiClient.hpp"
 

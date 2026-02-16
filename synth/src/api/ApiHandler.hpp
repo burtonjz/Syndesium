@@ -23,8 +23,8 @@
 
 #include "core/BaseComponent.hpp"
 #include "meta/CollectionDescriptor.hpp"
-#include "types/ConnectionRequest.hpp"
-#include "types/CollectionRequest.hpp"
+#include "requests/ConnectionRequest.hpp"
+#include "requests/CollectionRequest.hpp"
 #include "params/ParameterMap.hpp"
 
 

@@ -21,7 +21,7 @@
 #include "types/CollectionType.hpp"
 #include "util/util.hpp"
 #include "widgets/NoteWidget.hpp"
-#include "types/CollectionRequest.hpp"
+#include "requests/CollectionRequest.hpp"
 
 #include <nlohmann/json.hpp>
 #include <QJsonArray>

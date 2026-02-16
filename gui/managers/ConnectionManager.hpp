@@ -19,7 +19,7 @@
 #define __GUI_CONNECTION_MANAGER_HPP_
 
 #include "interfaces/ISocketLookup.hpp"
-#include "types/ConnectionRequest.hpp"
+#include "requests/ConnectionRequest.hpp"
 
 #include <QObject>
 #include <QGraphicsScene>

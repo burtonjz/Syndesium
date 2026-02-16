@@ -22,7 +22,7 @@
 #include "configs/ComponentConfig.hpp"
 #include "meta/CollectionDescriptor.hpp"
 #include "meta/ComponentRegistry.hpp"
-#include "types/CollectionRequest.hpp"
+#include "requests/CollectionRequest.hpp"
 #include "types/ParameterType.hpp"
 #include "types/SocketType.hpp"
 

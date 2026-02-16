@@ -21,7 +21,7 @@
 #include <QGraphicsPathItem>
 
 #include "widgets/SocketWidget.hpp"
-#include "types/ConnectionRequest.hpp"
+#include "requests/ConnectionRequest.hpp"
 
 class ConnectionCable : public QGraphicsPathItem {
 private:
