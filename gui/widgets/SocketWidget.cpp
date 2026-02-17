@@ -16,13 +16,13 @@
  */
 
 #include "widgets/SocketWidget.hpp"
-#include "widgets/SocketContainerWidget.hpp"
+#include "graphics/GraphNode.hpp"
 #include "app/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <qgraphicsitem.h>
 
-SocketWidget::SocketWidget(SocketSpec spec, SocketContainerWidget* parent):
+SocketWidget::SocketWidget(SocketSpec spec, GraphNode* parent):
     QGraphicsObject(nullptr),
     spec_(spec),
     parent_(parent)
@@ -34,7 +34,7 @@ SocketWidget::SocketWidget(SocketSpec spec, SocketContainerWidget* parent):
     setFlag(QGraphicsItem::ItemIsSelectable, false);
     setAcceptHoverEvents(true);
     setAcceptedMouseButtons(Qt::LeftButton);
-    setZValue(-0.2); // we want the sockets just behind the SocketContainerWidget, with room to place the cable between
+    setZValue(-0.2); // we want the sockets just behind the GraphNode, with room to place the cable between
 
     setToolTip(spec_.name);
     show();

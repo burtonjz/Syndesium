@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __UI_GRAPH_PANEL_HPP_
-#define __UI_GRAPH_PANEL_HPP_
+#ifndef GRAPH_PANEL_HPP_
+#define GRAPH_PANEL_HPP_
 
 #include <QGraphicsView>
 #include <QGraphicsScene>
@@ -28,10 +28,10 @@
 #include "interfaces/ISocketLookup.hpp"
 #include "managers/ConnectionManager.hpp"
 #include "views/ConnectionRenderer.hpp"
-#include "widgets/SocketContainerWidget.hpp"
-#include "widgets/ComponentDetailWidget.hpp"
+#include "managers/ComponentManager.hpp"
+#include "graphics/GraphNode.hpp"
 
-class ComponentWidget ; // forward declaration
+class ComponentNode ; // forward declaration
 
 class GraphPanel : public QGraphicsView, public ISocketLookup {
     Q_OBJECT
@@ -40,9 +40,9 @@ private:
     QGraphicsScene* scene_ ;
     ConnectionRenderer* connectionRenderer_ ;
     ConnectionManager* connectionManager_ ;
-
-    std::vector<SocketContainerWidget*> widgets_ ;
-    std::vector<ComponentDetailWidget*> details_ ;
+    ComponentManager* componentManager_ ;
+    
+    std::vector<GraphNode*> nodes_ ;
     
     // logic for managing socket hovers
     bool isDraggingConnection_ = false ;
@@ -53,16 +53,12 @@ private:
     QAction* disconnectAllAct_ ;
 
     // hardware widgets
-    SocketContainerWidget* audioOut_ ;
-    SocketContainerWidget* midiIn_ ;
+    GraphNode* audioOut_ ;
+    GraphNode* midiIn_ ;
 
 public:
     explicit GraphPanel(QWidget* parent = nullptr);
     ~GraphPanel();
-
-    void addComponent(int id, ComponentType type);
-    void removeComponent(int id);
-    void deleteSelectedComponents();
 
     void addAudioOutput();
     void addMidiInput();
@@ -72,12 +68,13 @@ public:
     void loadConnection(const QJsonObject& request); 
     void loadPositions(const QJsonObject& request);
 
-    SocketContainerWidget* getWidget(int ComponentId) const ;
-    ComponentDetailWidget* getDetailWidget(int componentId) const ;
-    SocketWidget* getWidgetSocket(
-        SocketContainerWidget* w, SocketType t, 
+    ComponentNode* getNode(int ComponentId) const ;
+    SocketWidget* getNodeSocket(
+        GraphNode* w, SocketType t, 
         std::variant<std::monostate, size_t, ParameterType> selector = std::monostate{} 
     );
+
+    std::vector<ComponentNode*> getSelectedComponents() const ;
 
     // ISocketLookup
     SocketWidget* findSocket(
@@ -102,19 +99,24 @@ private:
     void createContextMenuActions() ;
 
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
-    void componentDoubleClicked(ComponentWidget* widget);
+    void componentDoubleClicked(ComponentNode* widget);
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);
     
 public  slots:
-    void onComponentAdded(ComponentType type);
-    void onComponentRemoved(ComponentWidget* component);
-    void onWidgetZUpdate();
+    // from parent
+    void onComponentSelected(ComponentType type);
+    
+    // from component manager
+    void onComponentAdded(int componentId, ComponentType type);
+    void onComponentRemoved(int componentId);
+
+    void onNodeZUpdate();
 
 signals:
     void wasModified();
 
 };
 
-#endif // __UI_GRAPH_PANEL_HPP_
+#endif // GRAPH_PANEL_HPP_

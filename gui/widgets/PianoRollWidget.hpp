@@ -18,7 +18,7 @@
 #ifndef PIANOROLL_WIDGET_HPP_
 #define PIANOROLL_WIDGET_HPP_
 
-#include "meta/ComponentDescriptor.hpp"
+#include "models/ComponentModel.hpp"
 #include "types/SequenceData.hpp"
 #include "widgets/NoteWidget.hpp"
 
@@ -35,9 +35,10 @@ class PianoRollWidget : public QWidget {
     Q_OBJECT
 
 private:
+    ComponentModel* model_ ;
     std::map<int, NoteWidget*> notes_ ;
     std::vector<int> selectedNotes_ ;
-    int id_ ;
+
 
     float totalBeats_ ;
 
@@ -48,7 +49,7 @@ private:
     bool isResizing_ = false ;
 
 public:
-    explicit PianoRollWidget(int id, QWidget* parent = nullptr);
+    explicit PianoRollWidget(ComponentModel* model, QWidget* parent = nullptr);
 
     void setTotalBeats(float beats);
     void removeNote(int idx);
@@ -99,7 +100,7 @@ private:
     
 public slots:
     void onApiDataReceived(const QJsonObject &json);
-    void onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value);
+    void onParameterChanged(ParameterType p);
 };
 
 #endif // PIANOROLL_WIDGET_HPP_

@@ -69,7 +69,7 @@ private:
 
 signals:
     void engineStatusChanged(bool status);
-    void componentAdded(ComponentType typ);
+    void componentSelected(ComponentType typ);
 
 private slots:
     void onApiConnected();
@@ -77,7 +77,7 @@ private slots:
     void onSetupButtonClicked();
     void onStartStopButtonClicked();
     void onEngineStatusChange(bool status);
-    void onComponentAdded(int index);
+    void onComponentSelected(int index);
 
     // menu bar actions
     void onActionLoad();

@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __UI_COMPONENT_WIDGET_HPP_
-#define __UI_COMPONENT_WIDGET_HPP_
+#ifndef COMPONENT_NODE_HPP_
+#define COMPONENT_NODE_HPP_
 
 #include <QGraphicsObject>
 #include <QPainter>
@@ -24,26 +24,22 @@
 #include <QStyleOptionGraphicsItem>
 #include <qnamespace.h>
 
-#include "widgets/SocketContainerWidget.hpp"
-#include "meta/ComponentDescriptor.hpp"
+#include "models/ComponentModel.hpp"
+#include "graphics/GraphNode.hpp"
 #include "widgets/SocketWidget.hpp"
 
-class ComponentWidget :  public SocketContainerWidget {
+class ComponentNode :  public GraphNode {
     Q_OBJECT
 
 private:
-    int componentId_ ;
-    ComponentDescriptor descriptor_ ;
+    ComponentModel* model_ ;
     std::vector<SocketSpec> specs_ ;
 
 public:
-    explicit ComponentWidget(int id, ComponentType type, QGraphicsItem* parent = nullptr);
-    ~ComponentWidget() = default ;
+    explicit ComponentNode(ComponentModel* model, QGraphicsItem* parent = nullptr);
+    ~ComponentNode() = default ;
 
-    const ComponentDescriptor& getComponentDescriptor() const { return descriptor_ ; }
-    const int getID() const { return componentId_ ; }
-
-    const std::vector<SocketSpec>& getSocketSpecs() const { return specs_ ; }
+    ComponentModel* getModel() const ;
 };
 
-#endif // __UI_COMPONENT_WIDGET_HPP_
+#endif // COMPONENT_NODE_HPP_

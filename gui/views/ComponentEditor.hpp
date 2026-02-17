@@ -15,77 +15,63 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __UI_COMPONENT_DETAIL_WIDGET_HPP_
-#define __UI_COMPONENT_DETAIL_WIDGET_HPP_
+#ifndef COMPONENT_EDITOR_HPP_
+#define COMPONENT_EDITOR_HPP_
+
+#include "models/ComponentModel.hpp"
+#include "types/ParameterType.hpp"
+#include "widgets/ParameterWidget.hpp"
 
 #include <QWidget>
-#include <QLabel>
-#include <QHBoxLayout>
-#include <QVBoxLayout>
 #include <QPushButton>
-#include <QDoubleSpinBox>
-#include <QComboBox>
-#include <QMap>
-#include <QEvent>
 #include <QTimer>
-
 #include <unordered_map>
 
-#include "types/ParameterType.hpp"
-#include "types/CollectionType.hpp"
-
-#include "meta/ComponentDescriptor.hpp"
-
-class ComponentDetailWidget : public QWidget {
+class ComponentEditor : public QWidget {
     Q_OBJECT
     
 private:
-    int componentId_ ;
-    ComponentDescriptor descriptor_ ;
+    ComponentModel* model_ ;
     QPushButton* resetButton_ ;
     QPushButton* closeButton_ ;
-    QMap<ParameterType, QWidget*> parameterWidgets_ ;
-    QMap<CollectionType, QWidget*> collectionWidgets_ ;
+    std::map<ParameterType, ParameterWidget*> parameterWidgets_ ; // general independent parameters
+    QWidget* componentWidget_ ; // optional component-wide widget for more feature-rich UI
 
-    QTimer* modifiedTimer_ ;
     QTimer* parameterChangedTimer_ ;
-
     std::unordered_map<ParameterType, ParameterValue> pendingChanges_ ;
 
 public:
-    explicit ComponentDetailWidget(int id, ComponentType typ, QWidget* parent = nullptr);
-    ~ComponentDetailWidget() override = default ;
+    explicit ComponentEditor(ComponentModel* model, QWidget* parent = nullptr);
+    ~ComponentEditor() override = default ;
 
-    int getID() const ;
-    ComponentType getType() const ;
+    ComponentModel* getModel() const ;
     
 protected:
-    QWidget* createParameterWidget(ParameterType p);
-    QWidget* createCollectionWidget(CollectionDescriptor cd);
+    ParameterWidget* createParameterWidget(ParameterType p);
+    QWidget* createComponentWidget(ComponentType t);
 
 private:
-    QWidget* createIndependentCollection(CollectionDescriptor cd);
-    QWidget* createGroupedCollection(CollectionDescriptor cd);
-    QWidget* createSynchronizedCollection(CollectionDescriptor cd);
-
-    void requestCollectionItemCreate(int index, std::function<void(bool)> callback);
-    void requestCollectionItemDelete(int index, std::function<void(bool)> callback);
-    
     void setupLayout();
     void closeEvent(QCloseEvent* event) override ;
 
+    void requestCollectionItemCreate(int index, std::function<void(bool)> callback);
+    void requestCollectionItemDelete(int index, std::function<void(bool)> callback);
+
 signals:
     void widgetClosed();
-    void parameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value);
+    void parameterEdited(int componentId, ParameterType p, ParameterValue value);
     void wasModified();
 
 private slots:
     void onCloseButtonClicked();
+    void onResetButtonClicked();
+
     void flushPendingChanges();
 
 public slots:
-    void onValueChange();
+    // pass along parameter updates from child ParameterWidgets
+    void onValueChange(); 
 };
 
 
-#endif // __UI_COMPONENT_DETAIL_WIDGET_HPP_
+#endif // COMPONENT_EDITOR_HPP_

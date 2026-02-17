@@ -141,12 +141,12 @@ void Synth::configureWidgetButtons(){
 
     // connections
     connect(ui_->addModuleBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
-        this, [this](int index){ onComponentAdded(index); });
+        this, [this](int index){ onComponentSelected(index); });
     connect(ui_->addModulatorBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
-        this, [this](int index){ onComponentAdded(index); });
+        this, [this](int index){ onComponentSelected(index); });
     connect(ui_->addMidiComponentBox, QOverload<int>::of(&QComboBox::currentIndexChanged),
-        this, [this](int index){ onComponentAdded(index); });
-    connect(this, &Synth::componentAdded, graph_, &GraphPanel::onComponentAdded);
+        this, [this](int index){ onComponentSelected(index); });
+    connect(this, &Synth::componentSelected, graph_, &GraphPanel::onComponentSelected);
 }
 
 void Synth::configureMenuActions(){
@@ -239,14 +239,14 @@ void Synth::onEngineStatusChange(bool status){
     }
 }
 
-void Synth::onComponentAdded(int index){
+void Synth::onComponentSelected(int index){
     if ( index == 0 ) return ;
 
     auto cbox = dynamic_cast<QComboBox*>(sender());
 
     ComponentType typ = static_cast<ComponentType>(cbox->itemData(index).toInt());
     cbox->setCurrentIndex(0); 
-    emit componentAdded(typ);
+    emit componentSelected(typ);
 }
 
 void Synth::onActionLoad(){

@@ -15,14 +15,14 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "widgets/SocketContainerWidget.hpp"
+#include "graphics/GraphNode.hpp"
 #include "widgets/SocketWidget.hpp"
 #include "app/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <qpoint.h>
 
-SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent): 
+GraphNode::GraphNode(QString name, QGraphicsItem* parent): 
     QGraphicsObject(parent),
     name_(name)
 {
@@ -42,19 +42,19 @@ SocketContainerWidget::SocketContainerWidget(QString name, QGraphicsItem* parent
 
 }
 
-SocketContainerWidget::~SocketContainerWidget(){
+GraphNode::~GraphNode(){
     for ( auto socket : sockets_ ){
         socket->deleteLater();
     }
 }
 
-QRectF SocketContainerWidget::boundingRect() const {
+QRectF GraphNode::boundingRect() const {
     qreal delta = Theme::COMPONENT_HIGHLIGHT_BUFFER + Theme::COMPONENT_HIGHLIGHT_WIDTH ;
     return QRectF(0, 0, Theme::COMPONENT_WIDTH, Theme::COMPONENT_HEIGHT)
         .adjusted(-delta, -delta, delta, delta);
 }
 
-void SocketContainerWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
+void GraphNode::paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget){
     Q_UNUSED(option)
     Q_UNUSED(widget)
 
@@ -75,7 +75,7 @@ void SocketContainerWidget::paint(QPainter* painter, const QStyleOptionGraphicsI
     }
 }
 
-void SocketContainerWidget::createSockets(std::initializer_list<SocketSpec> specs ){
+void GraphNode::createSockets(std::initializer_list<SocketSpec> specs ){
     for ( const auto& s : specs ){
         SocketWidget* socket = new SocketWidget(s, this);
         sockets_.push_back(socket);
@@ -85,7 +85,7 @@ void SocketContainerWidget::createSockets(std::initializer_list<SocketSpec> spec
     positionSockets();
 }
 
-void SocketContainerWidget::createSockets(std::vector<SocketSpec> specs){
+void GraphNode::createSockets(std::vector<SocketSpec> specs){
     for ( const auto& s : specs ){
         SocketWidget* socket = new SocketWidget(s, this);
         sockets_.push_back(socket);
@@ -95,7 +95,7 @@ void SocketContainerWidget::createSockets(std::vector<SocketSpec> specs){
     positionSockets();
 }
 
-void SocketContainerWidget::layoutSockets(){
+void GraphNode::layoutSockets(){
     leftSockets_.clear();
     rightSockets_.clear();
     topSockets_.clear();
@@ -123,7 +123,7 @@ void SocketContainerWidget::layoutSockets(){
     }
 }
 
-void SocketContainerWidget::positionSockets(QPointF newPos){
+void GraphNode::positionSockets(QPointF newPos){
     QPointF scenePos = newPos;
 
     qreal startY = 25 ; // below the title
@@ -149,7 +149,7 @@ void SocketContainerWidget::positionSockets(QPointF newPos){
     }
 }
 
-QVariant SocketContainerWidget::itemChange(GraphicsItemChange change, const QVariant& value ){
+QVariant GraphNode::itemChange(GraphicsItemChange change, const QVariant& value ){
     if ( change == ItemPositionChange ){
         positionSockets(value.toPointF());
         emit positionChanged() ;

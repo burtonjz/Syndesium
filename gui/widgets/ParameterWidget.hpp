@@ -37,8 +37,12 @@ public:
 
     virtual ~ParameterWidget() = default ;
 
+    virtual ParameterType getType() const = 0 ;
     virtual ParameterValue getValue() const = 0 ;
-    virtual void setValue(const ParameterValue& value) = 0 ;
+    virtual void setValue(const ParameterValue& value, bool block = false) = 0 ;
+
+public slots:
+    void onModelParameterChanged(ParameterType p, ParameterValue v);
 
 signals:
     void valueChanged();
@@ -59,8 +63,9 @@ private:
 public:
     explicit DelayWidget(QWidget* parent = nullptr);
 
+    ParameterType getType() const override ;
     ParameterValue getValue() const override ;
-    void setValue(const ParameterValue& value) override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
     void setValue(size_t samples, bool block = true);
 
 protected:
@@ -81,8 +86,9 @@ private:
 public:
     explicit WaveformWidget(QWidget* parent = nullptr);
 
+    ParameterType getType() const override ;
     ParameterValue getValue() const override ;
-    void setValue(const ParameterValue& value) override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
 
 };
 
@@ -94,8 +100,9 @@ private:
 public:
     explicit FilterTypeWidget(QWidget* parent = nullptr);
 
+    ParameterType getType() const override ;
     ParameterValue getValue() const override ;
-    void setValue(const ParameterValue& value) override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
 
 };
 
@@ -107,8 +114,9 @@ private:
 public:
     explicit StatusWidget(QWidget* parent = nullptr);
 
+    ParameterType getType() const override ;
     ParameterValue getValue() const override ;
-    void setValue(const ParameterValue& value) override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
 
 };
 
@@ -123,8 +131,9 @@ private:
 public:
     explicit SliderWidget(ParameterType p, QWidget* parent = nullptr);
 
+    ParameterType getType() const override ;
     ParameterValue getValue() const override ;
-    void setValue(const ParameterValue& value) override ;
+    void setValue(const ParameterValue& value, bool block = false) override ;
 
 protected:
     void mouseDoubleClickEvent(QMouseEvent* event) override ;

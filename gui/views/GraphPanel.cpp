@@ -18,14 +18,11 @@
 #include "views/GraphPanel.hpp"
 #include "api/ApiClient.hpp"
 #include "app/Theme.hpp"
-#include "meta/ComponentDescriptor.hpp"
-#include "meta/ComponentRegistry.hpp"
 #include "managers/ConnectionManager.hpp"
 #include "util/util.hpp"
-#include "widgets/ComponentDetailWidget.hpp"
-#include "widgets/SocketContainerWidget.hpp"
+#include "graphics/GraphNode.hpp"
 #include "widgets/SocketWidget.hpp"
-#include "widgets/ComponentWidget.hpp"
+#include "graphics/ComponentNode.hpp"
 #include "types/ComponentType.hpp"
 
 #include <QWheelEvent>
@@ -59,6 +56,11 @@ GraphPanel::GraphPanel(QWidget* parent):
     isDraggingConnection_(false)
 {
     setupScene();
+
+    connectionManager_ = new ConnectionManager(this);
+    connectionRenderer_ = new ConnectionRenderer(scene_, connectionManager_, this, this);
+    componentManager_ = new ComponentManager(this);
+
     createContextMenuActions();
 
     addMidiInput();
@@ -69,20 +71,28 @@ GraphPanel::GraphPanel(QWidget* parent):
     setMouseTracking(true);
 
     // connections
-    connect(ApiClient::instance(), &ApiClient::dataReceived, this, &GraphPanel::onApiDataReceived);
+    connect(
+        ApiClient::instance(), &ApiClient::dataReceived, 
+        this, &GraphPanel::onApiDataReceived
+    );
+    connect(
+        componentManager_, &ComponentManager::componentAdded,
+        this, &GraphPanel::onComponentAdded
+    );
+    connect(
+        componentManager_, &ComponentManager::componentRemoved,
+        this, &GraphPanel::onComponentRemoved
+    );
 }
 
 GraphPanel::~GraphPanel(){
-    delete connectionManager_ ;
+
 }
 
 void GraphPanel::setupScene(){
     scene_ = new QGraphicsScene(this);
     scene_->setSceneRect(-2000,-2000, 4000, 4000);
     setScene(scene_);
-
-    connectionManager_ = new ConnectionManager(this);
-    connectionRenderer_ = new ConnectionRenderer(scene_, connectionManager_, this, this);
 
     // view properties
     setRenderHint(QPainter::Antialiasing);
@@ -101,121 +111,59 @@ void GraphPanel::createContextMenuActions(){
     );
 }
 
-void GraphPanel::addComponent(int id, ComponentType type){
-    auto component = new ComponentWidget(id, type);
-    auto detail = new ComponentDetailWidget(id,type, this);
-
-    widgets_.push_back(component);
-    details_.push_back(detail);
-
-    // dynamic connections
-    connect(component, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
-    connect(component, &SocketContainerWidget::positionChanged, connectionRenderer_, &ConnectionRenderer::onWidgetPositionChanged);
-    connect(component, &SocketContainerWidget::positionChanged, this, &GraphPanel::wasModified );
-    connect(detail, &ComponentDetailWidget::wasModified, this, &GraphPanel::wasModified );
-
-    scene_->addItem(component);
-    for ( auto socket : component->getSockets() ){
-        scene_->addItem(socket);
-    }
-    
-    component->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
-    
-    qDebug() << "Created component:" << component->getName() << "at position:" << component->pos() ;
-    emit wasModified() ;
-}
-
-void GraphPanel::removeComponent(int id){
-    auto w = getWidget(id);
-    if ( !w ){
-        qWarning() << "requested removal of component id which does not exist. id:" << id ;
-        return ;
-    }
-
-    // remove the container widget
-    auto itWidget = std::find(widgets_.begin(), widgets_.end(), w);
-    if ( itWidget != widgets_.end() ) widgets_.erase(itWidget) ;
-    scene_->removeItem(w);
-    w->deleteLater();
-
-    // remove the detail widget
-    auto d = getDetailWidget(id);
-    if ( !d ) return ;
-    auto itDetails = std::find(details_.begin(), details_.end(), d);
-    if ( itDetails != details_.end() ) details_.erase(itDetails);
-    d->deleteLater();
-}
 void GraphPanel::addAudioOutput(){
-    audioOut_ = new SocketContainerWidget("Audio Output Device");
+    audioOut_ = new GraphNode("Audio Output Device");
     audioOut_->createSockets({{SocketType::SignalInbound, "Audio In"}});
     audioOut_->setData(Qt::UserRole, 0); // output index
     scene_->addItem(audioOut_);
 
-    widgets_.push_back(audioOut_);
+    nodes_.push_back(audioOut_);
     for ( auto socket : audioOut_->getSockets() ){
         scene_->addItem(socket);
     }
 
-    connect(audioOut_, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
-    connect(audioOut_, &SocketContainerWidget::positionChanged, connectionRenderer_, &ConnectionRenderer::onWidgetPositionChanged);
+    connect(audioOut_, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
+    connect(audioOut_, &GraphNode::positionChanged, connectionRenderer_, &::ConnectionRenderer::onNodePositionChanged);
 
     qDebug() << "Created Audio Output Device Widget:" << audioOut_->getName() << "at position:" << audioOut_->pos() ;
 }
 
 void GraphPanel::addMidiInput(){
-    midiIn_ = new SocketContainerWidget("MIDI Input Device");
+    midiIn_ = new GraphNode("MIDI Input Device");
     midiIn_->createSockets({{SocketType::MidiOutbound, "MIDI Out"}});
     scene_->addItem(midiIn_);
 
-    widgets_.push_back(midiIn_);
+    nodes_.push_back(midiIn_);
     for ( auto socket : midiIn_->getSockets() ){
         scene_->addItem(socket);
     }
     
-    connect(midiIn_, &SocketContainerWidget::needsZUpdate, this, &GraphPanel::onWidgetZUpdate);
-    connect(midiIn_, &SocketContainerWidget::positionChanged, connectionRenderer_, &ConnectionRenderer::onWidgetPositionChanged);
+    connect(midiIn_, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
+    connect(midiIn_, &GraphNode::positionChanged, connectionRenderer_, &ConnectionRenderer::onNodePositionChanged);
 
     qDebug() << "Created Midi Input Device Widget:" << midiIn_->getName() << "at position:" << midiIn_->pos() ;
 }
 
-SocketContainerWidget* GraphPanel::getWidget(int componentId) const {
-    for ( auto widget : widgets_ ){
-        auto component = dynamic_cast<ComponentWidget*>(widget);
-        if ( component && component->getID() == componentId){
-            return widget ;
+ComponentNode* GraphPanel::getNode(int componentId) const {
+    for ( auto n : nodes_ ){
+        auto cNode = dynamic_cast<ComponentNode*>(n);
+        if ( cNode ){
+            if ( cNode->getModel()->getId() == componentId ){
+                return cNode ;
+            }
         }
     }
     return nullptr ;
-}
-
-ComponentDetailWidget* GraphPanel::getDetailWidget(int componentId) const {
-    for ( auto d : details_ ){
-        if( d->getID() == componentId ){
-            return d ;
-        }
-    }
-    return nullptr ;
-}
-
-void GraphPanel::deleteSelectedComponents(){
-    QList<QGraphicsItem*> selectedItems = scene_->selectedItems() ;
-
-    for ( QGraphicsItem* item: selectedItems ){
-        ComponentWidget* module = dynamic_cast<ComponentWidget*>(item);
-        if ( module ){
-            onComponentRemoved(module);
-        }
-    }
 }
 
 QJsonArray GraphPanel::getComponentPositions() const {
     QJsonArray positions ;
-    for ( auto w : widgets_ ){
-        auto component = dynamic_cast<ComponentWidget*>(w);
+    for ( auto n : nodes_ ){
+        auto component = dynamic_cast<ComponentNode*>(n);
         if ( component ){
             auto pos = component->pos();
             positions.append(QJsonObject{
-                {"ComponentId", component->getID()},
+                {"ComponentId", component->getModel()->getId()},
                 {"xpos", pos.x()},
                 {"ypos", pos.y()}
             });
@@ -239,24 +187,24 @@ void GraphPanel::loadPositions(const QJsonObject& request){
         int xpos = posObj["xpos"].toInt();
         int ypos = posObj["ypos"].toInt();
         
-        auto c = getWidget(componentID);
-        if ( c ){
-            c->setPos(xpos,ypos);
+        auto n = getNode(componentID);
+        if ( n ){
+            n->setPos(xpos,ypos);
         }
     }
 }
 
 
-SocketWidget* GraphPanel::getWidgetSocket(
-        SocketContainerWidget* w, SocketType t, 
+SocketWidget* GraphPanel::getNodeSocket(
+        GraphNode* n, SocketType t, 
         std::variant<std::monostate, size_t, ParameterType> selector 
 ){
-    if (!w){
+    if ( !n ){
         qWarning() << "invalid widget specified." ;
         return nullptr ;
     }
 
-    for ( auto s : w->getSockets() ){
+    for ( auto s : n->getSockets() ){
         if ( s->getType() == t ){
             if ( t == SocketType::ModulationInbound ){
                 ParameterType p = std::get<ParameterType>(selector);
@@ -277,25 +225,38 @@ SocketWidget* GraphPanel::getWidgetSocket(
     return nullptr ;
 }
 
+std::vector<ComponentNode*> GraphPanel::getSelectedComponents() const {
+    auto selectedItems = scene_->selectedItems() ;
+    std::vector<ComponentNode*> nodes ;
+
+    for ( QGraphicsItem* item: selectedItems ){
+        ComponentNode* node = dynamic_cast<ComponentNode*>(item);
+        if ( node ){
+            nodes.push_back(node);
+        }
+    }
+    return nodes ;
+}
+
 SocketWidget* GraphPanel::findSocket(
     SocketType type,
     std::optional<int> componentId,
     std::optional<size_t> idx,
     std::optional<ParameterType> param
 ){
-    SocketContainerWidget* w = nullptr ;
+    GraphNode* w = nullptr ;
 
     
     if ( !componentId.has_value() ){ 
         // missing component id means its a hardware socket
         if ( type == SocketType::SignalInbound ){
             w = audioOut_ ;
-            return getWidgetSocket(audioOut_, type, static_cast<size_t>(0));
+            return getNodeSocket(audioOut_, type, static_cast<size_t>(0));
         } else if ( type == SocketType::MidiOutbound ){
-            return getWidgetSocket(midiIn_, type);
+            return getNodeSocket(midiIn_, type);
         } 
     } else {
-        w = getWidget(componentId.value());
+        w = getNode(componentId.value());
     }
 
     if ( !w ){ 
@@ -311,7 +272,7 @@ SocketWidget* GraphPanel::findSocket(
             return nullptr ;
         }
         ParameterType mp = static_cast<ParameterType>(param.value());
-        return getWidgetSocket(w, type, mp);
+        return getNodeSocket(w, type, mp);
     }
     case SocketType::SignalInbound:
     case SocketType::SignalOutbound:
@@ -319,11 +280,11 @@ SocketWidget* GraphPanel::findSocket(
             qWarning() << "Signal Socket Type selected but no index specified. Invalid socket requested." ;
             return nullptr ;
         }
-        return getWidgetSocket(w, type, idx.value());
+        return getNodeSocket(w, type, idx.value());
     case SocketType::MidiInbound:
     case SocketType::ModulationOutbound:
     case SocketType::MidiOutbound:
-        return getWidgetSocket(w, type);
+        return getNodeSocket(w, type);
     default:
         qWarning() << "invalid socket type specified. Exiting.";
         return nullptr ;
@@ -344,7 +305,9 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
     switch (event->key()){
         case Qt::Key_Delete:
         case Qt::Key_Backspace:
-            deleteSelectedComponents();
+            for ( const auto c : getSelectedComponents() ){
+                componentManager_->requestRemoveComponent(c->getModel()->getId());
+            }
             break ;
         case Qt::Key_Escape:
             connectionRenderer_->cancelDrag();
@@ -402,7 +365,7 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
     }
 
     if ( event->button() == Qt::RightButton ){
-        // TODO: maybe if we right click a module we can do some stuff...
+        // TODO: maybe if we right click a module we #include "meta/ComponentDescriptor.hpp"can do some stuff...
     }
 
     QGraphicsView::mousePressEvent(event); // pass event through
@@ -411,10 +374,10 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
 void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
     QPointF scenePos = mapToScene(event->pos());
 
-    // Launch ComponentWidget
+    // Launch ComponentNode
     QGraphicsItem* item = scene()->itemAt(scenePos, transform());
     while (item){
-        if ( ComponentWidget* w = dynamic_cast<ComponentWidget*>(item)){ 
+        if ( ComponentNode* w = dynamic_cast<ComponentNode*>(item)){ 
             componentDoubleClicked(w);
         } 
         item = item->parentItem();
@@ -478,48 +441,8 @@ void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
 
 }
 
-void GraphPanel::onComponentAdded(ComponentType type){
-    QJsonObject obj ;
-    auto descriptor = ComponentRegistry::getComponentDescriptor(type);
-
-    obj["action"] = "add_component" ;
-    obj["name"] = QString::fromStdString(descriptor.name) ;
-    obj["type"] = static_cast<int>(type);
-    ApiClient::instance()->sendMessage(obj); 
-}
-
-void GraphPanel::onComponentRemoved(ComponentWidget* component){
-    if ( !component ) return ;
-    
-    QJsonObject obj ;
-    obj["action"] = "remove_component" ;
-    obj["componentId"] = component->getID() ;
-    ApiClient::instance()->sendMessage(obj);
-}
-
 void GraphPanel::onApiDataReceived(const QJsonObject& json){
     QString action = json["action"].toString();
-
-    if ( action == "add_component" ){
-        if ( json["status"] != "success" ){
-            qDebug() << "module was not successfully added." ;
-            return ;
-        }
-
-        int id = json["componentId"].toInt();
-        ComponentType type = static_cast<ComponentType>(json["type"].toInt());
-        addComponent(id, type);
-    }
-
-    if ( action == "remove_component" ){
-        if ( json["status"] != "success" ){
-            qDebug() << "module was not successfully removed." ;
-            return ;
-        }
-
-        int id = json["componentId"].toInt();
-        removeComponent(id);
-    }
 
     if ( action == "load_configuration" ){
         if ( json["status"] == "success"){
@@ -528,47 +451,71 @@ void GraphPanel::onApiDataReceived(const QJsonObject& json){
     }
 }
 
-void GraphPanel::componentDoubleClicked(ComponentWidget* widget){
-    int id = widget->getID();
-    ComponentType type = widget->getComponentDescriptor().type ;
-
-    auto d = getDetailWidget(id);
-    if ( !d ){
-        qDebug() << "No detail component found for id" << id ;
-        return ;
-    } 
-
-    if ( d->isVisible() ){
-        d->hide();
-    } else {
-        d->show();
-        d->raise();
-    }
+void GraphPanel::onComponentSelected(ComponentType type){
+    componentManager_->requestAddComponent(type);
 }
 
-void GraphPanel::onWidgetZUpdate(){
-    SocketContainerWidget* widget = dynamic_cast<SocketContainerWidget*>(sender());
+void GraphPanel::onComponentAdded(int componentId, ComponentType type){
+    auto m = componentManager_->getModel(componentId);
+
+    if ( !m ){
+        qWarning() << "cannot create component node. Model not found";
+        return ;
+    }
+
+    auto n = new ComponentNode(m);
+    nodes_.push_back(n);
+
+    connect(n, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
+    connect(n, &GraphNode::positionChanged, connectionRenderer_, &ConnectionRenderer::onNodePositionChanged);
+
+    scene_->addItem(n);
+    for ( auto s : n->getSockets() ){
+        scene_->addItem(s);
+    }
+
+    n->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
+}
+
+void GraphPanel::onComponentRemoved(int componentId){
+    auto n = getNode(componentId);
+    if ( !n ){
+        qWarning() << "requested removal of component id which does not exist. id:" << componentId ;
+        return ;
+    }
+
+    nodes_.erase(std::remove(nodes_.begin(), nodes_.end(), n), nodes_.end());
+    scene_->removeItem(n);
+    n->deleteLater();
+}
+
+void GraphPanel::componentDoubleClicked(ComponentNode* widget){
+    int id = widget->getModel()->getId();
+
+    componentManager_->showEditor(id);
+}
+
+void GraphPanel::onNodeZUpdate(){
+    GraphNode* node = dynamic_cast<GraphNode*>(sender());
     int maxZ = 0 ;
-    for ( auto w : widgets_ ){
-        if ( w != widget && w->zValue() > maxZ ){
-            maxZ = w->zValue();
+    for ( auto n : nodes_ ){
+        if ( n != node && n->zValue() > maxZ ){
+            maxZ = n->zValue();
         }
     }
 
-    if ( maxZ != 0 && widget->zValue() == maxZ ) return ;
+    if ( maxZ != 0 && node->zValue() == maxZ ) return ;
 
-    widget->setZValue( maxZ + 1 );
+    // nodes in front of cables in front of sockets
+    node->setZValue( maxZ + 1 );
 
-    // cables go ahead of sockets, behind widgets
-    auto widgetCables = connectionRenderer_->getWidgetConnections(widget);
-    for ( auto* cable : widgetCables ){
-        cable->setZValue( maxZ + 0.9 ); 
+    auto cables = connectionRenderer_->getNodeConnections(node);
+    for ( auto* cable : cables ){
+        cable->setZValue( maxZ  + 0.9 ); 
     }
 
-    // lastly, sockets (this doesn't work because sockets are parented :( )
-    auto sockets = widget->getSockets();
+    auto sockets = node->getSockets();
     for ( auto* socket: sockets){
         socket->setZValue(maxZ + 0.8);
     }
- 
 }

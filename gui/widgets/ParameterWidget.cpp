@@ -21,12 +21,18 @@
 #include "types/ParameterType.hpp"
 #include "types/Waveform.hpp"
 #include "types/FilterType.hpp"
-#include "widgets/ComponentDetailWidget.hpp"
 
 #include <cmath>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
 #include <QInputDialog>
+
+void ParameterWidget::onModelParameterChanged(ParameterType p, ParameterValue v){
+    qDebug() << "ParameterWidget::onModelParameterChanged triggered!" ;
+    if ( p != getType() ) return ;
+
+    setValue(v, true);
+}
 
 /*
 =========================================
@@ -50,6 +56,10 @@ DelayWidget::DelayWidget(QWidget* parent):
     updateDisplay();
 }
 
+ParameterType DelayWidget::getType() const {
+    return ParameterType::DELAY ;
+}
+
 ParameterValue DelayWidget::getValue() const {
     QString unit = unitCombo_->currentText();
 
@@ -60,20 +70,20 @@ ParameterValue DelayWidget::getValue() const {
     }
 }
 
-void DelayWidget::setValue(const ParameterValue& value){
+void DelayWidget::setValue(const ParameterValue& value, bool block){
     using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::DELAY);
 
     size_t samples = std::get<ValueType>(value);
 
-    setValue(samples);
+    setValue(samples, block);
 }
 
 void DelayWidget::setValue(size_t samples, bool block){
     QString unit = unitCombo_->currentText();
-
-    if ( block ){
-        QSignalBlocker blocker(slider_);
-    }
+    
+    QSignalBlocker blocker(slider_);
+    if ( !block ) blocker.unblock();
+    
     
     if (unit == "ms") { 
         slider_->setValue((samples / sampleRate_) * 1000.0f) ;
@@ -172,11 +182,6 @@ void DelayWidget::connectSignals(){
         emit valueChanged();
     });
 
-    auto p = dynamic_cast<ComponentDetailWidget*>(parent());
-    if ( p ){
-        connect(this, &ParameterWidget::valueChanged, p, &ComponentDetailWidget::onValueChange);
-    }
-
     // changing units updates the slider but doesn't send updates
     connect(unitCombo_, QOverload<int>::of(&QComboBox::currentIndexChanged), 
             this, [this](int index) {
@@ -255,25 +260,26 @@ WaveformWidget::WaveformWidget(QWidget* parent):
     // connections
     connect(waveforms_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
 
-    auto p = dynamic_cast<ComponentDetailWidget*>(parent);
-    if ( p ){
-        connect(this, &ParameterWidget::valueChanged, p, &ComponentDetailWidget::onValueChange);
-    }
+}
 
+ParameterType WaveformWidget::getType() const {
+    return ParameterType::WAVEFORM ;
 }
 
 ParameterValue WaveformWidget::getValue() const {
     return waveforms_->itemData(waveforms_->currentIndex()).value<uint8_t>();
 }
 
-void WaveformWidget::setValue(const ParameterValue& value){
+void WaveformWidget::setValue(const ParameterValue& value, bool block){
     using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::WAVEFORM);
     uint8_t wf = std::get<ValueType>(value);
+
+    QSignalBlocker blocker(waveforms_);
+    if ( !block ) blocker.unblock();
 
     int idx = waveforms_->findData(wf);
 
     if ( idx != -1 ){
-        QSignalBlocker blocker(waveforms_);
         waveforms_->setCurrentIndex(idx);
     } else {
         qWarning() << "could not set waveform value, enum not found in data" ;
@@ -316,26 +322,27 @@ FilterTypeWidget::FilterTypeWidget(QWidget* parent):
 
     // connections
     connect(type_, &QComboBox::currentIndexChanged, this, &ParameterWidget::valueChanged);
+}
 
-    auto p = dynamic_cast<ComponentDetailWidget*>(parent);
-    if ( p ){
-        connect(this, &ParameterWidget::valueChanged, p, &ComponentDetailWidget::onValueChange);
-    }
-
+ParameterType FilterTypeWidget::getType() const {
+    return ParameterType::FILTER_TYPE ;
 }
 
 ParameterValue FilterTypeWidget::getValue() const {
     return type_->itemData(type_->currentIndex()).value<uint8_t>();
 }
 
-void FilterTypeWidget::setValue(const ParameterValue& value){
+void FilterTypeWidget::setValue(const ParameterValue& value, bool block){
     using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::FILTER_TYPE);
+
+    QSignalBlocker blocker(type_);
+    if ( !block ) blocker.unblock();
+
     uint8_t ft = std::get<ValueType>(value);
 
     int idx = type_->findData(ft);
 
     if ( idx != -1 ){
-        QSignalBlocker blocker(type_);
         type_->setCurrentIndex(idx);
     } else {
         qWarning() << "could not set filter type value, enum not found in data" ;
@@ -367,20 +374,22 @@ StatusWidget::StatusWidget(QWidget* parent):
 
     // connections
     connect(toggle_, &QAbstractButton::toggled, this, &ParameterWidget::valueChanged);
+}
 
-    auto p = dynamic_cast<ComponentDetailWidget*>(parent);
-    if ( p ){
-        connect(this, &ParameterWidget::valueChanged, p, &ComponentDetailWidget::onValueChange);
-    }
+ParameterType StatusWidget::getType() const {
+    return ParameterType::STATUS ;
 }
 
 ParameterValue StatusWidget::getValue() const {
     return toggle_->isChecked();
 }
 
-void StatusWidget::setValue(const ParameterValue& value){
+void StatusWidget::setValue(const ParameterValue& value, bool block){
     using ValueType = GET_PARAMETER_VALUE_TYPE(ParameterType::STATUS);
     auto status = std::get<ValueType>(value);
+
+    QSignalBlocker blocker(toggle_);
+    if ( !block ) blocker.unblock();
 
     toggle_->setChecked(status);
 }
@@ -402,6 +411,10 @@ SliderWidget::SliderWidget(ParameterType p, QWidget* parent):
     connectSignals();
 }
 
+ParameterType SliderWidget::getType() const {
+    return param_ ;
+}
+
 ParameterValue SliderWidget::getValue() const {
     double v = slider_->value() * std::pow(10, -1.0 * precision_);
     switch(param_){
@@ -419,8 +432,11 @@ ParameterValue SliderWidget::getValue() const {
     }
 }
 
-void SliderWidget::setValue(const ParameterValue& value){
+void SliderWidget::setValue(const ParameterValue& value, bool block){
     // dispatch for value type, multiplying by precision to properly convert to int slider
+    QSignalBlocker blocker(slider_);
+    if ( !block ) blocker.unblock();
+    
     switch(param_){
         #define X(name) \
             case ParameterType::name: \
@@ -436,6 +452,8 @@ void SliderWidget::setValue(const ParameterValue& value){
                 << " is not in enum. This shouldn't happen." ;
             break ;
     }
+
+    if ( block ) updateDisplay();
 }
 
 void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
@@ -513,11 +531,6 @@ void SliderWidget::connectSignals(){
         updateDisplay();
         emit valueChanged();
     });
-
-    auto p = dynamic_cast<ComponentDetailWidget*>(parent());
-    if ( p ){
-        connect(this, &ParameterWidget::valueChanged, p, &ComponentDetailWidget::onValueChange);
-    }
 }
 
 void SliderWidget::updateDisplay(){

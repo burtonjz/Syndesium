@@ -17,7 +17,7 @@
 
 #include "views/ConnectionRenderer.hpp"
 
-#include "widgets/SocketContainerWidget.hpp"
+#include "graphics/GraphNode.hpp"
 
 ConnectionRenderer::ConnectionRenderer(
     QGraphicsScene* scene,
@@ -117,16 +117,16 @@ void ConnectionRenderer::removeSocketConnections(SocketWidget* s){
     }
 }
 
-const std::vector<ConnectionCable*> ConnectionRenderer::getWidgetConnections(SocketContainerWidget* widget) const {
+const std::vector<ConnectionCable*> ConnectionRenderer::getNodeConnections(GraphNode* node) const {
     std::vector<ConnectionCable*> c ;
     for (const auto& cable : cables_ ) {
-        if (cable->involvesWidget(widget)) c.push_back(cable);
+        if (cable->involvesWidget(node)) c.push_back(cable);
     }
     return c ;
 }
 
-void ConnectionRenderer::onWidgetPositionChanged(){
-    SocketContainerWidget* widget = dynamic_cast<SocketContainerWidget*>(sender());
+void ConnectionRenderer::onNodePositionChanged(){
+    GraphNode* widget = dynamic_cast<GraphNode*>(sender());
     if (!widget) return ;
     
     for ( const auto& cable : cables_ ) {

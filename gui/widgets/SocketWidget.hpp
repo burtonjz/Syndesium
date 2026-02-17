@@ -25,7 +25,7 @@
 
 #include "types/SocketType.hpp"
 
-class SocketContainerWidget ; // forward declaration
+class GraphNode ; // forward declaration
 
 struct SocketSpec {
     SocketType type ;
@@ -38,13 +38,13 @@ class SocketWidget : public QGraphicsObject {
 
 private:
     SocketSpec spec_ ;
-    SocketContainerWidget* parent_ ;
+    GraphNode* parent_ ;
     bool isHovered_ = false ;
     bool isDragging_ = false ;
     QColor getSocketColor(bool isHovered) const ;
 
 public:
-    SocketWidget(SocketSpec spec, SocketContainerWidget* parent = nullptr);
+    SocketWidget(SocketSpec spec, GraphNode* parent = nullptr);
 
     enum { Type = UserType + 2 };
     int type() const override { return Type; }
@@ -55,7 +55,7 @@ public:
 
     // Getters/Setters
     SocketType getType() const { return spec_.type ; } 
-    SocketContainerWidget* getParent() const { return parent_ ; }
+    GraphNode* getParent() const { return parent_ ; }
     const QString& getName() const { return spec_.name ; }
     bool isHovered() const ;
     void setHovered(bool hovered);

@@ -15,14 +15,11 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "widgets/ComponentDetailWidget.hpp"
+#include "views/ComponentEditor.hpp"
 
 #include "meta/ComponentDescriptor.hpp"
-#include "meta/ComponentRegistry.hpp"
-#include "types/CollectionType.hpp"
 #include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
-#include "api/ApiClient.hpp"
 #include "app/Theme.hpp"
 
 #include "widgets/ParameterWidget.hpp"
@@ -36,24 +33,24 @@
 #include <qboxlayout.h>
 #include <qscrollarea.h>
 
-ComponentDetailWidget::ComponentDetailWidget(int id, ComponentType type, QWidget* parent):
+ComponentEditor::ComponentEditor(ComponentModel* model, QWidget* parent):
     QWidget(parent),
-    componentId_(id),
-    descriptor_(ComponentRegistry::getComponentDescriptor(type))
+    model_(model)
 {
-    setWindowTitle(QString::fromStdString(descriptor_.name));
+    auto d = model_->getDescriptor();
 
+    setWindowTitle(QString::fromStdString(d.name));
     setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_ShowWithoutActivating);
 
-    for ( auto p: descriptor_.controllableParameters ){
+    // optional component-specific widget ( for more tailored ui )
+    componentWidget_ = createComponentWidget(d.type);
+
+    // create generic parameter widgets 
+    for ( auto p: d.controllableParameters ){
         parameterWidgets_[p] = createParameterWidget(p);
     }
-
-    for ( auto cd : descriptor_.collections ){
-        collectionWidgets_[cd.collectionType] = createCollectionWidget(cd);
-    }
-
+    
     setupLayout();
 
     // handle parameter changes
@@ -61,183 +58,142 @@ ComponentDetailWidget::ComponentDetailWidget(int id, ComponentType type, QWidget
     parameterChangedTimer_->setSingleShot(true);
     parameterChangedTimer_->setInterval(300);
 
-    connect(parameterChangedTimer_, &QTimer::timeout, this, &ComponentDetailWidget::flushPendingChanges);
-    
-    // notify upstream of changes 
-    modifiedTimer_ = new QTimer(this);
-    modifiedTimer_->setSingleShot(true);
-    modifiedTimer_->setInterval(300);
-
-    connect(modifiedTimer_, &QTimer::timeout, this, &ComponentDetailWidget::wasModified);
-    connect(this, &ComponentDetailWidget::parameterChanged, modifiedTimer_, qOverload<>(&QTimer::start)); 
-
-    
+    connect(
+        parameterChangedTimer_, &QTimer::timeout, 
+        this, &ComponentEditor::flushPendingChanges
+    ); 
 }
 
-int ComponentDetailWidget::getID() const {
-    return componentId_ ;
+ComponentModel* ComponentEditor::getModel() const {
+    return model_ ;
 }
 
-ComponentType ComponentDetailWidget::getType() const {
-    return descriptor_.type ;
-}
-
-QWidget* ComponentDetailWidget::createParameterWidget(ParameterType p){
+ParameterWidget* ComponentEditor::createParameterWidget(ParameterType p){
+    ParameterWidget* w ;
     switch(p){
     case ParameterType::WAVEFORM:
-        return new WaveformWidget(this);
+        w = new WaveformWidget(this);
+        break ;
     case ParameterType::FILTER_TYPE:
-        return new FilterTypeWidget(this);
+        w = new FilterTypeWidget(this);
+        break ;
     case ParameterType::STATUS:
-        return new StatusWidget(this);
+        w = new StatusWidget(this);
+        break ;
     case ParameterType::DELAY:
-        return new DelayWidget(this);
+        w = new DelayWidget(this);
+        break ;
     default:
-        // use generic slider
-        return new SliderWidget(p, this);
+        w = new SliderWidget(p, this);
+        break ;
     }
-}
 
-QWidget* ComponentDetailWidget::createCollectionWidget(CollectionDescriptor cd){
-    switch(cd.collectionType){
-    case CollectionType::SEQUENCER:
-    {
-        PianoRollWidget* pianoRoll = new PianoRollWidget(componentId_);
-        connect(this, &ComponentDetailWidget::parameterChanged, pianoRoll, &PianoRollWidget::onParameterChanged);
-        return pianoRoll ;
-    }
-    case CollectionType::GENERIC:
-    default:
-    {
-        switch (cd.structure){
-        case CollectionStructure::INDEPENDENT:
-            return createIndependentCollection(cd);
-        case CollectionStructure::GROUPED:
-            return createGroupedCollection(cd);
-        case CollectionStructure::SYNCHRONIZED:
-            return createSynchronizedCollection(cd);
-        default:
-            return nullptr ;
-        }
-    }}
-}
-
-QWidget* ComponentDetailWidget::createIndependentCollection(CollectionDescriptor cd){
-    // TODO
-    return nullptr ;
-}
-
-QWidget* ComponentDetailWidget::createGroupedCollection(CollectionDescriptor cd){
-    // TODO
-    return nullptr ;
-}
-
-QWidget* ComponentDetailWidget::createSynchronizedCollection(CollectionDescriptor cd){
-    // TODO
-    return nullptr ;
-}
-
-void ComponentDetailWidget::setupLayout(){
-    QVBoxLayout* mainLayout = new QVBoxLayout(this);
-    QHBoxLayout* buttonLayout = new QHBoxLayout();
+    connect(
+        w, &ParameterWidget::valueChanged, 
+        this, &ComponentEditor::onValueChange
+    );
+    connect(
+        model_, &ComponentModel::parameterValueChanged,
+        w, &ParameterWidget::onModelParameterChanged
+    );
     
+    return w ;
+}
 
-    // collections
-    QVBoxLayout* collectionLayout = new QVBoxLayout();
-    for ( auto cd : descriptor_.collections ){
-        QWidget* w = collectionWidgets_[cd.collectionType];
+QWidget* ComponentEditor::createComponentWidget(ComponentType t){
+    switch(t){
+    case ComponentType::Sequencer:
+    {
+        auto* scroll = new QScrollArea() ;
+        PianoRollWidget* pianoRoll = new PianoRollWidget(model_, this);
+        scroll->setWidget(pianoRoll);
+        connect(
+            model_, &ComponentModel::parameterValueChanged, 
+            pianoRoll, &PianoRollWidget::onParameterChanged
+        );
+        return scroll ;
+    }
+    default:
+        return nullptr ;
+        
+    }
+}
 
-        // specialized first
-        switch(cd.collectionType){
-        case CollectionType::SEQUENCER:
-        {
-            auto* scroll = new QScrollArea() ;
-            scroll->setWidget(w);
-            collectionLayout->addWidget(scroll);
-            break ;
-        }
-        case CollectionType::GENERIC:
-        default:
-            qWarning() << "attempted to make collection widget of type" << CollectionType::toString(cd.collectionType) << ", which is not implemented" ;
-            break ;
-        }
-
-        // TODO: generic collection layout logic
+void ComponentEditor::setupLayout(){
+    QVBoxLayout* mainLayout = new QVBoxLayout(this);
+    mainLayout->setContentsMargins(
+        Theme::COMPONENT_DETAIL_MARGINS,
+        Theme::COMPONENT_DETAIL_MARGINS,
+        Theme::COMPONENT_DETAIL_MARGINS,
+        Theme::COMPONENT_DETAIL_MARGINS
+    );
+    
+    // component-specific widget belongs at the top
+    if ( componentWidget_ ){
+        mainLayout->addWidget(componentWidget_);
     }
 
-    mainLayout->addLayout(collectionLayout);
-
-    // parameters
+    // parameter widgets horizontally spaced
     QHBoxLayout* parameterLayout = new QHBoxLayout();
     parameterLayout->setSpacing(Theme::COMPONENT_DETAIL_WIDGET_SPACING);
 
-    for ( auto p : descriptor_.controllableParameters ){
-        QWidget* w = parameterWidgets_[p];
-        parameterLayout->addWidget(w);
+    for ( auto p : model_->getDescriptor().controllableParameters ){
+        parameterLayout->addWidget(parameterWidgets_[p]);
     }
 
     mainLayout->addLayout(parameterLayout);
     
     // buttons
+    QHBoxLayout* buttonLayout = new QHBoxLayout();
     closeButton_ = new QPushButton("Close",this);
     resetButton_ = new QPushButton("Reset", this);
     buttonLayout->addWidget(closeButton_);
     buttonLayout->addWidget(resetButton_);
     mainLayout->addLayout(buttonLayout);
 
-    // resize this widget to fit all parameters
-    int nParameters = parameterWidgets_.size();
-    int width = (nParameters * Theme::COMPONENT_DETAIL_WIDGET_WIDTH) + 
-        ((nParameters - 1) * Theme::COMPONENT_DETAIL_WIDGET_SPACING) + 
-        Theme::COMPONENT_DETAIL_MARGINS ;
-    resize(width, sizeHint().height());
+    connect(
+        closeButton_, &QPushButton::clicked, 
+        this, &ComponentEditor::onCloseButtonClicked 
+    );
+    connect(
+        resetButton_, &QPushButton::clicked, 
+        this, &ComponentEditor::onResetButtonClicked
+    );
+
+    adjustSize();
 }
 
-void ComponentDetailWidget::closeEvent(QCloseEvent* event){
+void ComponentEditor::closeEvent(QCloseEvent* event){
     event->ignore();
     hide();
     emit widgetClosed();
 }
 
-void ComponentDetailWidget::onCloseButtonClicked(){
+void ComponentEditor::onCloseButtonClicked(){
     hide();
     emit widgetClosed();
 }
 
-void ComponentDetailWidget::onValueChange(){
-    auto widget = dynamic_cast<QWidget*>(sender());
-    auto it = std::find(parameterWidgets_.begin(), parameterWidgets_.end(), widget);
-    
-    if ( it == parameterWidgets_.end() ) return ;
-    
-    ParameterType p = it.key();
-    ParameterValue v ;
+void ComponentEditor::onResetButtonClicked(){
+    // TODO ask model to reset all parameters to default
+}
 
-    if ( auto pWidget = dynamic_cast<ParameterWidget*>(it.value())){
-        v = pWidget->getValue();
-    } else {
-        qWarning() << "invalid QWidget stored for parameter of type " << GET_PARAMETER_TRAIT_MEMBER(p,name) ;
-        return ;
-    }
+void ComponentEditor::onValueChange(){
+    auto w = dynamic_cast<ParameterWidget*>(sender());
+    if ( !w ) return ;
+
+    ParameterType p = w->getType();
+    ParameterValue v = w->getValue();
     
     pendingChanges_[p] = v ;
     parameterChangedTimer_->start();
 }
 
-void ComponentDetailWidget::flushPendingChanges(){
+void ComponentEditor::flushPendingChanges(){
     if ( pendingChanges_.empty() ) return ;
 
     for ( auto [p, val] : pendingChanges_ ){
-        QJsonObject obj ;
-        obj["action"] = "set_parameter" ;
-        obj["componentId"] = componentId_ ;
-        obj["parameter"] = static_cast<int>(p);
-        obj["value"] = QVariant::fromStdVariant(val).toJsonValue();
-        
-        ApiClient::instance()->sendMessage(obj); 
-        emit parameterChanged(componentId_,descriptor_,p,val) ;
+        emit parameterEdited(model_->getId(),p,val) ;
     }
-
     pendingChanges_.clear();
-    emit wasModified();
 }

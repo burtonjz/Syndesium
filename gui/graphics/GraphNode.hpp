@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __UI_SOCKET_CONTAINER_WIDGET_HPP_
-#define __UI_SOCKET_CONTAINER_WIDGET_HPP_
+#ifndef GRAPH_NODE_HPP_
+#define GRAPH_NODE_HPP_
 
 #include <QGraphicsObject>
 #include <QPainter>
@@ -27,7 +27,7 @@
 
 #include "widgets/SocketWidget.hpp"
 
-class SocketContainerWidget :  public QGraphicsObject {
+class GraphNode :  public QGraphicsObject {
     Q_OBJECT
 
 private:
@@ -45,8 +45,8 @@ protected:
     QGraphicsTextItem* titleText_ ;
 
 public:
-    explicit SocketContainerWidget(QString name, QGraphicsItem* parent = nullptr);
-    virtual ~SocketContainerWidget();
+    explicit GraphNode(QString name, QGraphicsItem* parent = nullptr);
+    virtual ~GraphNode();
 
     enum { Type = UserType + 1 };
     int type() const override { return Type; }
@@ -73,4 +73,4 @@ signals:
 
 };
 
-#endif // __UI_SOCKET_CONTAINER_WIDGET_HPP_
+#endif // GRAPH_NODE_HPP_

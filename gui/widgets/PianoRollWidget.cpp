@@ -30,9 +30,9 @@
 #include <qjsondocument.h>
 #include <qpainter.h>
 
-PianoRollWidget::PianoRollWidget(int id, QWidget* parent):
+PianoRollWidget::PianoRollWidget(ComponentModel* model, QWidget* parent):
     QWidget(parent),
-    id_(id),
+    model_(model),
     totalBeats_(16.0f),
     notes_(),
     selectedNotes_()
@@ -304,7 +304,7 @@ void PianoRollWidget::deleteNote(int idx){
     req.collectionType = CollectionType::SEQUENCER ;
     req.action = CollectionAction::REMOVE ;
     req.index = idx ;
-    req.componentId = id_ ;
+    req.componentId = model_->getId() ;
     
     QJsonObject obj = Util::nlohmannToQJsonObject(req);
     ApiClient::instance()->sendMessage(obj);
@@ -361,7 +361,7 @@ void PianoRollWidget::onDragEnd(const QPointF pos){
     CollectionRequest req ;
     req.collectionType = CollectionType::SEQUENCER ;
     req.action = CollectionAction::ADD ;
-    req.componentId = id_ ;
+    req.componentId = model_->getId() ;
     req.value = dragNote_->getNote() ;
     
     QJsonObject obj = Util::nlohmannToQJsonObject(req);
@@ -420,7 +420,7 @@ void PianoRollWidget::onResizeEnd(const QPointF pos){
     CollectionRequest req ;
     req.collectionType = CollectionType::SEQUENCER ;
     req.action = CollectionAction::SET ;
-    req.componentId = id_ ;
+    req.componentId = model_->getId() ;
     req.index =  idx ;
     req.value = dragNote_->getNote() ;
     
@@ -442,7 +442,7 @@ void PianoRollWidget::updateSelectedNotePitch(int p){
         req.collectionType = CollectionType::SEQUENCER ; 
         req.action = CollectionAction::SET ;
         req.index = idx ;
-        req.componentId = id_ ;
+        req.componentId = model_->getId() ;
         req.value = n->getNote() ;
 
         QJsonObject obj = Util::nlohmannToQJsonObject(req);
@@ -460,7 +460,7 @@ void PianoRollWidget::updateSelectedNoteStart(float t){
         req.collectionType = CollectionType::SEQUENCER ; 
         req.action = CollectionAction::SET ;
         req.index = idx ;
-        req.componentId = id_ ;
+        req.componentId = model_->getId() ;
         req.value = n->getNote() ;
 
         QJsonObject obj = Util::nlohmannToQJsonObject(req);
@@ -478,7 +478,7 @@ void PianoRollWidget::updateSelectedNoteDuration(float d){
         req.collectionType = CollectionType::SEQUENCER ; 
         req.action = CollectionAction::SET ;
         req.index = idx ;
-        req.componentId = id_ ;
+        req.componentId = model_->getId() ;
         req.value = n->getNote() ;
 
         QJsonObject obj = Util::nlohmannToQJsonObject(req);
@@ -526,11 +526,9 @@ void PianoRollWidget::onApiDataReceived(const QJsonObject& json){
     }
 }
 
-void PianoRollWidget::onParameterChanged(int componentId, ComponentDescriptor descriptor, ParameterType p, ParameterValue value){
-    if ( componentId != id_ ) return ;
-
+void PianoRollWidget::onParameterChanged(ParameterType p){
     if ( p == ParameterType::DURATION ){
-        setTotalBeats(std::get<double>(value));
+        setTotalBeats(std::get<double>(model_->getParameterValue(p)));
         return ;
     }
 }

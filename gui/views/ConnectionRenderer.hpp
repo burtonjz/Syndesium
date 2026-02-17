@@ -22,7 +22,7 @@
 #include <QGraphicsScene>
 #include "managers/ConnectionManager.hpp"
 #include "interfaces/ISocketLookup.hpp"
-#include "widgets/ConnectionCable.hpp"
+#include "graphics/ConnectionCable.hpp"
 
 class ConnectionRenderer : public QObject {
     Q_OBJECT
@@ -53,11 +53,11 @@ public:
     bool isDragging() const ;
 
     // cable management
-    const std::vector<ConnectionCable*> getWidgetConnections(SocketContainerWidget* widget) const ;
+    const std::vector<ConnectionCable*> getNodeConnections(GraphNode* node) const ;
     void removeSocketConnections(SocketWidget* s);
 
 public slots:
-    void onWidgetPositionChanged();
+    void onNodePositionChanged();
     void onConnectionAdded(const ConnectionRequest& req);
     void onConnectionRemoved(const ConnectionRequest& req);
 };

@@ -15,46 +15,50 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "widgets/ComponentWidget.hpp"
-#include "meta/ComponentRegistry.hpp"
+#include "graphics/ComponentNode.hpp"
 #include "widgets/SocketWidget.hpp"
 #include "types/ParameterType.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
 
-ComponentWidget::ComponentWidget(int id, ComponentType type, QGraphicsItem* parent): 
-    SocketContainerWidget(QString::fromStdString(ComponentRegistry::getComponentDescriptor(type).name), parent),
-    componentId_(id),
-    descriptor_(ComponentRegistry::getComponentDescriptor(type)),
+ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent): 
+    GraphNode(QString::fromStdString(model->getDescriptor().name), parent),
+    model_(model),
     specs_()
 {
+    auto d = model_->getDescriptor();
+    
     // create sockets from descriptor
-    for ( const ParameterType& p : descriptor_.modulatableParameters){
+    for ( const ParameterType& p : d.modulatableParameters){
         std::string name = GET_PARAMETER_TRAIT_MEMBER(p,name);
         specs_.push_back({SocketType::ModulationInbound, QString::fromStdString(name)});
     }
 
-    for (int i = 0; i < descriptor_.numAudioInputs; ++i){
+    for (int i = 0; i < d.numAudioInputs; ++i){
         specs_.push_back({SocketType::SignalInbound, QString("Audio Input %1").arg(i+1), i});
     }
 
-    for (int i = 0; i < descriptor_.numMidiInputs; ++i){
+    for (int i = 0; i < d.numMidiInputs; ++i){
         specs_.push_back({SocketType::MidiInbound, QString("MIDI Input %1").arg(i+1)});
     }
 
-    for (int i = 0; i < descriptor_.numAudioOutputs; ++i){
+    for (int i = 0; i < d.numAudioOutputs; ++i){
         specs_.push_back({SocketType::SignalOutbound, QString("Audio Output %1").arg(i+1), i});
     }
 
-    for (int i = 0; i < descriptor_.numMidiOutputs; ++i){
+    for (int i = 0; i < d.numMidiOutputs; ++i){
         specs_.push_back({SocketType::MidiOutbound, QString("MIDI Output %1").arg(i+1)});
     }
 
-    if ( descriptor_.isModulator()){
+    if ( d.isModulator()){
         specs_.push_back({SocketType::ModulationOutbound, QString("Modulation Output")});
     }
 
     createSockets(specs_);
 
+}
+
+ComponentModel* ComponentNode::getModel() const {
+    return model_ ;
 }

@@ -15,9 +15,9 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "widgets/ConnectionCable.hpp"
+#include "graphics/ConnectionCable.hpp"
 #include "widgets/SocketWidget.hpp"
-#include "widgets/ComponentWidget.hpp"
+#include "graphics/ComponentNode.hpp"
 #include "app/Theme.hpp"
 
 #include <QPainter>
@@ -101,7 +101,7 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
     }
 }
 
-bool ConnectionCable::involvesWidget(SocketContainerWidget* widget) const {
+bool ConnectionCable::involvesWidget(GraphNode* widget) const {
     return ( fromSocket_ && fromSocket_->getParent() == widget ) ||
            ( toSocket_   &&   toSocket_->getParent() == widget ) ;
 }
@@ -135,11 +135,11 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
     
     auto outboundSocket = getOutboundSocket();
     auto inboundSocket = getInboundSocket();
-    ComponentWidget* inboundComponent = nullptr ;
-    ComponentWidget* outboundComponent = nullptr ;
+    ComponentNode* inboundComponent = nullptr ;
+    ComponentNode* outboundComponent = nullptr ;
     
     if ( inboundSocket ){
-        inboundComponent = dynamic_cast<ComponentWidget*>(inboundSocket->getParent());    
+        inboundComponent = dynamic_cast<ComponentNode*>(inboundSocket->getParent());    
         r.inboundSocket = inboundSocket->getType();
         if ( inboundSocket->getType() == SocketType::ModulationInbound ){
             r.inboundParameter = parameterFromString(inboundSocket->getName().toStdString()) ;
@@ -147,21 +147,21 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
     }
         
     if ( outboundSocket ){
-        outboundComponent = dynamic_cast<ComponentWidget*>(outboundSocket->getParent());
+        outboundComponent = dynamic_cast<ComponentNode*>(outboundSocket->getParent());
         r.outboundSocket = outboundSocket->getType();
     }
         
 
 
     if ( inboundComponent ){
-        r.inboundID = inboundComponent->getID();
+        r.inboundID = inboundComponent->getModel()->getId();
         if ( inboundSocket->getType() == SocketType::SignalInbound ){
             r.inboundIdx = inboundSocket->data(Qt::UserRole).value<size_t>();
         }
     }
 
     if ( outboundComponent ){
-        r.outboundID = outboundComponent->getID() ;
+        r.outboundID = outboundComponent->getModel()->getId() ;
         if ( outboundSocket->getType() == SocketType::SignalOutbound ){
             r.outboundIdx = outboundSocket->data(Qt::UserRole).value<size_t>();
         }
@@ -403,7 +403,7 @@ QPointF ConnectionCable::normalizePoint(const QPointF& p) const {
 //     bounds.reserve(items.size());
 
 //     for ( auto* item : items ){
-//         if ( item->type() == SocketContainerWidget::Type ){
+//         if ( item->type() == GraphNode::Type ){
 //             bounds.push_back(item->sceneBoundingRect());
 //             qDebug() << "found obstacle: " << item ;
 //         }

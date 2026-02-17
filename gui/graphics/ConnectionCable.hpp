@@ -15,8 +15,8 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef __GUI_CONNECTION_CABLE_HPP_
-#define __GUI_CONNECTION_CABLE_HPP_
+#ifndef CONNECTION_CABLE_HPP_
+#define CONNECTION_CABLE_HPP_
 
 #include <QGraphicsPathItem>
 
@@ -49,7 +49,7 @@ public:
     bool isComplete() const { return fromSocket_ && toSocket_ ; }
     bool isCompatible(SocketWidget* socket) const ;
 
-    bool involvesWidget(SocketContainerWidget* widget) const ;
+    bool involvesWidget(GraphNode* widget) const ;
     bool involvesSocket(SocketWidget* socket) const ;
 
     void updatePath();
@@ -76,4 +76,4 @@ private:
 
 };
 
-#endif // __GUI_CONNECTION_CABLE_HPP_
+#endif // CONNECTION_CABLE_HPP_
