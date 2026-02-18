@@ -35,7 +35,7 @@ private:
     QPushButton* resetButton_ ;
     QPushButton* closeButton_ ;
     std::map<ParameterType, ParameterWidget*> parameterWidgets_ ; // general independent parameters
-    QWidget* componentWidget_ ; // optional component-wide widget for more feature-rich UI
+    QWidget* specializedWidget_ ; // optional component-wide widget for more feature-rich UI
 
     QTimer* parameterChangedTimer_ ;
     std::unordered_map<ParameterType, ParameterValue> pendingChanges_ ;
@@ -45,10 +45,11 @@ public:
     ~ComponentEditor() override = default ;
 
     ComponentModel* getModel() const ;
+    QWidget* getSpecializedWidget() const ;
     
 protected:
     ParameterWidget* createParameterWidget(ParameterType p);
-    QWidget* createComponentWidget(ComponentType t);
+    QWidget* createSpecializedWidget(ComponentType t);
 
 private:
     void setupLayout();

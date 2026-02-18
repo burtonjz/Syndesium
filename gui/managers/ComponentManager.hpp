@@ -22,6 +22,7 @@
 #include "views/ComponentEditor.hpp"
 #include "types/ComponentType.hpp"
 #include "requests/CollectionRequest.hpp"
+#include "widgets/CollectionWidget.hpp"
 
 #include <QObject>
 
@@ -51,6 +52,7 @@ private:
     void addComponent(int componentId, ComponentType type);
     void removeComponent(int componentId);
 
+    CollectionWidget* getEditorCollectionWidget(ComponentEditor* editor) const ;
     bool handleCollectionApiResponse(const QJsonObject &json);
 
 public slots:

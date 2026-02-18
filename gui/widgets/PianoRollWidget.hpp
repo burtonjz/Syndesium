@@ -18,6 +18,7 @@
 #ifndef PIANOROLL_WIDGET_HPP_
 #define PIANOROLL_WIDGET_HPP_
 
+#include "widgets/CollectionWidget.hpp"
 #include "models/ComponentModel.hpp"
 #include "types/SequenceData.hpp"
 #include "widgets/NoteWidget.hpp"
@@ -31,28 +32,28 @@
 #include <map>
 #include <cstdint>
 
-class PianoRollWidget : public QWidget {
+class PianoRollWidget : public CollectionWidget {
     Q_OBJECT
 
 private:
-    ComponentModel* model_ ;
     std::map<int, NoteWidget*> notes_ ;
     std::vector<int> selectedNotes_ ;
-
 
     float totalBeats_ ;
 
     bool isDragging_ = false ;
+    bool isResizing_ = false ;
+
     NoteWidget* dragNote_ ;
     float anchorBeat_ ;
-
-    bool isResizing_ = false ;
 
 public:
     explicit PianoRollWidget(ComponentModel* model, QWidget* parent = nullptr);
 
+    void updateCollection(const CollectionRequest& req) override ;
+    
     void setTotalBeats(float beats);
-    void removeNote(int idx);
+    // void removeNote(int idx);
 
 protected:
     void paintEvent(QPaintEvent*) override ;
@@ -76,30 +77,36 @@ private:
     NoteWidget* findNoteAtPos(const QPointF& pos);
     
     // functions for Qt event handling
-    void onNoteSelected(NoteWidget* note, bool multiSelect);
-    void onNoteHover(const QPointF pos);
+    void selectNote(NoteWidget* note, bool multiSelect);
     void deselectNotes();
+    void handleNoteHover(const QPointF pos);
 
-    void onDragStart(const QPointF pos);
-    void onDragMove(const QPointF pos);
-    void onDragEnd(const QPointF pos);
+    // dragging new notes
+    void startDrag(const QPointF pos);
+    void updateDrag(const QPointF pos);
+    void endDrag(const QPointF pos);
 
-    bool onResizeStart(NoteWidget* note, const QPointF pos);
-    void onResizeMove(const QPointF pos);
-    void onResizeEnd(const QPointF pos);
+    // resize existing note
+    bool startResize(NoteWidget* note, const QPointF pos);
+    void updateResize(const QPointF pos);
+    void endResize(const QPointF pos);
 
     void updateSelectedNotePitch(int p);
     void updateSelectedNoteStart(float t);
     void updateSelectedNoteDuration(float d);
 
     // functions for api responses
+    void handleCollectionAdd(const CollectionRequest& req);
+    void handleCollectionRemove(const CollectionRequest& req);
+    
     void onNoteAdded(SequenceNote note);
     void onNoteRemoved(SequenceNote note);
-    void deleteNote(int idx);
-    void deleteSelectedNotes();
+
+    void requestRemoveNote(int idx);
+    void requestRemoveSelectedNotes();
     
 public slots:
-    void onApiDataReceived(const QJsonObject &json);
+    // respond to parameter changes from the component model
     void onParameterChanged(ParameterType p);
 };
 

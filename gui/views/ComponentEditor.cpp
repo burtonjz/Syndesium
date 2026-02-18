@@ -44,7 +44,7 @@ ComponentEditor::ComponentEditor(ComponentModel* model, QWidget* parent):
     setAttribute(Qt::WA_ShowWithoutActivating);
 
     // optional component-specific widget ( for more tailored ui )
-    componentWidget_ = createComponentWidget(d.type);
+    specializedWidget_ = createSpecializedWidget(d.type);
 
     // create generic parameter widgets 
     for ( auto p: d.controllableParameters ){
@@ -66,6 +66,10 @@ ComponentEditor::ComponentEditor(ComponentModel* model, QWidget* parent):
 
 ComponentModel* ComponentEditor::getModel() const {
     return model_ ;
+}
+
+QWidget* ComponentEditor::getSpecializedWidget() const {
+    return specializedWidget_ ;
 }
 
 ParameterWidget* ComponentEditor::createParameterWidget(ParameterType p){
@@ -100,11 +104,11 @@ ParameterWidget* ComponentEditor::createParameterWidget(ParameterType p){
     return w ;
 }
 
-QWidget* ComponentEditor::createComponentWidget(ComponentType t){
+QWidget* ComponentEditor::createSpecializedWidget(ComponentType t){
     switch(t){
     case ComponentType::Sequencer:
     {
-        auto* scroll = new QScrollArea() ;
+        auto* scroll = new QScrollArea(this) ;
         PianoRollWidget* pianoRoll = new PianoRollWidget(model_, this);
         scroll->setWidget(pianoRoll);
         connect(
@@ -129,8 +133,8 @@ void ComponentEditor::setupLayout(){
     );
     
     // component-specific widget belongs at the top
-    if ( componentWidget_ ){
-        mainLayout->addWidget(componentWidget_);
+    if ( specializedWidget_ ){
+        mainLayout->addWidget(specializedWidget_);
     }
 
     // parameter widgets horizontally spaced

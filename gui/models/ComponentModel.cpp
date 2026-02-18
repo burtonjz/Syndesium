@@ -91,25 +91,6 @@ void ComponentModel::setParameterToDefault(ParameterType p, bool block){
     }
 }
 
-const CollectionRequest& ComponentModel::getCollectionValue(CollectionType c) const {
-    if ( !validCollection(c) ){
-        throw std::logic_error(
-            "FATAL: Invalid Collection Type " + CollectionType::toString(c)
-            + " accessed in an unsupported Component Type (" + static_cast<char>(type_) 
-            + "). This is a programming bug. "
-        ); 
-    }
-    return collections_.at(c);
-}
-
-void ComponentModel::updateCollection(const CollectionRequest& req, bool block){
-    // TODO
-
-    if ( !block ){
-        emit collectionUpdated(req);
-    }
-}
-
 bool ComponentModel::validParam(ParameterType p) const {
     auto it = std::find(
         descriptor_.controllableParameters.begin(), 
@@ -117,12 +98,5 @@ bool ComponentModel::validParam(ParameterType p) const {
         p
     );
     return it != descriptor_.controllableParameters.end();
-}
-
-bool ComponentModel::validCollection(CollectionType c) const {
-    for ( const auto& cd : descriptor_.collections ){
-        if ( cd.collectionType == c ) return true ;
-    }
-    return false ;
 }
 

@@ -90,12 +90,24 @@ void ComponentManager::showEditor(int componentId){
 
 void ComponentManager::addComponent(int componentId, ComponentType type){
     models_[componentId] = new ComponentModel(componentId, type);
-    editors_[componentId] = new ComponentEditor(models_[componentId]);
 
+    auto editor = new ComponentEditor(models_[componentId]);
+    editors_[componentId] = editor ;
+
+    // editors must communicate parameter edits
     connect(
         editors_[componentId], &ComponentEditor::parameterEdited,
         this, &ComponentManager::onParameterEdited
     );
+    
+    auto cw = getEditorCollectionWidget(editor);
+    if ( cw ){
+        qDebug() << "collection edits connecting!";
+        connect(
+            cw, &CollectionWidget::collectionEdited,
+            this, &ComponentManager::onCollectionEdited
+        );
+    }
 
     emit componentAdded(componentId, type);
 }
@@ -115,7 +127,26 @@ void ComponentManager::removeComponent(int componentId){
     emit componentRemoved(componentId);
 }
 
+
+CollectionWidget* ComponentManager::getEditorCollectionWidget(ComponentEditor* editor) const {
+    auto specialized = editor->getSpecializedWidget();
+    if ( !specialized ) return nullptr ;
+
+    CollectionWidget* cw = dynamic_cast<CollectionWidget*>(specialized);
+    if ( !cw ){
+        cw = specialized->findChild<CollectionWidget*>();
+    }
+    
+    return cw ;
+}
+
 bool ComponentManager::handleCollectionApiResponse(const QJsonObject &json){
+    // note: there is no centralized model for managing Collections. So we will 
+    // instead break the pattern here and only do this for specialized widget stored
+    // in the component editor. 
+
+    // bool response is to determine if the event should be considered "handled" so
+    // that we don't eat up the wrong types of request
     CollectionRequest req ;
     try {
         req = Util::QJsonObjectToNlohmann(json);
@@ -123,15 +154,21 @@ bool ComponentManager::handleCollectionApiResponse(const QJsonObject &json){
         return false ;
     }
 
-    auto it = models_.find(req.componentId);
-    if ( it == models_.end() ){
+    auto it = editors_.find(req.componentId);
+    if ( it == editors_.end() ){
         qWarning() << "Could not find model with Component ID" << req.componentId 
             << ". Will not process collection request" ;
         return true ;
     }
-    it->second->updateCollection(req);
+    
+    auto cw = getEditorCollectionWidget(it->second);
+    if ( cw ){
+        cw->updateCollection(req);
+    }
+    
     return true ;
 }
+
 
 void ComponentManager::onApiDataReceived(const QJsonObject &json){
     QString action = json["action"].toString();
@@ -177,7 +214,7 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
         return ;
     }
 
-    if ( handleCollectionApiResponse(json) ){
+    if ( success && handleCollectionApiResponse(json) ){
         return ;
     }
 }
@@ -187,5 +224,6 @@ void ComponentManager::onParameterEdited(int componentId, ParameterType p, Param
 }
 
 void ComponentManager::onCollectionEdited(CollectionRequest req ){
+    qDebug() << "collection edit request received!";
     requestCollectionUpdate(req);
 }

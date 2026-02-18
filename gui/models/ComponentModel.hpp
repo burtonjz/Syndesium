@@ -34,7 +34,6 @@ private:
     ComponentType type_ ;
     ComponentDescriptor descriptor_ ;
     std::map<ParameterType, ParameterValue> parameters_ ;
-    std::map<CollectionType, CollectionRequest> collections_ ;
 
 public:
     ComponentModel(int id, ComponentType typ);
@@ -47,12 +46,8 @@ public:
     void setParameterValue(ParameterType p, ParameterValue v, bool block = false);
     void setParameterToDefault(ParameterType p, bool block = false);
 
-    const CollectionRequest& getCollectionValue(CollectionType t) const ;
-    void updateCollection(const CollectionRequest& req, bool block = false);
-
 private:
     bool validParam(ParameterType p) const ;
-    bool validCollection(CollectionType c) const ;
 
 signals:
     void parameterValueChanged(ParameterType p, ParameterValue v);
