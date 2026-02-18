@@ -20,7 +20,6 @@
 
 #include "types/ComponentType.hpp"
 #include "types/ParameterType.hpp"
-#include "types/CollectionType.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "requests/CollectionRequest.hpp"
 
