@@ -31,6 +31,7 @@ struct SocketSpec {
     SocketType type ;
     QString name ;
     std::optional<size_t> idx ;
+    std::optional<int> componentId ;
 };
 
 class SocketWidget : public QGraphicsObject {
@@ -54,9 +55,8 @@ public:
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget) override ;
 
     // Getters/Setters
-    SocketType getType() const { return spec_.type ; } 
+    const SocketSpec& getSpec() const { return spec_ ; }
     GraphNode* getParent() const { return parent_ ; }
-    const QString& getName() const { return spec_.name ; }
     bool isHovered() const ;
     void setHovered(bool hovered);
 

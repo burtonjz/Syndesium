@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,48 +15,44 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef COMPONENT_EDITOR_HPP_
-#define COMPONENT_EDITOR_HPP_
+#ifndef GROUP_EDITOR_HPP_
+#define GROUP_EDITOR_HPP_
 
-#include "types/ParameterType.hpp"
 #include "widgets/ComponentParameters.hpp"
+#include "types/ParameterType.hpp"
 
 #include <QWidget>
 #include <QPushButton>
+#include <QGridLayout>
+#include <unordered_map>
 
 // forward declarations
 class ComponentModel ;
 
-class ComponentEditor : public QWidget {
+class GroupEditor : public QWidget {
     Q_OBJECT
-    
+
 private:
-    ComponentParameters* params_ ;
-    QPushButton* resetButton_ ;
+    std::unordered_map<int, ComponentParameters*> params_ ;
+    QGridLayout* paramsLayout_ ;
     QPushButton* closeButton_ ;
 
 public:
-    explicit ComponentEditor(ComponentModel* model, QWidget* parent = nullptr);
-    ~ComponentEditor() override ;
+    explicit GroupEditor(QWidget* parent = nullptr);
 
-    ComponentParameters* getComponentParameters() const ;
+    void addComponent(ComponentModel* model);
+    void removeComponent(ComponentModel* model);
+    ComponentParameters* getComponentParameters(int componentId);
     
 private:
     void setupLayout();
-    void closeEvent(QCloseEvent* event) override ;
-
-    void requestCollectionItemCreate(int index, std::function<void(bool)> callback);
-    void requestCollectionItemDelete(int index, std::function<void(bool)> callback);
+    void relayoutParams();
 
 signals:
-    // passthrough for ComponentParameters
     void parameterEdited(int componentId, ParameterType p, ParameterValue value);
 
 private slots:
     void onCloseButtonClicked();
-    void onResetButtonClicked();
-
 };
 
-
-#endif // COMPONENT_EDITOR_HPP_
+#endif // GROUP_EDITOR_HPP_

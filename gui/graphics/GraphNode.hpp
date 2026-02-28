@@ -60,6 +60,10 @@ public:
     void createSockets(std::initializer_list<SocketSpec> specs );
     void createSockets(const std::vector<SocketSpec> specs );
 
+    void hide();
+    void show();
+    void addToScene(QGraphicsScene* scene);
+
 protected:
     // Graphics overrides
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes

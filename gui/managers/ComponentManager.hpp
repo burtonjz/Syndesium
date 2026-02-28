@@ -20,9 +20,11 @@
 
 #include "models/ComponentModel.hpp"
 #include "views/ComponentEditor.hpp"
+#include "views/GroupEditor.hpp"
 #include "types/ComponentType.hpp"
 #include "requests/CollectionRequest.hpp"
 #include "widgets/CollectionWidget.hpp"
+#include "widgets/ComponentParameters.hpp"
 
 #include <QObject>
 
@@ -32,9 +34,13 @@ class ComponentManager : public QObject {
 private:
     std::map<int, ComponentModel*> models_ ;
     std::map<int, ComponentEditor*> editors_ ;
+    std::map<int, GroupEditor*> groupEditors_ ;
+
+    int currentGroupId_ = 0 ;
 
 public:
     ComponentManager(QObject* parent = nullptr);
+    ~ComponentManager();
 
     // API requests
     void requestAddComponent(ComponentType type);
@@ -44,15 +50,21 @@ public:
 
     ComponentModel* getModel(int componentId) const ;
     ComponentEditor* getEditor(int componentId) const ;
+    GroupEditor* getGroupEditor(int groupId) const ;
     
     void showEditor(int componentId);
+    void showGroupEditor(int groupId);
+
+    void createGroup(const std::vector<int> componentIds);
+    void appendToGroup(int groupId, const std::vector<int> componentIds);
+    void removeGroup(int groupId);
     
 private:
     // on api response
     void addComponent(int componentId, ComponentType type);
     void removeComponent(int componentId);
 
-    CollectionWidget* getEditorCollectionWidget(ComponentEditor* editor) const ;
+    CollectionWidget* getCollectionWidget(ComponentParameters* params) const ;
     bool handleCollectionApiResponse(const QJsonObject &json);
 
 public slots:
@@ -63,6 +75,7 @@ public slots:
 signals:
     void componentAdded(int componentId, ComponentType type);
     void componentRemoved(int componentId);
+    void componentGroupUpdated(int groupId, const std::vector<int> componentIds);
 };
 
 #endif // COMPONENT_MANAGER_HPP_

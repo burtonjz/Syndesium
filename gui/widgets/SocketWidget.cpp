@@ -23,7 +23,7 @@
 #include <qgraphicsitem.h>
 
 SocketWidget::SocketWidget(SocketSpec spec, GraphNode* parent):
-    QGraphicsObject(nullptr),
+    QGraphicsObject(),
     spec_(spec),
     parent_(parent)
 {

@@ -17,7 +17,7 @@
 
 #include "graphics/ConnectionCable.hpp"
 #include "widgets/SocketWidget.hpp"
-#include "graphics/ComponentNode.hpp"
+#include "graphics/GraphNode.hpp"
 #include "app/Theme.hpp"
 
 #include <QPainter>
@@ -80,8 +80,8 @@ bool ConnectionCable::isCompatible(SocketWidget* socket) const {
     // if (fromSocket_->getParent() == socket->getParent()) return false ;
     
     // Must be compatible types
-    SocketType fromType = fromSocket_->getType();
-    SocketType toType = socket->getType();
+    SocketType fromType = fromSocket_->getSpec().type;
+    SocketType toType = socket->getSpec().type;
 
     switch ( fromType ){
     case SocketType::MidiInbound:
@@ -135,37 +135,21 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
     
     auto outboundSocket = getOutboundSocket();
     auto inboundSocket = getInboundSocket();
-    ComponentNode* inboundComponent = nullptr ;
-    ComponentNode* outboundComponent = nullptr ;
     
-    if ( inboundSocket ){
-        inboundComponent = dynamic_cast<ComponentNode*>(inboundSocket->getParent());    
-        r.inboundSocket = inboundSocket->getType();
-        if ( inboundSocket->getType() == SocketType::ModulationInbound ){
-            r.inboundParameter = parameterFromString(inboundSocket->getName().toStdString()) ;
+    if ( inboundSocket ){  
+        r.inboundID = inboundSocket->getSpec().componentId ;
+        r.inboundSocket = inboundSocket->getSpec().type ;
+        r.inboundIdx = inboundSocket->getSpec().idx ;
+        if ( inboundSocket->getSpec().type == SocketType::ModulationInbound ){
+            r.inboundParameter = parameterFromString(inboundSocket->getSpec().name.toStdString()) ;
         }
     }
         
     if ( outboundSocket ){
-        outboundComponent = dynamic_cast<ComponentNode*>(outboundSocket->getParent());
-        r.outboundSocket = outboundSocket->getType();
+        r.outboundID = outboundSocket->getSpec().componentId ;
+        r.outboundSocket = outboundSocket->getSpec().type ;
+        r.outboundIdx = outboundSocket->getSpec().idx ;
     }
-        
-
-
-    if ( inboundComponent ){
-        r.inboundID = inboundComponent->getModel()->getId();
-        if ( inboundSocket->getType() == SocketType::SignalInbound ){
-            r.inboundIdx = inboundSocket->data(Qt::UserRole).value<size_t>();
-        }
-    }
-
-    if ( outboundComponent ){
-        r.outboundID = outboundComponent->getModel()->getId() ;
-        if ( outboundSocket->getType() == SocketType::SignalOutbound ){
-            r.outboundIdx = outboundSocket->data(Qt::UserRole).value<size_t>();
-        }
-    } 
     
     return r ;
 };
@@ -174,13 +158,13 @@ QString ConnectionCable::toText() const {
     QString fromText = getFromSocket()
         ? QString("%1 %2")
             .arg(getFromSocket()->getParent()->getName())
-            .arg(getFromSocket()->getName())
+            .arg(getFromSocket()->getSpec().name)
         : "null" ;
 
     QString toText = getToSocket()
         ? QString("%1 %2")
             .arg(getToSocket()->getParent()->getName())
-            .arg(getToSocket()->getName())
+            .arg(getToSocket()->getSpec().name)
         : "null" ;
     return fromText + "->" + toText ;
 }
@@ -214,7 +198,7 @@ QColor ConnectionCable::getCableColor() const
 {
     if (!fromSocket_) return Qt::gray;
     
-    switch (fromSocket_->getType()) {
+    switch (fromSocket_->getSpec().type) {
         case SocketType::ModulationInbound:
         case SocketType::ModulationOutbound:
             return Theme::CABLE_MODULATION ;
@@ -367,7 +351,7 @@ void ConnectionCable::drawCableArrow(QPainterPath& path, qreal atPercent){
 QPointF ConnectionCable::getSocketDirectionVector(SocketWidget* socket){
     if ( ! socket ) return QPointF(0.0,0.0);
     
-    switch(socket->getType()){
+    switch(socket->getSpec().type){
         case SocketType::SignalInbound: // left
         case SocketType::MidiInbound: 
             return QPointF(-1.0, 0);
@@ -387,27 +371,3 @@ QPointF ConnectionCable::normalizePoint(const QPointF& p) const {
     qreal len = std::sqrt(p.x() * p.x() + p.y() * p.y() );
     return len > 0 ? QPointF(p.x() / len, p.y() / len) : QPointF(0,0);
 }
-
-// std::vector<QRectF> ConnectionCable::getRelevantObstacles(const QPointF& start, const QPointF& end){
-//     std::vector<QRectF> bounds ;
-
-//     if ( !scene() ) return bounds ;
-
-//     QRectF searchArea(start, end);
-//     searchArea = searchArea.normalized();
-
-//     auto buf = Theme::CABLE_BOUNDING_BUFFER ;
-//     searchArea.adjust(-buf, -buf, buf, buf);
-
-//     const auto items = scene()->items(searchArea, Qt::IntersectsItemBoundingRect);
-//     bounds.reserve(items.size());
-
-//     for ( auto* item : items ){
-//         if ( item->type() == GraphNode::Type ){
-//             bounds.push_back(item->sceneBoundingRect());
-//             qDebug() << "found obstacle: " << item ;
-//         }
-//     }
-
-//     return bounds ;
-// }

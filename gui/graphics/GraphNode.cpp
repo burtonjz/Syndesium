@@ -20,7 +20,8 @@
 #include "app/Theme.hpp"
 
 #include <QGraphicsSceneMouseEvent>
-#include <qpoint.h>
+#include <QGraphicsScene>
+#include <QPoint>
 
 GraphNode::GraphNode(QString name, QGraphicsItem* parent): 
     QGraphicsObject(parent),
@@ -95,6 +96,25 @@ void GraphNode::createSockets(std::vector<SocketSpec> specs){
     positionSockets();
 }
 
+void GraphNode::hide(){
+    QGraphicsItem::hide();
+    for ( auto& s : getSockets() ){
+        s->hide();
+    }
+}
+
+void GraphNode::show(){
+    QGraphicsItem::show();
+    for ( auto& s : getSockets() ){
+        s->show();
+    }
+}
+
+void GraphNode::addToScene(QGraphicsScene* scene){
+    scene->addItem(this);
+    for ( auto* socket : sockets_ ) scene->addItem(socket);
+}
+
 void GraphNode::layoutSockets(){
     leftSockets_.clear();
     rightSockets_.clear();
@@ -102,7 +122,7 @@ void GraphNode::layoutSockets(){
     bottomSockets_.clear();
 
     for (SocketWidget* socket : sockets_){
-        switch(socket->getType()){
+        switch(socket->getSpec().type){
         case SocketType::MidiInbound:
         case SocketType::SignalInbound:
             leftSockets_.push_back(socket);

@@ -155,6 +155,9 @@ public:
     static constexpr int SWITCH_WIDGET_MARGIN = 3 ;
     static constexpr int SWITCH_WIDGET_CORNER_ROUND = 8 ;
     static constexpr int SWITCH_WIDGET_ANIMATION_DURATION = 120 ; // msec
+
+    static constexpr int GROUP_EDITOR_GRID_MAX_COLUMNS = 3 ;
+    
 };
 
 #endif // __UI_THEME_HPP_

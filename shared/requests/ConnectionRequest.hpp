@@ -49,10 +49,11 @@ struct ConnectionRequest {
     bool valid() const {
         bool t = true ;
         switch(inboundSocket){
-        case SocketType::SignalInbound:
+        case SocketType::SignalInbound: 
             t = t && outboundSocket == SocketType::SignalOutbound ;
-            t = t && inboundID.has_value() == inboundIdx.has_value();
-            t = t && outboundID.has_value() == outboundIdx.has_value();
+            // must have audio port indices defined
+            t = t && inboundIdx.has_value();
+            t = t && outboundIdx.has_value();
             break ;
         case SocketType::MidiInbound:
             t = t && outboundSocket == SocketType::MidiOutbound ;

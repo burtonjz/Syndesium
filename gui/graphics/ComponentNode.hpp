@@ -40,6 +40,8 @@ public:
     ~ComponentNode() = default ;
 
     ComponentModel* getModel() const ;
+    const std::vector<SocketSpec>& getSpecs() const ;
+    
 };
 
 #endif // COMPONENT_NODE_HPP_

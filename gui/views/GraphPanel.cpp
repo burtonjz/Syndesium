@@ -18,6 +18,7 @@
 #include "views/GraphPanel.hpp"
 #include "api/ApiClient.hpp"
 #include "app/Theme.hpp"
+#include "graphics/GroupNode.hpp"
 #include "managers/ConnectionManager.hpp"
 #include "util/util.hpp"
 #include "graphics/GraphNode.hpp"
@@ -83,6 +84,10 @@ GraphPanel::GraphPanel(QWidget* parent):
         componentManager_, &ComponentManager::componentRemoved,
         this, &GraphPanel::onComponentRemoved
     );
+    connect(
+        componentManager_, &ComponentManager::componentGroupUpdated,
+        this, &GraphPanel::onComponentGroupUpdate
+    );
 }
 
 GraphPanel::~GraphPanel(){
@@ -113,15 +118,15 @@ void GraphPanel::createContextMenuActions(){
 
 void GraphPanel::addAudioOutput(){
     audioOut_ = new GraphNode("Audio Output Device");
-    audioOut_->createSockets({{SocketType::SignalInbound, "Audio In"}});
-    audioOut_->setData(Qt::UserRole, 0); // output index
-    scene_->addItem(audioOut_);
-
+    audioOut_->createSockets({{
+        .type = SocketType::SignalInbound, 
+        .name = "Audio In",
+        .idx  = 0
+    }});
+    
+    audioOut_->addToScene(scene_);
     nodes_.push_back(audioOut_);
-    for ( auto socket : audioOut_->getSockets() ){
-        scene_->addItem(socket);
-    }
-
+    
     connect(audioOut_, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
     connect(audioOut_, &GraphNode::positionChanged, connectionRenderer_, &::ConnectionRenderer::onNodePositionChanged);
 
@@ -130,13 +135,13 @@ void GraphPanel::addAudioOutput(){
 
 void GraphPanel::addMidiInput(){
     midiIn_ = new GraphNode("MIDI Input Device");
-    midiIn_->createSockets({{SocketType::MidiOutbound, "MIDI Out"}});
-    scene_->addItem(midiIn_);
+    midiIn_->createSockets({{
+        .type = SocketType::MidiOutbound, 
+        .name = "MIDI Out"
+    }});
 
+    midiIn_->addToScene(scene_);
     nodes_.push_back(midiIn_);
-    for ( auto socket : midiIn_->getSockets() ){
-        scene_->addItem(socket);
-    }
     
     connect(midiIn_, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
     connect(midiIn_, &GraphNode::positionChanged, connectionRenderer_, &ConnectionRenderer::onNodePositionChanged);
@@ -144,12 +149,40 @@ void GraphPanel::addMidiInput(){
     qDebug() << "Created Midi Input Device Widget:" << midiIn_->getName() << "at position:" << midiIn_->pos() ;
 }
 
-ComponentNode* GraphPanel::getNode(int componentId) const {
+GraphNode* GraphPanel::getVisibleNode(int componentId) const {
+    for ( auto n : nodes_ ){
+        auto cNode = dynamic_cast<ComponentNode*>(n);
+        if ( cNode && cNode->isVisible() ){
+            if ( cNode->getModel()->getId() == componentId ){
+                return cNode ;
+            }
+        }
+        auto gNode = dynamic_cast<GroupNode*>(n);
+        if ( gNode && gNode->contains(componentId) ){
+            return gNode ;
+        }
+    }
+    return nullptr ;
+}
+
+ComponentNode* GraphPanel::getComponentNode(int componentId) const {
     for ( auto n : nodes_ ){
         auto cNode = dynamic_cast<ComponentNode*>(n);
         if ( cNode ){
             if ( cNode->getModel()->getId() == componentId ){
                 return cNode ;
+            }
+        }
+    }
+    return nullptr ;
+}
+
+GroupNode* GraphPanel::getGroupNode(int groupId) const {
+    for ( auto n : nodes_ ){
+        auto gNode = dynamic_cast<GroupNode*>(n);
+        if ( gNode ){
+            if ( gNode->getId() == groupId ){
+                return gNode ;
             }
         }
     }
@@ -187,7 +220,7 @@ void GraphPanel::loadPositions(const QJsonObject& request){
         int xpos = posObj["xpos"].toInt();
         int ypos = posObj["ypos"].toInt();
         
-        auto n = getNode(componentID);
+        auto n = getComponentNode(componentID);
         if ( n ){
             n->setPos(xpos,ypos);
         }
@@ -205,10 +238,10 @@ SocketWidget* GraphPanel::getNodeSocket(
     }
 
     for ( auto s : n->getSockets() ){
-        if ( s->getType() == t ){
+        if ( s->getSpec().type == t ){
             if ( t == SocketType::ModulationInbound ){
                 ParameterType p = std::get<ParameterType>(selector);
-                if ( p == parameterFromString(s->getName().toStdString())){
+                if ( p == parameterFromString(s->getSpec().name.toStdString())){
                     return s ;
                 }
             } else if ( t == SocketType:: SignalInbound || t == SocketType::SignalOutbound ) {
@@ -238,6 +271,19 @@ std::vector<ComponentNode*> GraphPanel::getSelectedComponents() const {
     return nodes ;
 }
 
+std::vector<GroupNode*> GraphPanel::getSelectedGroups() const {
+    auto selectedItems = scene_->selectedItems() ;
+    std::vector<GroupNode*> nodes ;
+
+    for ( QGraphicsItem* item: selectedItems ){
+        GroupNode* node = dynamic_cast<GroupNode*>(item);
+        if ( node ){
+            nodes.push_back(node);
+        }
+    }
+    return nodes ;
+}
+
 SocketWidget* GraphPanel::findSocket(
     SocketType type,
     std::optional<int> componentId,
@@ -256,7 +302,7 @@ SocketWidget* GraphPanel::findSocket(
             return getNodeSocket(midiIn_, type);
         } 
     } else {
-        w = getNode(componentId.value());
+        w = getVisibleNode(componentId.value());
     }
 
     if ( !w ){ 
@@ -311,6 +357,16 @@ void GraphPanel::keyPressEvent(QKeyEvent* event){
             break ;
         case Qt::Key_Escape:
             connectionRenderer_->cancelDrag();
+            break ;
+        case Qt::Key_G:
+            if ( event->modifiers() & Qt::ControlModifier ){
+                handleGroupEvent();
+            }
+            break ;
+        case Qt::Key_U:
+            if ( event->modifiers() & Qt::ControlModifier ){
+                handleUngroupEvent();
+            }
             break ;
         default:
             QGraphicsView::keyPressEvent(event);
@@ -374,11 +430,12 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
 void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
     QPointF scenePos = mapToScene(event->pos());
 
-    // Launch ComponentNode
+    // Launch ComponentEditor
     QGraphicsItem* item = scene()->itemAt(scenePos, transform());
     while (item){
-        if ( ComponentNode* w = dynamic_cast<ComponentNode*>(item)){ 
-            componentDoubleClicked(w);
+        if ( GraphNode* w = dynamic_cast<GraphNode*>(item)){ 
+            graphNodeDoubleClicked(w);
+            return ;
         } 
         item = item->parentItem();
     }
@@ -469,16 +526,13 @@ void GraphPanel::onComponentAdded(int componentId, ComponentType type){
     connect(n, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
     connect(n, &GraphNode::positionChanged, connectionRenderer_, &ConnectionRenderer::onNodePositionChanged);
 
-    scene_->addItem(n);
-    for ( auto s : n->getSockets() ){
-        scene_->addItem(s);
-    }
+    n->addToScene(scene_);
 
     n->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
 }
 
 void GraphPanel::onComponentRemoved(int componentId){
-    auto n = getNode(componentId);
+    auto n = getComponentNode(componentId);
     if ( !n ){
         qWarning() << "requested removal of component id which does not exist. id:" << componentId ;
         return ;
@@ -489,10 +543,75 @@ void GraphPanel::onComponentRemoved(int componentId){
     n->deleteLater();
 }
 
-void GraphPanel::componentDoubleClicked(ComponentNode* widget){
-    int id = widget->getModel()->getId();
+void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
+    if ( auto c = dynamic_cast<ComponentNode*>(widget) ){
+        componentManager_->showEditor(c->getModel()->getId());
+        return ;
+    }
 
-    componentManager_->showEditor(id);
+    if ( auto g = dynamic_cast<GroupNode*>(widget) ){
+        componentManager_->showGroupEditor(g->getId());
+        return ;
+    }
+}
+
+void GraphPanel::handleGroupEvent(){
+    std::vector<int> groupIds ;
+    std::vector<int> componentIds ;
+
+    for ( const auto& g : getSelectedGroups() ){
+        groupIds.push_back(g->getId());
+    }
+
+    for ( const auto& c: getSelectedComponents() ){
+        componentIds.push_back(c->getModel()->getId());
+    }
+
+    if ( groupIds.size() == 0 && componentIds.size() == 0 ) return ;
+
+    // case 1: no groups selected, create new group
+    if ( groupIds.size() == 0 ){
+        componentManager_->createGroup(componentIds);
+    }
+
+    // case 2: one group selected, add into group
+    if ( groupIds.size() == 1 ){
+        componentManager_->appendToGroup(groupIds[0], componentIds);
+    }
+}
+
+void GraphPanel::handleUngroupEvent(){
+    for ( const auto& g : getSelectedGroups() ){
+        componentManager_->removeGroup(g->getId());
+    }
+}
+
+void GraphPanel::onComponentGroupUpdate(int groupId, std::vector<int> componentIds){
+    auto gNode = getGroupNode(groupId);
+
+    // if it's a new group, create it
+    if ( !gNode ){
+        gNode = new GroupNode(groupId);
+        nodes_.push_back(gNode);
+        gNode->addToScene(scene_);
+        //TODO make connection from group node to connection renderer
+    }
+
+    // reset and add componentIds
+    gNode->removeAll();
+    for ( const auto id : componentIds ){
+        gNode->add(getComponentNode(id));
+    }
+    
+    // if there are no component ids, then remove the group node
+    if ( gNode->getNumComponents() == 0 ){
+        nodes_.erase(std::remove(nodes_.begin(), nodes_.end(), gNode), nodes_.end());
+        scene_->removeItem(gNode);
+        gNode->deleteLater();
+        return ;
+    }
+    
+    // TODO: handle connection renderings to point to visible object
 }
 
 void GraphPanel::onNodeZUpdate(){

@@ -30,6 +30,7 @@
 #include "views/ConnectionRenderer.hpp"
 #include "managers/ComponentManager.hpp"
 #include "graphics/GraphNode.hpp"
+#include "graphics/GroupNode.hpp"
 
 class ComponentNode ; // forward declaration
 
@@ -68,13 +69,17 @@ public:
     void loadConnection(const QJsonObject& request); 
     void loadPositions(const QJsonObject& request);
 
-    ComponentNode* getNode(int ComponentId) const ;
+    ComponentNode* getComponentNode(int componentId) const ;
+    GroupNode* getGroupNode(int groupId) const ;
+
+    GraphNode* getVisibleNode(int componentId) const ;
     SocketWidget* getNodeSocket(
         GraphNode* w, SocketType t, 
         std::variant<std::monostate, size_t, ParameterType> selector = std::monostate{} 
     );
 
     std::vector<ComponentNode*> getSelectedComponents() const ;
+    std::vector<GroupNode*> getSelectedGroups() const ;
 
     // ISocketLookup
     SocketWidget* findSocket(
@@ -99,8 +104,11 @@ private:
     void createContextMenuActions() ;
 
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
-    void componentDoubleClicked(ComponentNode* widget);
-
+    void graphNodeDoubleClicked(GraphNode* widget);
+    
+    void handleGroupEvent();
+    void handleUngroupEvent();
+    
 private slots:
     void onApiDataReceived(const QJsonObject &json);
     
@@ -111,6 +119,7 @@ public  slots:
     // from component manager
     void onComponentAdded(int componentId, ComponentType type);
     void onComponentRemoved(int componentId);
+    void onComponentGroupUpdate(int groupId, std::vector<int> componentIds);
 
     void onNodeZUpdate();
 

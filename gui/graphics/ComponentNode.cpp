@@ -32,27 +32,53 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
     // create sockets from descriptor
     for ( const ParameterType& p : d.modulatableParameters){
         std::string name = GET_PARAMETER_TRAIT_MEMBER(p,name);
-        specs_.push_back({SocketType::ModulationInbound, QString::fromStdString(name)});
+        specs_.push_back({
+            .type        =SocketType::ModulationInbound, 
+            .name        = QString::fromStdString(name), 
+            .componentId = model_->getId()
+        });
     }
 
     for (int i = 0; i < d.numAudioInputs; ++i){
-        specs_.push_back({SocketType::SignalInbound, QString("Audio Input %1").arg(i+1), i});
+        specs_.push_back({
+            .type        = SocketType::SignalInbound, 
+            .name        = QString("Audio Input %1").arg(i+1), 
+            .idx         = i,
+            .componentId = model_->getId()
+        });
     }
 
     for (int i = 0; i < d.numMidiInputs; ++i){
-        specs_.push_back({SocketType::MidiInbound, QString("MIDI Input %1").arg(i+1)});
+        specs_.push_back({
+            .type = SocketType::MidiInbound, 
+            .name = QString("MIDI Input %1").arg(i+1),
+            .componentId = model_->getId()
+        });
     }
 
     for (int i = 0; i < d.numAudioOutputs; ++i){
-        specs_.push_back({SocketType::SignalOutbound, QString("Audio Output %1").arg(i+1), i});
+        specs_.push_back({
+            .type = SocketType::SignalOutbound, 
+            .name = QString("Audio Output %1").arg(i+1), 
+            .idx = i,
+            .componentId = model_->getId()
+        });
     }
 
     for (int i = 0; i < d.numMidiOutputs; ++i){
-        specs_.push_back({SocketType::MidiOutbound, QString("MIDI Output %1").arg(i+1)});
+        specs_.push_back({
+            .type = SocketType::MidiOutbound, 
+            .name = QString("MIDI Output %1").arg(i+1),
+            .componentId = model_->getId()
+        });
     }
 
     if ( d.isModulator()){
-        specs_.push_back({SocketType::ModulationOutbound, QString("Modulation Output")});
+        specs_.push_back({
+            .type = SocketType::ModulationOutbound, 
+            .name = QString("Modulation Output"),
+            .componentId = model_->getId()
+        });
     }
 
     createSockets(specs_);
@@ -61,4 +87,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
 
 ComponentModel* ComponentNode::getModel() const {
     return model_ ;
+}
+
+const std::vector<SocketSpec>& ComponentNode::getSpecs() const {
+    return specs_ ;
 }

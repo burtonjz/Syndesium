@@ -31,6 +31,12 @@ ComponentManager::ComponentManager(QObject* parent):
     );
 }
 
+ComponentManager::~ComponentManager(){
+    for ( const auto& e : editors_ ) e.second->deleteLater();
+    for ( const auto& g : groupEditors_ ) g.second->deleteLater();
+    for ( const auto& m : models_ ) m.second->deleteLater();
+}
+
 void ComponentManager::requestAddComponent(ComponentType type){
     QJsonObject obj ;
     auto descriptor = ComponentRegistry::getComponentDescriptor(type);
@@ -77,6 +83,12 @@ ComponentEditor* ComponentManager::getEditor(int componentId) const {
     return it->second ;
 }
 
+GroupEditor* ComponentManager::getGroupEditor(int groupId) const {
+    auto it = groupEditors_.find(groupId);
+    if ( it == groupEditors_.end() ) return nullptr ;
+
+    return it->second ;
+}
 
 void ComponentManager::showEditor(int componentId){
     auto it = editors_.find(componentId);
@@ -86,6 +98,67 @@ void ComponentManager::showEditor(int componentId){
     }
     it->second->show();
     it->second->raise();
+}
+
+void ComponentManager::showGroupEditor(int groupId){
+    auto it = groupEditors_.find(groupId);
+    if ( it == groupEditors_.end() ){
+        qWarning() << "requested group editor for invalid group id:" << groupId ;
+        return ;
+    }
+    it->second->show();
+    it->second->raise();
+}
+
+void ComponentManager::createGroup(const std::vector<int> componentIds){
+    int id = currentGroupId_++ ;
+    GroupEditor* g = new GroupEditor();
+    groupEditors_[id] = g ;
+
+    connect(
+        g, &GroupEditor::parameterEdited,
+        this, &ComponentManager::onParameterEdited
+    );
+
+    for ( auto i : componentIds ){
+        g->addComponent(getModel(i));
+        
+        // handle specialized collection widgets
+        auto cw = getCollectionWidget(g->getComponentParameters(i));
+        if ( cw ){
+            qDebug() << "collection edits connecting!";
+            connect(
+                cw, &CollectionWidget::collectionEdited,
+                this, &ComponentManager::onCollectionEdited
+            );
+        }
+    }
+    
+    emit componentGroupUpdated(id, componentIds);
+}
+void ComponentManager::appendToGroup(int groupId, const std::vector<int> componentIds){
+    auto it = groupEditors_.find(groupId);
+    if ( it == groupEditors_.end() ){
+        qWarning() << "Could not find group editor with Id " << groupId ;
+        return ;
+    }
+
+    for ( auto id : componentIds ){
+        it->second->addComponent(getModel(id));
+    }
+
+    emit componentGroupUpdated(groupId, componentIds);
+}
+
+void ComponentManager::removeGroup(int groupId){
+    GroupEditor* g = getGroupEditor(groupId);
+    if ( !g ) return ;
+
+    // g->removeLater(); ?
+    groupEditors_.erase(groupId);
+    delete g ;
+
+    emit componentGroupUpdated(groupId, {});
 }
 
 void ComponentManager::addComponent(int componentId, ComponentType type){
@@ -100,7 +173,7 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
         this, &ComponentManager::onParameterEdited
     );
     
-    auto cw = getEditorCollectionWidget(editor);
+    auto cw = getCollectionWidget(editor->getComponentParameters());
     if ( cw ){
         qDebug() << "collection edits connecting!";
         connect(
@@ -128,8 +201,9 @@ void ComponentManager::removeComponent(int componentId){
 }
 
 
-CollectionWidget* ComponentManager::getEditorCollectionWidget(ComponentEditor* editor) const {
-    auto specialized = editor->getSpecializedWidget();
+CollectionWidget* ComponentManager::getCollectionWidget(ComponentParameters* params) const {
+    if ( !params ) return nullptr ;
+    auto specialized = params->getSpecializedWidget();
     if ( !specialized ) return nullptr ;
 
     CollectionWidget* cw = dynamic_cast<CollectionWidget*>(specialized);
@@ -161,7 +235,7 @@ bool ComponentManager::handleCollectionApiResponse(const QJsonObject &json){
         return true ;
     }
     
-    auto cw = getEditorCollectionWidget(it->second);
+    auto cw = getCollectionWidget(it->second->getComponentParameters());
     if ( cw ){
         cw->updateCollection(req);
     }

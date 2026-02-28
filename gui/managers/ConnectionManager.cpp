@@ -62,6 +62,7 @@ void ConnectionManager::loadConnection(const ConnectionRequest& req){
 
 void ConnectionManager::requestConnectionEvent(const ConnectionRequest& req){
     if ( !req.valid() ){
+        qDebug() << nlohmann::json(req).dump() ;
         qWarning() << "Invalid connection request created. Cancelling connection.";
         return ;
     }

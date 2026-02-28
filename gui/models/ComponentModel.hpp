@@ -51,12 +51,7 @@ private:
 signals:
     void parameterValueChanged(ParameterType p, ParameterValue v);
     void collectionUpdated(const CollectionRequest& req);
-
-    
-
-
-
-    
+        
 };
 
 #endif // COMPONENT_MODEL_HPP_
