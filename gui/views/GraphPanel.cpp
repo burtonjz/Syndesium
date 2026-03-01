@@ -568,7 +568,8 @@ void GraphPanel::handleGroupEvent(){
     }
 
     if ( groupIds.size() == 0 && componentIds.size() == 0 ) return ;
-
+    if ( groupIds.size() == 0 && componentIds.size() == 1 ) return ;
+    
     // case 1: no groups selected, create new group
     if ( groupIds.size() == 0 ){
         componentManager_->createGroup(componentIds);
