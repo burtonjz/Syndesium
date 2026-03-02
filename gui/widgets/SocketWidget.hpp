@@ -22,8 +22,11 @@
 #include <QWidget>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
+#include <optional>
 
 #include "types/SocketType.hpp"
+#include "types/ParameterType.hpp"
+
 
 class GraphNode ; // forward declaration
 
@@ -32,6 +35,7 @@ struct SocketSpec {
     QString name ;
     std::optional<size_t> idx ;
     std::optional<int> componentId ;
+    std::optional<ParameterType> modulatedParameter ;
 };
 
 class SocketWidget : public QGraphicsObject {
@@ -64,6 +68,11 @@ public:
     bool isInput() const ;
     
     QPointF getConnectionPoint() const ;
+
+    bool matches(
+        SocketType type, std::optional<int> componentId, 
+        std::optional<size_t> idx, std::optional<ParameterType> param
+    ) const ;
 
 };
 

@@ -35,7 +35,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         specs_.push_back({
             .type        =SocketType::ModulationInbound, 
             .name        = QString::fromStdString(name), 
-            .componentId = model_->getId()
+            .componentId = model_->getId(),
+            .modulatedParameter = p
         });
     }
 

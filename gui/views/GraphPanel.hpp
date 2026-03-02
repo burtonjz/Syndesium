@@ -73,10 +73,6 @@ public:
     GroupNode* getGroupNode(int groupId) const ;
 
     GraphNode* getVisibleNode(int componentId) const ;
-    SocketWidget* getNodeSocket(
-        GraphNode* w, SocketType t, 
-        std::variant<std::monostate, size_t, ParameterType> selector = std::monostate{} 
-    );
 
     std::vector<ComponentNode*> getSelectedComponents() const ;
     std::vector<GroupNode*> getSelectedGroups() const ;
@@ -108,7 +104,7 @@ private:
     
     void handleGroupEvent();
     void handleUngroupEvent();
-    
+
 private slots:
     void onApiDataReceived(const QJsonObject &json);
     

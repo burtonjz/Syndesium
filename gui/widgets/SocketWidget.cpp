@@ -107,3 +107,15 @@ bool SocketWidget::isInput() const {
 QPointF SocketWidget::getConnectionPoint() const {
     return mapToScene(0,0);
 }
+
+bool SocketWidget::matches(
+    SocketType type, std::optional<int> componentId, 
+    std::optional<size_t> idx, std::optional<ParameterType> param
+) const {
+    return 
+        type == spec_.type &&
+        componentId == spec_.componentId &&
+        idx == spec_.idx &&
+        param == spec_.modulatedParameter
+    ;
+}

@@ -22,7 +22,6 @@ GroupNode::GroupNode(int groupId, QGraphicsItem* parent):
     GraphNode(QString("Group %1").arg(groupId), parent),
     groupId_(groupId)
 {
-
 }
 
 void GroupNode::add(ComponentNode* node){
@@ -69,8 +68,8 @@ int GroupNode::getId() const {
 
 void GroupNode::addSockets(ComponentNode* node){
     for ( const auto& spec : node->getSpecs() ){
-        SocketWidget* socket = new SocketWidget(spec);
-        sockets_.push_back(socket);
+        SocketWidget* socket = new SocketWidget(spec, this);
+        sockets_.push_back(socket);  
         if ( scene() ) scene()->addItem(socket);
     }
 

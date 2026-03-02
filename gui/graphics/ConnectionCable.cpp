@@ -141,7 +141,7 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
         r.inboundSocket = inboundSocket->getSpec().type ;
         r.inboundIdx = inboundSocket->getSpec().idx ;
         if ( inboundSocket->getSpec().type == SocketType::ModulationInbound ){
-            r.inboundParameter = parameterFromString(inboundSocket->getSpec().name.toStdString()) ;
+            r.inboundParameter = inboundSocket->getSpec().modulatedParameter ;
         }
     }
         

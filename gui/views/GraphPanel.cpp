@@ -227,37 +227,6 @@ void GraphPanel::loadPositions(const QJsonObject& request){
     }
 }
 
-
-SocketWidget* GraphPanel::getNodeSocket(
-        GraphNode* n, SocketType t, 
-        std::variant<std::monostate, size_t, ParameterType> selector 
-){
-    if ( !n ){
-        qWarning() << "invalid widget specified." ;
-        return nullptr ;
-    }
-
-    for ( auto s : n->getSockets() ){
-        if ( s->getSpec().type == t ){
-            if ( t == SocketType::ModulationInbound ){
-                ParameterType p = std::get<ParameterType>(selector);
-                if ( p == parameterFromString(s->getSpec().name.toStdString())){
-                    return s ;
-                }
-            } else if ( t == SocketType:: SignalInbound || t == SocketType::SignalOutbound ) {
-                size_t index = std::get<size_t>(selector);
-                if ( index == s->data(Qt::UserRole).value<size_t>() ){
-                    return s ;
-                }
-            } else {
-                return s ;
-            }
-        }
-    }
-
-    return nullptr ;
-}
-
 std::vector<ComponentNode*> GraphPanel::getSelectedComponents() const {
     auto selectedItems = scene_->selectedItems() ;
     std::vector<ComponentNode*> nodes ;
@@ -292,51 +261,34 @@ SocketWidget* GraphPanel::findSocket(
 ){
     GraphNode* w = nullptr ;
 
-    
+    // first, find the corresponding GraphNode
     if ( !componentId.has_value() ){ 
-        // missing component id means its a hardware socket
         if ( type == SocketType::SignalInbound ){
             w = audioOut_ ;
-            return getNodeSocket(audioOut_, type, static_cast<size_t>(0));
+            idx = 0 ;
         } else if ( type == SocketType::MidiOutbound ){
-            return getNodeSocket(midiIn_, type);
+            w = midiIn_ ;
         } 
     } else {
         w = getVisibleNode(componentId.value());
     }
 
     if ( !w ){ 
-        qWarning() << "Could not find socket.";
+        qWarning() << "Could not find node matching search criteria." ;
         return nullptr ;
     }
 
-    switch(type){
-    case SocketType::ModulationInbound:
-    {
-        if ( !param.has_value() ){
-            qWarning() << "Inbound Modulation specified without defining parameter. Cannot find socket.";
-            return nullptr ;
+    // search its sockets
+    for ( auto s : w->getSockets() ){
+        if ( s->matches(type, componentId, idx, param) ){
+            return s ;
         }
-        ParameterType mp = static_cast<ParameterType>(param.value());
-        return getNodeSocket(w, type, mp);
     }
-    case SocketType::SignalInbound:
-    case SocketType::SignalOutbound:
-        if ( !idx.has_value() ){
-            qWarning() << "Signal Socket Type selected but no index specified. Invalid socket requested." ;
-            return nullptr ;
-        }
-        return getNodeSocket(w, type, idx.value());
-    case SocketType::MidiInbound:
-    case SocketType::ModulationOutbound:
-    case SocketType::MidiOutbound:
-        return getNodeSocket(w, type);
-    default:
-        qWarning() << "invalid socket type specified. Exiting.";
-        return nullptr ;
-    }
+
+    qWarning() << "Could not find socket matching search criteria." ;
+    return nullptr ;
 }
-
+   
 SocketWidget* GraphPanel::findSocketAt(const QPointF& scenePos){
     auto items = scene_->items(scenePos);
     for ( auto item : items ){
@@ -595,6 +547,17 @@ void GraphPanel::onComponentGroupUpdate(int groupId, std::vector<int> componentI
         gNode = new GroupNode(groupId);
         nodes_.push_back(gNode);
         gNode->addToScene(scene_);
+
+        // connections 
+        connect(
+            gNode, &GraphNode::needsZUpdate, 
+            this, &GraphPanel::onNodeZUpdate
+        );
+        connect(
+            gNode, &GraphNode::positionChanged, 
+            connectionRenderer_, &ConnectionRenderer::onNodePositionChanged
+        );
+
         //TODO make connection from group node to connection renderer
     }
 
