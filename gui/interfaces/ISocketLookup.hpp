@@ -18,33 +18,15 @@
 #ifndef I_SOCKET_LOOKUP_HPP_
 #define I_SOCKET_LOOKUP_HPP_
 
-#include "types/SocketType.hpp"
-#include "types/ParameterType.hpp"
-
-#include <optional>
+#include "widgets/SocketWidget.hpp"
 #include <QPointF>
-
-// forward declarations
-class SocketWidget ;
 
 class ISocketLookup {
 public:
     virtual ~ISocketLookup() = default ;
-    
-    /**
-     * @brief find a socket widget
-     * 
-     * @param componentId component the socket belongs to
-     * @param type socket type
-     * @param idx if audio socket, specify audio socket index
-     * @param param if modulation socket, specify modulation parameter
-     * @return SocketWidget* 
-     */
+
     virtual SocketWidget* findSocket(
-        SocketType type,
-        std::optional<int> componentId = std::nullopt,
-        std::optional<size_t> idx = std::nullopt, 
-        std::optional<ParameterType> param = std::nullopt        
+        SocketSpec spec
     ) = 0 ;
 
     /**

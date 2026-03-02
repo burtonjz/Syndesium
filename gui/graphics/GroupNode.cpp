@@ -25,7 +25,10 @@ GroupNode::GroupNode(int groupId, QGraphicsItem* parent):
 }
 
 void GroupNode::add(ComponentNode* node){
-    if ( !node || contains(node) ) return ;
+    if ( !node || contains(node) ){
+        qWarning() << "ignoring GroupNode Component add with null pointer" ;
+        return ;
+    } 
     children_.push_back(node);
     addSockets(node);
     node->hide();

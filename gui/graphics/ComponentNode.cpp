@@ -44,8 +44,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         specs_.push_back({
             .type        = SocketType::SignalInbound, 
             .name        = QString("Audio Input %1").arg(i+1), 
-            .idx         = i,
-            .componentId = model_->getId()
+            .componentId = model_->getId(),
+            .idx         = i
         });
     }
 
@@ -61,8 +61,8 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
         specs_.push_back({
             .type = SocketType::SignalOutbound, 
             .name = QString("Audio Output %1").arg(i+1), 
-            .idx = i,
-            .componentId = model_->getId()
+            .componentId = model_->getId(),
+            .idx = i
         });
     }
 

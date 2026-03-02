@@ -45,12 +45,17 @@ void ConnectionManager::loadConnection(const ConnectionRequest& req){
     }
     
     // make sure sockets are real before adding the connection
-    SocketWidget* inboundSocket = socketLookup_->findSocket(
-        req.inboundSocket, req.inboundID, req.inboundIdx, req.inboundParameter
-    );
-    SocketWidget* outboundSocket = socketLookup_->findSocket(
-        req.outboundSocket, req.outboundID, req.outboundIdx
-    );
+    SocketWidget* inboundSocket = socketLookup_->findSocket({
+        .type = req.inboundSocket, 
+        .componentId = req.inboundID,
+        .idx =  req.inboundIdx,
+        .modulatedParameter = req.inboundParameter
+    });
+    SocketWidget* outboundSocket = socketLookup_->findSocket({
+        .type = req.outboundSocket,
+        .componentId = req.outboundID,
+        .idx = req.outboundIdx,
+    });
 
     if ( ! inboundSocket || ! outboundSocket ){
         qWarning() << "Json connection not successfully loaded: sockets not found";

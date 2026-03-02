@@ -23,6 +23,7 @@
 #include "managers/ConnectionManager.hpp"
 #include "interfaces/ISocketLookup.hpp"
 #include "graphics/ConnectionCable.hpp"
+#include "graphics/GraphNode.hpp"
 
 class ConnectionRenderer : public QObject {
     Q_OBJECT
@@ -55,6 +56,8 @@ public:
     // cable management
     const std::vector<ConnectionCable*> getNodeConnections(GraphNode* node) const ;
     void removeSocketConnections(SocketWidget* s);
+
+    void onComponentGroup(const std::vector<int>& componentIds);
 
 public slots:
     void onNodePositionChanged();

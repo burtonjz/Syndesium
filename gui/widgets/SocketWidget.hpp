@@ -33,9 +33,17 @@ class GraphNode ; // forward declaration
 struct SocketSpec {
     SocketType type ;
     QString name ;
-    std::optional<size_t> idx ;
     std::optional<int> componentId ;
+    std::optional<size_t> idx ;
     std::optional<ParameterType> modulatedParameter ;
+
+    bool operator==(const SocketSpec& other){
+        return other.type == type &&
+               other.componentId == componentId &&
+               other.idx == idx &&
+               other.modulatedParameter == modulatedParameter
+            ;
+    }
 };
 
 class SocketWidget : public QGraphicsObject {
@@ -70,8 +78,7 @@ public:
     QPointF getConnectionPoint() const ;
 
     bool matches(
-        SocketType type, std::optional<int> componentId, 
-        std::optional<size_t> idx, std::optional<ParameterType> param
+        SocketSpec spec
     ) const ;
 
 };

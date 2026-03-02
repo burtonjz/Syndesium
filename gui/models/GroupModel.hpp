@@ -24,7 +24,6 @@
 #include <QObject>
 #include <vector>
 #include <map>
-#include <utility>
 
 enum class ParameterExposure {
     Visible, // normal visibility
@@ -42,9 +41,7 @@ private:
     
     int id_ ;
     QString name_ ;
-    std::vector<int> components_ ;
     std::map<int, ComponentModel*> models_ ;
-    std::map<std::pair<int, ParameterType>, ParameterConfig> configs_ ;
 
 public:
     GroupModel(int id, QString name = "");
@@ -54,13 +51,13 @@ public:
 
     void addComponent(ComponentModel* model);
     void removeComponent(int componentId);
-    const std::vector<int>& getComponents() const ;
+    const std::vector<int> getComponents() const ;
     
-    ParameterExposure getExposure(int componentId, ParameterType p) const ;
-    void setExposure(int componentId, ParameterType p, ParameterExposure e);
+    // ParameterExposure getExposure(int componentId, ParameterType p) const ;
+    // void setExposure(int componentId, ParameterType p, ParameterExposure e);
 
-    bool isVisible(int componentId, ParameterType p) const ;
-    bool isLocked(int componentId, ParameterType p) const ;
+    // bool isVisible(int componentId, ParameterType p) const ;
+    // bool isLocked(int componentId, ParameterType p) const ;
 
 signals:
     void ParameterExposureChanged(int componentId, ParameterType p, ParameterExposure e);

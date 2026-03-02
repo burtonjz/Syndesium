@@ -78,12 +78,7 @@ public:
     std::vector<GroupNode*> getSelectedGroups() const ;
 
     // ISocketLookup
-    SocketWidget* findSocket(
-        SocketType type,
-        std::optional<int> componentId = std::nullopt,
-        std::optional<size_t> idx = std::nullopt, 
-        std::optional<ParameterType> param = std::nullopt        
-    ) override ;
+    SocketWidget* findSocket(SocketSpec spec) override ;
     SocketWidget* findSocketAt(const QPointF& scenePos) override ;
 
 protected:
@@ -115,7 +110,10 @@ public  slots:
     // from component manager
     void onComponentAdded(int componentId, ComponentType type);
     void onComponentRemoved(int componentId);
-    void onComponentGroupUpdate(int groupId, std::vector<int> componentIds);
+
+    void onComponentGroupCreated(int groupId, std::vector<int> componentIds);
+    void onComponentGroupRemoved(int groupId, std::vector<int> componentIds);
+    void onComponentGroupUpdated(int groupId, std::vector<int> componentIds);
 
     void onNodeZUpdate();
 

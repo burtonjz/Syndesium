@@ -125,6 +125,24 @@ const std::vector<ConnectionCable*> ConnectionRenderer::getNodeConnections(Graph
     return c ;
 }
 
+void ConnectionRenderer::onComponentGroup(const std::vector<int>& componentIds){
+    for ( auto cable : cables_ ){
+        auto fromSpec = cable->getFromSocket()->getSpec();
+        auto toSpec = cable->getToSocket()->getSpec();
+        bool hasFromId = fromSpec.componentId.has_value();
+        bool hasToId = toSpec.componentId.has_value();
+        if ( !hasFromId && !hasToId ) continue ;
+        for ( const auto& id : componentIds ){
+            if ( hasFromId && fromSpec.componentId.value() == id ){
+                cable->setFromSocket(socketLookup_->findSocket(fromSpec));
+            }
+            if ( hasToId && toSpec.componentId.value() == id ){
+                cable->setToSocket(socketLookup_->findSocket(toSpec));
+            }
+        }
+    }
+}
+    
 void ConnectionRenderer::onNodePositionChanged(){
     GraphNode* widget = dynamic_cast<GraphNode*>(sender());
     if (!widget) return ;
@@ -137,17 +155,17 @@ void ConnectionRenderer::onNodePositionChanged(){
 }
 
 void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
-    SocketWidget* outbound = socketLookup_->findSocket(
-        req.outboundSocket, 
-        req.outboundID, 
-        req.outboundIdx
-    );
-    SocketWidget*  inbound = socketLookup_->findSocket(
-        req.inboundSocket, 
-        req.inboundID, 
-        req.inboundIdx, 
-        req.inboundParameter
-    );
+    SocketWidget* outbound = socketLookup_->findSocket({
+        .type = req.outboundSocket, 
+        .componentId = req.outboundID,
+        .idx = req.outboundIdx
+    });
+    SocketWidget*  inbound = socketLookup_->findSocket({
+        .type = req.inboundSocket, 
+        .componentId = req.inboundID, 
+        .idx = req.inboundIdx, 
+        .modulatedParameter = req.inboundParameter
+    });
 
     if ( !outbound || !inbound ){
         qWarning() << "did not find sockets to draw connection cable. Please investigate" ;

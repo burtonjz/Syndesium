@@ -19,6 +19,7 @@
 #define COMPONENT_MANAGER_HPP_
 
 #include "models/ComponentModel.hpp"
+#include "models/GroupModel.hpp"
 #include "views/ComponentEditor.hpp"
 #include "views/GroupEditor.hpp"
 #include "types/ComponentType.hpp"
@@ -34,6 +35,8 @@ class ComponentManager : public QObject {
 private:
     std::map<int, ComponentModel*> models_ ;
     std::map<int, ComponentEditor*> editors_ ;
+
+    std::map<int, GroupModel*> groupModels_ ;
     std::map<int, GroupEditor*> groupEditors_ ;
 
     int currentGroupId_ = 0 ;
@@ -50,6 +53,8 @@ public:
 
     ComponentModel* getModel(int componentId) const ;
     ComponentEditor* getEditor(int componentId) const ;
+
+    GroupModel* getGroupModel(int groupId) const ;
     GroupEditor* getGroupEditor(int groupId) const ;
     
     void showEditor(int componentId);
@@ -75,7 +80,10 @@ public slots:
 signals:
     void componentAdded(int componentId, ComponentType type);
     void componentRemoved(int componentId);
-    void componentGroupUpdated(int groupId, const std::vector<int> componentIds);
+
+    void componentGroupCreated(int groupId, const std::vector<int> componentIds); // new group id, components added
+    void componentGroupRemoved(int groupId, const std::vector<int> componentIds); // existing group id, components removed
+    void componentGroupUpdated(int groupId, const std::vector<int> componentIds); // existing group id, new component id list
 };
 
 #endif // COMPONENT_MANAGER_HPP_

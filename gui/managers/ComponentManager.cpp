@@ -22,8 +22,10 @@
 
 ComponentManager::ComponentManager(QObject* parent):
     QObject(parent),
+    models_(),
     editors_(),
-    models_()
+    groupModels_(),
+    groupEditors_()
 {
     connect(
         ApiClient::instance(), &ApiClient::dataReceived, 
@@ -32,9 +34,10 @@ ComponentManager::ComponentManager(QObject* parent):
 }
 
 ComponentManager::~ComponentManager(){
-    for ( const auto& e : editors_ ) e.second->deleteLater();
-    for ( const auto& g : groupEditors_ ) g.second->deleteLater();
     for ( const auto& m : models_ ) m.second->deleteLater();
+    for ( const auto& e : editors_ ) e.second->deleteLater();
+    for ( const auto& gm: groupModels_ ) gm.second->deleteLater();
+    for ( const auto& ge : groupEditors_ ) ge.second->deleteLater();
 }
 
 void ComponentManager::requestAddComponent(ComponentType type){
@@ -70,24 +73,27 @@ void ComponentManager::requestCollectionUpdate(CollectionRequest req){
 }
 
 ComponentModel* ComponentManager::getModel(int componentId) const {
-    auto it = models_.find(componentId);
-    if ( it == models_.end() ) return nullptr ;
+    if ( !models_.contains(componentId) ) return nullptr ;
 
-    return it->second ;
+    return models_.at(componentId) ;
 }
 
 ComponentEditor* ComponentManager::getEditor(int componentId) const {
-    auto it = editors_.find(componentId);
-    if ( it == editors_.end() ) return nullptr ;
+    if ( !editors_.contains(componentId) ) return nullptr ;
 
-    return it->second ;
+    return editors_.at(componentId) ;
+}
+
+GroupModel* ComponentManager::getGroupModel(int groupId) const {
+    if ( !groupModels_.contains(groupId) ) return nullptr ;
+
+    return groupModels_.at(groupId) ;
 }
 
 GroupEditor* ComponentManager::getGroupEditor(int groupId) const {
-    auto it = groupEditors_.find(groupId);
-    if ( it == groupEditors_.end() ) return nullptr ;
+    if ( !groupEditors_.contains(groupId) ) return nullptr ;
 
-    return it->second ;
+    return groupEditors_.at(groupId) ;
 }
 
 void ComponentManager::showEditor(int componentId){
@@ -112,7 +118,9 @@ void ComponentManager::showGroupEditor(int groupId){
 
 void ComponentManager::createGroup(const std::vector<int> componentIds){
     int id = currentGroupId_++ ;
+    GroupModel* m = new GroupModel(id);
     GroupEditor* g = new GroupEditor();
+    groupModels_[id] = m ;
     groupEditors_[id] = g ;
 
     connect(
@@ -121,44 +129,53 @@ void ComponentManager::createGroup(const std::vector<int> componentIds){
     );
 
     for ( auto i : componentIds ){
-        g->addComponent(getModel(i));
+        auto model = getModel(i);
+        m->addComponent(model);
+        g->addComponent(model);
         
         // handle specialized collection widgets
         auto cw = getCollectionWidget(g->getComponentParameters(i));
         if ( cw ){
-            qDebug() << "collection edits connecting!";
             connect(
                 cw, &CollectionWidget::collectionEdited,
                 this, &ComponentManager::onCollectionEdited
             );
         }
     }
-    
-    emit componentGroupUpdated(id, componentIds);
+
+    emit componentGroupCreated(id, componentIds);
 }
+
 void ComponentManager::appendToGroup(int groupId, const std::vector<int> componentIds){
-    auto it = groupEditors_.find(groupId);
-    if ( it == groupEditors_.end() ){
+    auto model = getGroupModel(groupId);
+    auto editor = getGroupEditor(groupId);
+    
+    if ( !model || !editor ){
         qWarning() << "Could not find group editor with Id " << groupId ;
         return ;
     }
-
+    
     for ( auto id : componentIds ){
-        it->second->addComponent(getModel(id));
+        model->addComponent(getModel(id));
+        editor->addComponent(getModel(id));
     }
 
-    emit componentGroupUpdated(groupId, componentIds);
+    emit componentGroupUpdated(groupId, model->getComponents());
 }
 
 void ComponentManager::removeGroup(int groupId){
-    GroupEditor* g = getGroupEditor(groupId);
-    if ( !g ) return ;
+    auto model = getGroupModel(groupId);
+    auto editor = getGroupEditor(groupId);
 
-    // g->removeLater(); ?
+    if ( !model || !editor ) return ;
+
+    emit componentGroupRemoved(groupId, model->getComponents());
+
+    groupModels_.erase(groupId);
     groupEditors_.erase(groupId);
-    delete g ;
-
-    emit componentGroupUpdated(groupId, {});
+    
+    model->deleteLater();
+    editor->deleteLater();    
 }
 
 void ComponentManager::addComponent(int componentId, ComponentType type){
