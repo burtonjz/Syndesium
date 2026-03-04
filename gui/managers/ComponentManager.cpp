@@ -72,6 +72,20 @@ void ComponentManager::requestCollectionUpdate(CollectionRequest req){
     ApiClient::instance()->sendMessage(obj); 
 }
 
+void ComponentManager::renameComponent(int id, const QString& name){
+    auto editor = getEditor(id);
+
+    if ( !editor ) return ;
+    editor->setName(name);
+}
+
+void ComponentManager::renameGroup(int id, const QString& name){
+    auto editor = getGroupEditor(id);
+
+    if ( !editor ) return ;
+    editor->setName(name);
+}
+
 ComponentModel* ComponentManager::getModel(int componentId) const {
     if ( !models_.contains(componentId) ) return nullptr ;
 
@@ -119,7 +133,7 @@ void ComponentManager::showGroupEditor(int groupId){
 void ComponentManager::createGroup(const std::vector<int> componentIds){
     int id = currentGroupId_++ ;
     GroupModel* m = new GroupModel(id);
-    GroupEditor* g = new GroupEditor();
+    GroupEditor* g = new GroupEditor(QString("Group %1").arg(id));
     groupModels_[id] = m ;
     groupEditors_[id] = g ;
 

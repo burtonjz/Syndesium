@@ -49,10 +49,6 @@ private:
     bool isDraggingConnection_ = false ;
     QPointer<SocketWidget> lastHovered_ = nullptr ;
 
-    // context menu actions
-    SocketWidget* clickedSocket_ ;
-    QAction* disconnectAllAct_ ;
-
     // hardware widgets
     GraphNode* audioOut_ ;
     GraphNode* midiIn_ ;
@@ -73,13 +69,14 @@ public:
     GroupNode* getGroupNode(int groupId) const ;
 
     GraphNode* getVisibleNode(int componentId) const ;
+    GraphNode* findNodeAt(const QPointF& scenePos) const ;
 
     std::vector<ComponentNode*> getSelectedComponents() const ;
     std::vector<GroupNode*> getSelectedGroups() const ;
 
     // ISocketLookup
-    SocketWidget* findSocket(SocketSpec spec) override ;
-    SocketWidget* findSocketAt(const QPointF& scenePos) override ;
+    SocketWidget* findSocket(SocketSpec spec) const override ;
+    SocketWidget* findSocketAt(const QPointF& scenePos) const override ;
 
 protected:
     void keyPressEvent(QKeyEvent* event) override ;
@@ -92,13 +89,19 @@ protected:
 
 private:
     void setupScene() ;
-    void createContextMenuActions() ;
 
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
     void graphNodeDoubleClicked(GraphNode* widget);
     
     void handleGroupEvent();
     void handleUngroupEvent();
+
+    void onDeletePressed();
+
+    // context menu functions
+    void onNodeRightClicked(GraphNode* node);
+    void onSocketRightClicked(SocketWidget* socket);
+    void startRename(GraphNode* node);
 
 private slots:
     void onApiDataReceived(const QJsonObject &json);

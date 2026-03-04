@@ -34,11 +34,14 @@ class GroupEditor : public QWidget {
 
 private:
     std::unordered_map<int, ComponentParameters*> params_ ;
+    QLabel* name_ ;
     QGridLayout* paramsLayout_ ;
     QPushButton* closeButton_ ;
 
 public:
-    explicit GroupEditor(QWidget* parent = nullptr);
+    explicit GroupEditor(const QString& name, QWidget* parent = nullptr);
+
+    void setName(const QString& name);
 
     void addComponent(ComponentModel* model);
     void removeComponent(ComponentModel* model);

@@ -32,6 +32,7 @@ class ComponentEditor : public QWidget {
     
 private:
     ComponentParameters* params_ ;
+    QLabel* name_ ;
     QPushButton* resetButton_ ;
     QPushButton* closeButton_ ;
 
@@ -40,7 +41,8 @@ public:
     ~ComponentEditor() override ;
 
     ComponentParameters* getComponentParameters() const ;
-    
+    void setName(const QString& name);
+
 private:
     void setupLayout();
     void closeEvent(QCloseEvent* event) override ;

@@ -51,6 +51,9 @@ public:
     void requestParameterUpdate(int componentId, ParameterType p, ParameterValue v);
     void requestCollectionUpdate(CollectionRequest req);
 
+    void renameComponent(int id, const QString& name);
+    void renameGroup(int id, const QString& name);
+    
     ComponentModel* getModel(int componentId) const ;
     ComponentEditor* getEditor(int componentId) const ;
 

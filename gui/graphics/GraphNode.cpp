@@ -76,6 +76,12 @@ void GraphNode::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
     }
 }
 
+void GraphNode::setName(const QString& name){
+    name_ = name ;
+    titleText_->setPlainText(name);
+    emit nodeNameUpdated(name_);
+}
+
 void GraphNode::createSockets(std::initializer_list<SocketSpec> specs ){
     for ( const auto& s : specs ){
         SocketWidget* socket = new SocketWidget(s, this);

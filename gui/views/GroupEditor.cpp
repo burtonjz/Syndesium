@@ -21,16 +21,23 @@
 
 #include <QScrollArea>
 
-GroupEditor::GroupEditor(QWidget* parent):
-    QWidget(parent),
+GroupEditor::GroupEditor(const QString& name, QWidget* parent):
+    QWidget(nullptr),
     params_(),
+    name_(new QLabel(name, this)),
     paramsLayout_(new QGridLayout()),
     closeButton_(new QPushButton("Close",this))
 {
-    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+    setWindowTitle(" ");
+
     setAttribute(Qt::WA_ShowWithoutActivating);
 
     setupLayout();
+}
+
+void GroupEditor::setName(const QString& name){
+    name_->setText(name);
 }
 
 void GroupEditor::addComponent(ComponentModel* model){
@@ -77,10 +84,12 @@ void GroupEditor::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(
         Theme::COMPONENT_DETAIL_MARGINS,
-        Theme::COMPONENT_DETAIL_MARGINS,
+        0,
         Theme::COMPONENT_DETAIL_MARGINS,
         Theme::COMPONENT_DETAIL_MARGINS
     );
+
+    mainLayout->addWidget(name_);
 
     // parameters
     auto gridContainer = new QWidget();

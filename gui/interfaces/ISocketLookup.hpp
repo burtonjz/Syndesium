@@ -27,7 +27,7 @@ public:
 
     virtual SocketWidget* findSocket(
         SocketSpec spec
-    ) = 0 ;
+    ) const = 0 ;
 
     /**
      * @brief find a socket widget at the specified location
@@ -35,7 +35,7 @@ public:
      * @param scenePos 
      * @return SocketWidget* 
      */
-    virtual SocketWidget* findSocketAt(const QPointF& scenePos) = 0 ;
+    virtual SocketWidget* findSocketAt(const QPointF& scenePos) const = 0 ;
 
 };
 

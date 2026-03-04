@@ -40,6 +40,7 @@
 #include <QPushButton>
 #include <QToolTip>
 #include <QMenu>
+#include <QLineEdit>
 
 #include <QJsonObject>
 #include <QJsonArray>
@@ -61,8 +62,6 @@ GraphPanel::GraphPanel(QWidget* parent):
     connectionManager_ = new ConnectionManager(this);
     connectionRenderer_ = new ConnectionRenderer(scene_, connectionManager_, this, this);
     componentManager_ = new ComponentManager(this);
-
-    createContextMenuActions();
 
     addMidiInput();
     addAudioOutput();
@@ -117,13 +116,6 @@ void GraphPanel::setupScene(){
     setResizeAnchor(QGraphicsView::AnchorUnderMouse);
 }
 
-void GraphPanel::createContextMenuActions(){
-    disconnectAllAct_ = new QAction("Disconnect All",this) ;
-    connect(disconnectAllAct_, &QAction::triggered, connectionManager_, 
-        [this](){ connectionRenderer_->removeSocketConnections(clickedSocket_);}
-    );
-}
-
 void GraphPanel::addAudioOutput(){
     audioOut_ = new GraphNode("Audio Output Device");
     audioOut_->createSockets({{
@@ -170,6 +162,16 @@ GraphNode* GraphPanel::getVisibleNode(int componentId) const {
         auto gNode = dynamic_cast<GroupNode*>(n);
         if ( gNode && gNode->contains(componentId) ){
             return gNode ;
+        }
+    }
+    return nullptr ;
+}
+
+GraphNode* GraphPanel::findNodeAt(const QPointF& scenePos) const {
+    auto items = scene_->items(scenePos);
+    for ( auto item : items ){
+        if ( GraphNode* node = dynamic_cast<GraphNode*>(item) ){
+            return node ;
         }
     }
     return nullptr ;
@@ -263,7 +265,7 @@ std::vector<GroupNode*> GraphPanel::getSelectedGroups() const {
     return nodes ;
 }
 
-SocketWidget* GraphPanel::findSocket(SocketSpec spec){
+SocketWidget* GraphPanel::findSocket(SocketSpec spec) const {
     GraphNode* w = nullptr ;
 
     // first, find the corresponding GraphNode
@@ -294,7 +296,7 @@ SocketWidget* GraphPanel::findSocket(SocketSpec spec){
     return nullptr ;
 }
 
-SocketWidget* GraphPanel::findSocketAt(const QPointF& scenePos){
+SocketWidget* GraphPanel::findSocketAt(const QPointF& scenePos) const {
     auto items = scene_->items(scenePos);
     for ( auto item : items ){
         if ( SocketWidget* socket = dynamic_cast<SocketWidget*>(item) ){
@@ -305,12 +307,16 @@ SocketWidget* GraphPanel::findSocketAt(const QPointF& scenePos){
 }
 
 void GraphPanel::keyPressEvent(QKeyEvent* event){
+    // scene/proxy gets priority first if focused
+    if ( scene_->focusItem() ){
+        QGraphicsView::keyPressEvent(event);
+        return ;
+    }
+
     switch (event->key()){
         case Qt::Key_Delete:
         case Qt::Key_Backspace:
-            for ( const auto c : getSelectedComponents() ){
-                componentManager_->requestRemoveComponent(c->getModel()->getId());
-            }
+            onDeletePressed();
             break ;
         case Qt::Key_Escape:
             connectionRenderer_->cancelDrag();
@@ -387,9 +393,12 @@ void GraphPanel::mousePressEvent(QMouseEvent* event){
 void GraphPanel::mouseDoubleClickEvent(QMouseEvent* event){
     QPointF scenePos = mapToScene(event->pos());
 
-    // Launch ComponentEditor
+   
     QGraphicsItem* item = scene()->itemAt(scenePos, transform());
     while (item){
+        // edit a node label
+
+        // launch the component editor ; 
         if ( GraphNode* w = dynamic_cast<GraphNode*>(item)){ 
             graphNodeDoubleClicked(w);
             return ;
@@ -416,14 +425,69 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
 
     // right clicking on a socket
     if ( SocketWidget* w = findSocketAt(scenePos) ){
-        clickedSocket_ = w ;
-        QMenu menu(this);\
-        menu.addAction(disconnectAllAct_);
-        menu.exec(event->globalPos());
+        onSocketRightClicked(w);
         return ;
     }
-    clickedSocket_ = nullptr ;
 
+    // right clicking on a graph node
+    if ( GraphNode* n =  findNodeAt(scenePos) ){
+        onNodeRightClicked(n);
+        return ;
+    }
+
+}
+
+void GraphPanel::onNodeRightClicked(GraphNode* node){
+    QMenu menu ;
+
+    QAction* rename = new QAction("Rename", &menu);
+    connect ( rename, &QAction::triggered, [this, node](){
+        startRename(node);
+    });
+
+    menu.addAction(rename);
+    menu.exec(QCursor::pos());
+}
+
+void GraphPanel::onSocketRightClicked(SocketWidget* socket){
+    QMenu menu ;
+
+    QAction* disconnectAll = new QAction("Disconnect All",&menu);
+    connect(disconnectAll, &QAction::triggered, [this, socket]() 
+        { connectionRenderer_->removeSocketConnections(socket);}
+    );
+
+    menu.addAction(disconnectAll);
+    menu.exec(QCursor::pos());
+}
+
+void GraphPanel::startRename(GraphNode* node ){
+    if ( !node ) return ;
+
+    QGraphicsTextItem* text = node->getNameItem() ;
+    QRectF rect = text->boundingRect();
+    QPointF scenePos = text->mapToScene(rect.topLeft());
+
+    QLineEdit* edit = new QLineEdit();
+    edit->setText(node->getName());
+    edit->selectAll();
+    edit->setFont(text->font());
+
+    QGraphicsProxyWidget* proxy = scene_->addWidget(edit);
+    proxy->setPos(scenePos);
+    proxy->resize(rect.size());
+    proxy->setFocus();
+    edit->setFocus();
+    text->hide();
+
+    connect(edit, &QLineEdit::editingFinished, [this, node, text, edit, proxy](){
+        if ( !edit->text().isEmpty() ){
+            node->setName(edit->text());
+        }
+        text->show();
+        scene_->removeItem(proxy);
+        proxy->deleteLater();
+    });
 }
 
 void GraphPanel::wheelEvent(QWheelEvent* event){
@@ -480,8 +544,20 @@ void GraphPanel::onComponentAdded(int componentId, ComponentType type){
     auto n = new ComponentNode(m);
     nodes_.push_back(n);
 
-    connect(n, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
-    connect(n, &GraphNode::positionChanged, connectionRenderer_, &ConnectionRenderer::onNodePositionChanged);
+    connect(
+        n, &GraphNode::needsZUpdate, 
+        this, &GraphPanel::onNodeZUpdate
+    );
+    connect(
+        n, &GraphNode::positionChanged, 
+        connectionRenderer_, &ConnectionRenderer::onNodePositionChanged
+    );
+    connect(
+        n, &GraphNode::nodeNameUpdated,
+        [this, componentId](const QString& name){
+            componentManager_->renameComponent(componentId, name);
+        }
+    );
 
     n->addToScene(scene_);
 
@@ -513,6 +589,12 @@ void GraphPanel::onComponentGroupCreated(int groupId, std::vector<int> component
     connect(
         gNode, &GraphNode::positionChanged, 
         connectionRenderer_, &ConnectionRenderer::onNodePositionChanged
+    );
+    connect(
+        gNode, &GraphNode::nodeNameUpdated,
+        [this, groupId](const QString& name){
+            componentManager_->renameGroup(groupId, name);
+        }
     );
 
     for ( const auto id : componentIds ){
@@ -564,6 +646,13 @@ void GraphPanel::graphNodeDoubleClicked(GraphNode* widget){
     if ( auto g = dynamic_cast<GroupNode*>(widget) ){
         componentManager_->showGroupEditor(g->getId());
         return ;
+    }
+}
+
+void GraphPanel::onDeletePressed(){
+    // delete all selected components
+    for ( const auto c : getSelectedComponents() ){
+        componentManager_->requestRemoveComponent(c->getModel()->getId());
     }
 }
 

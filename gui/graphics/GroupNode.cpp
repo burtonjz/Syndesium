@@ -70,7 +70,8 @@ int GroupNode::getId() const {
 }
 
 void GroupNode::addSockets(ComponentNode* node){
-    for ( const auto& spec : node->getSpecs() ){
+    for ( SocketSpec spec : node->getSpecs() ){
+        spec.name = node->getName() + " " + spec.name ;
         SocketWidget* socket = new SocketWidget(spec, this);
         sockets_.push_back(socket);  
         if ( scene() ) scene()->addItem(socket);

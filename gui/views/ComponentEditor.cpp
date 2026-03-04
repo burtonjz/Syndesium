@@ -29,13 +29,15 @@
 #include <qscrollarea.h>
 
 ComponentEditor::ComponentEditor(ComponentModel* model, QWidget* parent):
-    QWidget(parent),
+    QWidget(nullptr),
     params_(new ComponentParameters(model, this)),
+    name_(new QLabel(QString::fromStdString(model->getDescriptor().name), this)),
     closeButton_(new QPushButton("Close",this)),
     resetButton_(new QPushButton("Reset", this))
 {
-    setWindowTitle(QString::fromStdString(model->getDescriptor().name));
-    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint);
+    setWindowFlags(Qt::Tool | Qt::WindowStaysOnTopHint | Qt::CustomizeWindowHint | Qt::WindowTitleHint);
+    setWindowTitle(" ");
+
     setAttribute(Qt::WA_ShowWithoutActivating);
     
     setupLayout();
@@ -54,16 +56,23 @@ ComponentParameters* ComponentEditor::getComponentParameters() const {
     return params_ ;
 }
 
+void ComponentEditor::setName(const QString& name){
+    name_->setText(name);
+}
+
 void ComponentEditor::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(
         Theme::COMPONENT_DETAIL_MARGINS,
-        Theme::COMPONENT_DETAIL_MARGINS,
+        0,
         Theme::COMPONENT_DETAIL_MARGINS,
         Theme::COMPONENT_DETAIL_MARGINS
     );
-    
+
+    mainLayout->addWidget(name_);
+
     // params
+    mainLayout->addSpacing(Theme::COMPONENT_DETAIL_MARGINS);
     mainLayout->addWidget(params_, 1);
 
     // buttons

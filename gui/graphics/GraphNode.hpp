@@ -56,6 +56,9 @@ public:
 
     const std::vector<SocketWidget*>& getSockets() const { return sockets_ ; }
     const QString& getName() const { return name_ ; }
+    QGraphicsTextItem* getNameItem() const { return titleText_ ; }
+
+    void setName(const QString& name );
 
     void createSockets(std::initializer_list<SocketSpec> specs );
     void createSockets(const std::vector<SocketSpec> specs );
@@ -74,6 +77,7 @@ protected:
 signals:
     void positionChanged();
     void needsZUpdate();
+    void nodeNameUpdated(const QString& name);
 
 };
 

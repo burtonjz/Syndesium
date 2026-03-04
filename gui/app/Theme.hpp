@@ -158,6 +158,7 @@ public:
 
     static constexpr int GROUP_EDITOR_GRID_MAX_COLUMNS = 3 ;
     
+    static constexpr int DRAG_HANDLE_HEIGHT = 20 ;
 };
 
 #endif // __UI_THEME_HPP_
