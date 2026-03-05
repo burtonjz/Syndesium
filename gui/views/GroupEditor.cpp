@@ -80,6 +80,13 @@ ComponentParameters* GroupEditor::getComponentParameters(int componentId){
     return params_.at(componentId);
 }
 
+void GroupEditor::changeEvent(QEvent *event){
+    if ( event->type() == QEvent::ActivationChange && !isActiveWindow() ){
+        onCloseButtonClicked();
+    }
+    QWidget::changeEvent(event);
+}
+
 void GroupEditor::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(

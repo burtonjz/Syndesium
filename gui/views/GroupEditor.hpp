@@ -47,6 +47,9 @@ public:
     void removeComponent(ComponentModel* model);
     ComponentParameters* getComponentParameters(int componentId);
     
+protected:
+    void changeEvent(QEvent *event) override ;
+
 private:
     void setupLayout();
     void relayoutParams();

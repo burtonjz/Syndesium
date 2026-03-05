@@ -60,6 +60,13 @@ void ComponentEditor::setName(const QString& name){
     name_->setText(name);
 }
 
+void ComponentEditor::changeEvent(QEvent *event){
+    if ( event->type() == QEvent::ActivationChange && !isActiveWindow() ){
+        onCloseButtonClicked();
+    }
+    QWidget::changeEvent(event);
+}
+   
 void ComponentEditor::setupLayout(){
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(

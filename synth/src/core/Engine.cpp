@@ -647,6 +647,7 @@ std::vector<ConnectionRequest> Engine::getComponentSignalConnections(ComponentId
             req.outboundIdx = conn.index ;
             req.inboundSocket = SocketType::SignalInbound ;
             req.outboundSocket = SocketType::SignalOutbound ;
+            req.inboundIdx = 0 ; // TODO: support multi-channel sink
             v.push_back(req);
         }
     }

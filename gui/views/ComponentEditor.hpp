@@ -43,6 +43,9 @@ public:
     ComponentParameters* getComponentParameters() const ;
     void setName(const QString& name);
 
+protected:
+     void changeEvent(QEvent *event) override ;
+     
 private:
     void setupLayout();
     void closeEvent(QCloseEvent* event) override ;
