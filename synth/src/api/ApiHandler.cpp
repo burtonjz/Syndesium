@@ -403,6 +403,7 @@ json ApiHandler::removeComponent(int sock, const json& request){
 
 
 json ApiHandler::createConnection(int sock, const json& request){
+    SPDLOG_DEBUG("createConnection request: {}", request.dump());
     json response = request ;
     ConnectionRequest req ;
 
@@ -934,6 +935,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
             req.outboundSocket = SocketType::SignalOutbound ;        
             req.outboundID = sink.at("componentId");
             req.outboundIdx = sink.at("index");
+            req.inboundIdx = 0 ; // TODO: support multi-channel output
             
             const auto& connectionResponse = createConnection(sock, req);
             if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){

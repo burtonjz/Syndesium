@@ -77,9 +77,7 @@ public:
     
     QPointF getConnectionPoint() const ;
 
-    bool matches(
-        SocketSpec spec
-    ) const ;
+    bool matches(SocketSpec spec) const ;
 
 };
 

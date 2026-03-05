@@ -78,8 +78,8 @@ inline void to_json(json& j, const ConnectionRequest& req){
         j["action"] = "create_connection" ;
     }
 
-    j["inbound"];
-    j["outbound"];
+    j["inbound"] = json::object();
+    j["outbound"] = json::object();
     j["inbound"]["socketType"] = req.inboundSocket ;
     j["outbound"]["socketType"] = req.outboundSocket ;
     if ( req.inboundID.has_value() ) j["inbound"]["componentId"] = req.inboundID.value();
