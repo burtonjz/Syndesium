@@ -81,8 +81,13 @@ ComponentParameters* GroupEditor::getComponentParameters(int componentId){
 }
 
 void GroupEditor::changeEvent(QEvent *event){
+    // handle close events on focus loss, where focus was not lost to a child window.
     if ( event->type() == QEvent::ActivationChange && !isActiveWindow() ){
-        onCloseButtonClicked();
+        QWidget* active = QApplication::activeWindow();
+        if ( !active ){
+            return ; // ignore null new active windows -- means its a drag/resize/whatever
+        }
+        onCloseButtonClicked(); 
     }
     QWidget::changeEvent(event);
 }

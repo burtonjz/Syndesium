@@ -25,7 +25,9 @@
 #include <cmath>
 #include <QVBoxLayout>
 #include <QHBoxLayout>
-#include <QInputDialog>
+#include <QEvent>
+#include <QShortcut>
+#include <QLineEdit>
 
 void ParameterWidget::onModelParameterChanged(ParameterType p, ParameterValue v){
     qDebug() << "ParameterWidget::onModelParameterChanged triggered!" ;
@@ -95,35 +97,41 @@ void DelayWidget::setValue(size_t samples, bool block){
 }
 
 void DelayWidget::mouseDoubleClickEvent(QMouseEvent* event){
-    bool ok ;
-    QString unit = unitCombo_->currentText() ;
- 
-    auto s2v = [this](int val){
-        if ( unitCombo_->currentText() == "ms" ){
-            return static_cast<int>(val / 1000.0f);
-        } else {
-            return static_cast<int>(val);
-        }
-    };
+    auto* edit = new QLineEdit(this);
+    edit->setText(QString::number(slider_->value()));
+    edit->setGeometry(valueLabel_->geometry());
 
-    double val ;
-    val = QInputDialog::getInt(
-        this, "Set Delay", unit,
-        slider_->value(),
-        slider_->minimum()  , 
-        slider_->maximum()  ,
-        1, &ok, Qt::WindowFlags()
-    );
-
-    if ( ! ok ) return ;
-
-    qDebug() << "input returning value = " << val ;
-
-    if ( unit == "ms" ){
-        setValue(val / 1000.0 * sampleRate_, false);
+    // Enforce min/max based on current unit
+    QString unit = unitCombo_->currentText();
+    if (unit == "ms") {
+        edit->setValidator(new QIntValidator(minMs_, maxMs_, edit));
     } else {
-        setValue(val, false);
+        edit->setValidator(new QIntValidator(minSamples_, maxSamples_, edit));
     }
+
+    edit->show();
+    edit->setFocus();
+    edit->selectAll();
+
+    connect(
+        edit, &QLineEdit::editingFinished,
+        this, [this, edit]()
+    {
+        if ( !edit->hasAcceptableInput()){
+            edit->deleteLater();
+            return ;
+        }
+
+        QString unit = unitCombo_->currentText();
+        double val = edit->text().toDouble();
+        edit->deleteLater();
+
+        if ( unit == "ms" ){
+            setValue(val / 1000.0 * sampleRate_, false);
+        } else {
+            setValue(val, false);
+        }
+    });
 }
 
 void DelayWidget::setupUI(){
@@ -457,31 +465,46 @@ void SliderWidget::setValue(const ParameterValue& value, bool block){
 }
 
 void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
-    bool ok ;
     auto s2v = [this](int v){ return v * std::pow(10, -1.0 * precision_);};
-    
-    double value = QInputDialog::getDouble(
-        this, "Set" + QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(param_, name)),
-        "value:", s2v(slider_->value()),
-        s2v(slider_->minimum()), s2v(slider_->maximum()), precision_, &ok,
-        Qt::WindowFlags(), s2v(1)
-    );
 
-    if ( ok ){
+    auto* edit = new QLineEdit(this);
+    edit->setText(QString::number(s2v(slider_->value())));
+    edit->setGeometry(valueLabel_->geometry());
+
+    double min = s2v(slider_->minimum());
+    double max = s2v(slider_->maximum());
+    edit->setValidator(new QIntValidator(min, max, edit));
+    
+    edit->show();
+    edit->setFocus();
+    edit->selectAll();
+
+    connect(
+        edit, &QLineEdit::editingFinished,
+        this, [this, edit]()
+    {
+        if ( !edit->hasAcceptableInput()){
+            edit->deleteLater();
+            return ;
+        }
+
+        double val = edit->text().toDouble();
+        edit->deleteLater();
+
         switch(param_){
             #define X(name) \
                 case ParameterType::name: \
-                    setValue(static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(value)); \
-                    break ; 
+                    setValue(static_cast<GET_PARAMETER_VALUE_TYPE(ParameterType::name)>(val)); \
+                    break ;
                 PARAMETER_TYPE_LIST
             #undef X
-            default:
-                qWarning() << "Parameter of type " << 
-                    GET_PARAMETER_TRAIT_MEMBER(param_, name) 
-                    << " is not in enum. This shouldn't happen." ;
-                break ;
+        default:
+            qWarning() << "Parameter of type " <<
+                GET_PARAMETER_TRAIT_MEMBER(param_, name) <<
+                " is not in enum. This shouldn't happen." ;
+            break ;
         }
-    }
+    });
 }
 
 void SliderWidget::setupUI(){
