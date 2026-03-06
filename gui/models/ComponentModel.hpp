@@ -56,6 +56,8 @@ private:
 signals:
     void parameterValueChanged(ParameterType p, ParameterValue v);
     void collectionUpdated(const CollectionRequest& req);
+    void modulationDepthChanged(int componentId, ParameterType p, double depth);
+    void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
         
 };
 

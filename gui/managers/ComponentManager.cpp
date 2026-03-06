@@ -72,6 +72,28 @@ void ComponentManager::requestCollectionUpdate(CollectionRequest req){
     ApiClient::instance()->sendMessage(obj); 
 }
 
+void ComponentManager::requestModulationDepthUpdate(int componentId, ParameterType p, double depth){
+    QJsonObject obj ;
+    obj["action"] = "set_modulation_depth" ;
+    obj["componentId"] = componentId ;
+    obj["parameter"] = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
+    obj["depth"] = depth ;
+
+    ApiClient::instance()->sendMessage(obj);
+}
+
+void ComponentManager::requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy){
+    QJsonObject obj ;
+    obj["action"] = "set_modulation_strategy" ;
+    obj["componentId"] = componentId ;
+    obj["parameter"] = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
+    obj["strategy"] = static_cast<int>(strategy) ;
+
+    ApiClient::instance()->sendMessage(obj);
+}
+
+
+
 void ComponentManager::renameComponent(int id, const QString& name){
     auto editor = getEditor(id);
 
@@ -206,7 +228,6 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     
     auto cw = getCollectionWidget(editor->getComponentParameters());
     if ( cw ){
-        qDebug() << "collection edits connecting!";
         connect(
             cw, &CollectionWidget::collectionEdited,
             this, &ComponentManager::onCollectionEdited
@@ -300,6 +321,7 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
                 << ". Will not process set parameter request" ;
             return ;
         }
+
         ParameterType p = static_cast<ParameterType>(json["parameter"].toInt());
         
         // dispatch to set parameter value with correct variant
@@ -319,6 +341,50 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
         return ;
     }
 
+    if ( action == "set_modulation_depth" && success ){
+        int id = json["componentId"].toInt();
+        auto it = models_.find(id);
+        if ( it == models_.end() ){
+            qWarning() << "Could not find model with Component ID" << id 
+                << ". Will not process modulation depth request" ;
+            return ;
+        }
+
+        ParameterType p = parameterFromString(json["parameter"].toString().toStdString());
+        ModulationModel* m = it->second->getModulationModel(p);
+        if ( !m ){
+            qWarning() << "Could not find Modulation Model for Parameter " 
+                << GET_PARAMETER_TRAIT_MEMBER(p, name) 
+                << "from Component Model: " << it->second ;
+            return ;
+        }
+
+        m->setDepth(json["depth"].toDouble());
+        return ;
+    }
+
+    if ( action == "set_modulation_strategy" && success ){
+        int id = json["componentId"].toInt();
+        auto it = models_.find(id);
+        if ( it == models_.end() ){
+            qWarning() << "Could not find model with Component ID" << id 
+                << ". Will not process modulation strategy request" ;
+            return ;
+        }
+
+        ParameterType p = parameterFromString(json["parameter"].toString().toStdString());
+        ModulationModel* m = it->second->getModulationModel(p);
+        if ( !m ){
+            qWarning() << "Could not find Modulation Model for Parameter " 
+                << GET_PARAMETER_TRAIT_MEMBER(p, name) 
+                << "from Component Model: " << it->second ;
+            return ;
+        }
+
+        m->setStrategy(static_cast<ModulationStrategy>(json["strategy"].toInt()));
+        return ;
+    }
+
     if ( success && handleCollectionApiResponse(json) ){
         return ;
     }
@@ -331,4 +397,12 @@ void ComponentManager::onParameterEdited(int componentId, ParameterType p, Param
 void ComponentManager::onCollectionEdited(CollectionRequest req ){
     qDebug() << "collection edit request received!";
     requestCollectionUpdate(req);
+}
+
+void ComponentManager::onModulationDepthEdited(int componentId, ParameterType p, double depth){
+    requestModulationDepthUpdate(componentId, p, depth);
+}
+
+void ComponentManager::onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy){
+    requestModulationStrategyUpdate(componentId, p, strategy);
 }

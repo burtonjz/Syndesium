@@ -22,6 +22,7 @@
 #include "models/GroupModel.hpp"
 #include "views/ComponentEditor.hpp"
 #include "views/GroupEditor.hpp"
+#include <views/ModulationEditor.hpp>
 #include "types/ComponentType.hpp"
 #include "requests/CollectionRequest.hpp"
 #include "widgets/CollectionWidget.hpp"
@@ -35,6 +36,7 @@ class ComponentManager : public QObject {
 private:
     std::map<int, ComponentModel*> models_ ;
     std::map<int, ComponentEditor*> editors_ ;
+    std::map<int, ModulationEditor*> modulationEditors_ ;
 
     std::map<int, GroupModel*> groupModels_ ;
     std::map<int, GroupEditor*> groupEditors_ ;
@@ -50,6 +52,8 @@ public:
     void requestRemoveComponent(int componentId);
     void requestParameterUpdate(int componentId, ParameterType p, ParameterValue v);
     void requestCollectionUpdate(CollectionRequest req);
+    void requestModulationDepthUpdate(int componentId, ParameterType p, double depth);
+    void requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy);
 
     void renameComponent(int id, const QString& name);
     void renameGroup(int id, const QString& name);
@@ -79,6 +83,8 @@ public slots:
     void onApiDataReceived(const QJsonObject &json);
     void onParameterEdited(int componentId, ParameterType p, ParameterValue value);
     void onCollectionEdited(CollectionRequest req );
+    void onModulationDepthEdited(int componentId, ParameterType p, double depth);
+    void onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
 
 signals:
     void componentAdded(int componentId, ComponentType type);
