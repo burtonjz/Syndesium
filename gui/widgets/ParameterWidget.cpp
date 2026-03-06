@@ -104,7 +104,7 @@ void DelayWidget::mouseDoubleClickEvent(QMouseEvent* event){
     // Enforce min/max based on current unit
     QString unit = unitCombo_->currentText();
     if (unit == "ms") {
-        edit->setValidator(new QIntValidator(minMs_, maxMs_, edit));
+        edit->setValidator(new QDoubleValidator(minMs_, maxMs_, 1, edit));
     } else {
         edit->setValidator(new QIntValidator(minSamples_, maxSamples_, edit));
     }
@@ -379,6 +379,7 @@ StatusWidget::StatusWidget(QWidget* parent):
     // create status toggle
     toggle_ = new SwitchWidget(this);
     toggle_->setChecked(true);
+    layout->addWidget(toggle_);
 
     // connections
     connect(toggle_, &QAbstractButton::toggled, this, &ParameterWidget::valueChanged);
@@ -473,7 +474,7 @@ void SliderWidget::mouseDoubleClickEvent(QMouseEvent* event){
 
     double min = s2v(slider_->minimum());
     double max = s2v(slider_->maximum());
-    edit->setValidator(new QIntValidator(min, max, edit));
+    edit->setValidator(new QDoubleValidator(min, max, precision_, edit));
     
     edit->show();
     edit->setFocus();
