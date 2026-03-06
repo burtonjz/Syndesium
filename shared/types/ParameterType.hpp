@@ -22,7 +22,6 @@
 #include "types/Waveform.hpp"
 #include "types/ScaleType.hpp"
 #include "types/ScaleNote.hpp"
-#include "config/Config.hpp"
 
 #include <variant>
 #include <cstdint>
