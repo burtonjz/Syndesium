@@ -25,8 +25,37 @@ ParameterType parameterFromString(std::string str) {
     };
     
     auto it = str2Type.find(str);
-    if (it != str2Type.end()) {
+    if ( it != str2Type.end() ){
         return it->second;
     }
     throw std::runtime_error("Unknown parameter name: " + str);
+}
+
+ModulationStrategy modStrategyFromString(std::string str){
+    static const std::unordered_map<std::string, ModulationStrategy> str2strat = {
+        #define X(NAME) {#NAME, ModulationStrategy::NAME},
+        MODULATION_STRATEGY_LIST
+        #undef X
+    };
+
+    auto it = str2strat.find(str);
+    if ( it != str2strat.end() ){
+        return it->second;
+    }
+    throw std::invalid_argument("Unknown ModulationStrategy: " + str);
+}
+
+std::string modStrategyToString(ModulationStrategy str){
+    static const std::unordered_map<ModulationStrategy, std::string> strat2str = {
+        #define X(NAME) {ModulationStrategy::NAME, #NAME},
+        MODULATION_STRATEGY_LIST
+        #undef X
+    };
+
+    auto it = strat2str.find(str);
+    if ( it != strat2str.end() ){
+        return it->second;
+    }
+        
+    throw std::invalid_argument("Unknown ModulationStrategy." );
 }

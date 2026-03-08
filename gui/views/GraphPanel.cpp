@@ -22,7 +22,7 @@
 #include "managers/ConnectionManager.hpp"
 #include "util/util.hpp"
 #include "graphics/GraphNode.hpp"
-#include "widgets/SocketWidget.hpp"
+#include "graphics/SocketWidget.hpp"
 #include "graphics/ComponentNode.hpp"
 #include "types/ComponentType.hpp"
 
@@ -439,13 +439,40 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
 
 void GraphPanel::onNodeRightClicked(GraphNode* node){
     QMenu menu ;
+    QMenu* openMenu = menu.addMenu("Open");
 
     QAction* rename = new QAction("Rename", &menu);
     connect ( rename, &QAction::triggered, [this, node](){
         startRename(node);
     });
-
     menu.addAction(rename);
+
+    QAction* openEdit = new QAction("Editor", openMenu);
+    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
+        connect ( openEdit, &QAction::triggered, [this,c](){
+            componentManager_->showEditor(c->getModel()->getId());
+        });
+        openMenu->addAction(openEdit);
+    } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
+        connect ( openEdit, &QAction::triggered, [this,g](){
+            componentManager_->showGroupEditor(g->getId());
+        });
+        openMenu->addAction(openEdit);
+    }
+    
+    QAction* openMod = new QAction("Modulation", openMenu);
+    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
+        connect ( openMod, &QAction::triggered, [this,c](){
+            componentManager_->showModulationEditor(c->getModel()->getId());
+        });
+        openMenu->addAction(openMod);
+    } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
+        connect ( openMod, &QAction::triggered, [this,g](){
+            componentManager_->showGroupModulationEditor(g->getId());
+        });
+        openMenu->addAction(openMod);
+    }
+
     menu.exec(QCursor::pos());
 }
 
@@ -605,7 +632,6 @@ void GraphPanel::onComponentGroupCreated(int groupId, std::vector<int> component
 }
 
 void GraphPanel::onComponentGroupRemoved(int groupId, std::vector<int> componentIds){
-    qDebug() << "fuck" ;
     auto gNode = getGroupNode(groupId);
 
     if ( !gNode ){

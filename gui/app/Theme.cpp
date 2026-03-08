@@ -42,6 +42,7 @@ const QColor Theme::TEXT_PRIMARY = QColor(245, 237, 240);
 const QColor Theme::TEXT_SECONDARY = QColor(160, 165, 168);  
 const QColor Theme::ACCENT_COLOR = QColor(213, 137, 54);  
 const QColor Theme::MODULATION_ACTIVE = QColor(180, 85, 110);  
+const QColor Theme::MODULATION_INACTIVE = QColor(30,30,30);
 const QColor Theme::GRAPH_GRID_COLOR = QColor(38, 44, 48);
 
 // Component colors
@@ -264,23 +265,18 @@ void Theme::applyDarkTheme() {
     qApp->setStyleSheet(styleSheet);
 }
 
-QString Theme::getComponentStyle(bool selected, bool hovered) {
-    QColor borderColor = selected ? COMPONENT_BORDER_SELECTED : COMPONENT_BORDER;
-    QColor bgColor = hovered ? COMPONENT_BACKGROUND_HOVER : COMPONENT_BACKGROUND;
+const QString& Theme::getLabelTitleStyle(){
+    static const QString title = QString(
+        "font-size: 18px; font-weight: bold; color: %1;"
+    ).arg(TEXT_PRIMARY.name()) ;
     
-    return QString("background-color: %1; border: 2px solid %2;")
-        .arg(bgColor.name())
-        .arg(borderColor.name());
+    return title ;
 }
 
-QString Theme::getModulationStyle() {
-    return QString(
-        "QDoubleSpinBox { "
-        "  border: 2px solid %1; "
-        "  background-color: rgba(%2, %3, %4, 30);"
-        "}"
-    ).arg(MODULATION_ACTIVE.name())
-     .arg(MODULATION_ACTIVE.red())
-     .arg(MODULATION_ACTIVE.green())
-     .arg(MODULATION_ACTIVE.blue());
+const QString& Theme::getLabelHeaderStyle(){
+    static const QString title = QString(
+        "font-size: 14px; font-weight: bold; color: %1;"
+    ).arg(TEXT_PRIMARY.name()) ;
+    
+    return title ;
 }

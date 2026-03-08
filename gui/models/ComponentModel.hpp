@@ -22,8 +22,10 @@
 #include "types/ParameterType.hpp"
 #include "meta/ComponentDescriptor.hpp"
 #include "requests/CollectionRequest.hpp"
+#include "models/ModulationModel.hpp"
 
 #include <QObject>
+#include <map>
 
 class ComponentModel : public QObject {
     Q_OBJECT
@@ -33,13 +35,16 @@ private:
     ComponentType type_ ;
     ComponentDescriptor descriptor_ ;
     std::map<ParameterType, ParameterValue> parameters_ ;
+    std::map<ParameterType, ModulationModel*> modulations_ ;
 
 public:
     ComponentModel(int id, ComponentType typ);
+    ~ComponentModel();
 
     int getId() const ;
     ComponentType getType() const ;
     const ComponentDescriptor& getDescriptor() const ;
+    ModulationModel* getModulationModel(ParameterType p) const ;
 
     const ParameterValue& getParameterValue(ParameterType p) const ;
     void setParameterValue(ParameterType p, ParameterValue v, bool block = false);
@@ -51,6 +56,8 @@ private:
 signals:
     void parameterValueChanged(ParameterType p, ParameterValue v);
     void collectionUpdated(const CollectionRequest& req);
+    void modulationDepthChanged(int componentId, ParameterType p, double depth);
+    void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
         
 };
 

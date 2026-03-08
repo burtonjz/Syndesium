@@ -80,12 +80,20 @@ public:
         modData_ = {} ;
     }
 
-    BaseModulator* getModulator(){
+    BaseModulator* getModulator() const { 
         return modulator_ ;
     }
     
     ModulationData* getModulationData(){
         return &modData_ ;
+    }
+
+    ModulationStrategy getModulationStrategy() const {
+        return modStrategy_ ;
+    }
+
+    void setModulationStrategy(ModulationStrategy strat){
+        modStrategy_ = strat ;
     }
 
     virtual void resetValue() = 0 ;

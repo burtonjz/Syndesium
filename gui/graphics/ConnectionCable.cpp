@@ -16,7 +16,7 @@
  */
 
 #include "graphics/ConnectionCable.hpp"
-#include "widgets/SocketWidget.hpp"
+#include "graphics/SocketWidget.hpp"
 #include "graphics/GraphNode.hpp"
 #include "app/Theme.hpp"
 

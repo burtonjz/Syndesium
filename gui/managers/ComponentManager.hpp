@@ -22,6 +22,7 @@
 #include "models/GroupModel.hpp"
 #include "views/ComponentEditor.hpp"
 #include "views/GroupEditor.hpp"
+#include <views/ModulationEditor.hpp>
 #include "types/ComponentType.hpp"
 #include "requests/CollectionRequest.hpp"
 #include "widgets/CollectionWidget.hpp"
@@ -35,9 +36,11 @@ class ComponentManager : public QObject {
 private:
     std::map<int, ComponentModel*> models_ ;
     std::map<int, ComponentEditor*> editors_ ;
+    std::map<int, ModulationEditor*> modulationEditors_ ;
 
     std::map<int, GroupModel*> groupModels_ ;
     std::map<int, GroupEditor*> groupEditors_ ;
+    std::map<int, ModulationEditor*> groupModulationEditors_ ;
 
     int currentGroupId_ = 0 ;
 
@@ -50,18 +53,25 @@ public:
     void requestRemoveComponent(int componentId);
     void requestParameterUpdate(int componentId, ParameterType p, ParameterValue v);
     void requestCollectionUpdate(CollectionRequest req);
+    void requestModulationDepthUpdate(int componentId, ParameterType p, double depth);
+    void requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy);
 
     void renameComponent(int id, const QString& name);
     void renameGroup(int id, const QString& name);
     
     ComponentModel* getModel(int componentId) const ;
     ComponentEditor* getEditor(int componentId) const ;
+    ModulationEditor* getModulationEditor(int componentId) const ;
 
     GroupModel* getGroupModel(int groupId) const ;
     GroupEditor* getGroupEditor(int groupId) const ;
+    ModulationEditor* getGroupModulationEditor(int groupId) const ;
     
     void showEditor(int componentId);
+    void showModulationEditor(int componentId);
+
     void showGroupEditor(int groupId);
+    void showGroupModulationEditor(int groupId);
 
     void createGroup(const std::vector<int> componentIds);
     void appendToGroup(int groupId, const std::vector<int> componentIds);
@@ -79,6 +89,8 @@ public slots:
     void onApiDataReceived(const QJsonObject &json);
     void onParameterEdited(int componentId, ParameterType p, ParameterValue value);
     void onCollectionEdited(CollectionRequest req );
+    void onModulationDepthEdited(int componentId, ParameterType p, double depth);
+    void onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
 
 signals:
     void componentAdded(int componentId, ComponentType type);
@@ -87,6 +99,8 @@ signals:
     void componentGroupCreated(int groupId, const std::vector<int> componentIds); // new group id, components added
     void componentGroupRemoved(int groupId, const std::vector<int> componentIds); // existing group id, components removed
     void componentGroupUpdated(int groupId, const std::vector<int> componentIds); // existing group id, new component id list
+
+    void modulationDisconnected(int componentId, ParameterType p); // to inform the connectionManager
 };
 
 #endif // COMPONENT_MANAGER_HPP_

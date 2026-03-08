@@ -30,6 +30,26 @@ ComponentModel::ComponentModel(int id, ComponentType typ):
     for ( const auto& p : descriptor_.controllableParameters ){
         setParameterToDefault(p);
     }
+
+    for ( const auto& p : descriptor_.modulatableParameters ){
+        modulations_[p] = new ModulationModel(id_, p);
+
+        connect(
+            modulations_.at(p), &ModulationModel::modulationStrategyChanged,
+            this, &ComponentModel::modulationStrategyChanged
+        );
+
+        connect(
+            modulations_.at(p), &ModulationModel::modulationDepthChanged,
+            this, &ComponentModel::modulationDepthChanged
+        );
+    }
+}
+
+ComponentModel::~ComponentModel(){
+    for ( auto& [k,v] : modulations_ ){
+        v->deleteLater();
+    }
 }
 
 int ComponentModel::getId() const {
@@ -42,6 +62,11 @@ ComponentType ComponentModel::getType() const {
 
 const ComponentDescriptor& ComponentModel::getDescriptor() const {
     return descriptor_ ;
+}
+
+ModulationModel* ComponentModel::getModulationModel(ParameterType p) const {
+    if ( ! modulations_.at(p) ) return nullptr ;
+    return modulations_.at(p);
 }
 
 const ParameterValue& ComponentModel::getParameterValue(ParameterType p) const {

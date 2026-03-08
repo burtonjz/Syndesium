@@ -92,6 +92,9 @@ private:
     json setCollectionValue(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
+    // modulation management
+    json setModulationStrategy(int sock, const json& request);
+    json setModulationDepth(int sock, const json& request);
     
     // load functions
     bool loadCreateComponent(int sock, const json& components, std::unordered_map<int,int>& idMap);

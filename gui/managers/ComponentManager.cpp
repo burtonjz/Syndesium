@@ -72,6 +72,26 @@ void ComponentManager::requestCollectionUpdate(CollectionRequest req){
     ApiClient::instance()->sendMessage(obj); 
 }
 
+void ComponentManager::requestModulationDepthUpdate(int componentId, ParameterType p, double depth){
+    QJsonObject obj ;
+    obj["action"] = "set_modulation_depth" ;
+    obj["componentId"] = componentId ;
+    obj["parameter"] = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
+    obj["depth"] = depth ;
+
+    ApiClient::instance()->sendMessage(obj);
+}
+
+void ComponentManager::requestModulationStrategyUpdate(int componentId, ParameterType p, ModulationStrategy strategy){
+    QJsonObject obj ;
+    obj["action"] = "set_modulation_strategy" ;
+    obj["componentId"] = componentId ;
+    obj["parameter"] = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
+    obj["strategy"] = static_cast<int>(strategy) ;
+
+    ApiClient::instance()->sendMessage(obj);
+}
+
 void ComponentManager::renameComponent(int id, const QString& name){
     auto editor = getEditor(id);
 
@@ -98,6 +118,12 @@ ComponentEditor* ComponentManager::getEditor(int componentId) const {
     return editors_.at(componentId) ;
 }
 
+ModulationEditor* ComponentManager::getModulationEditor(int componentId) const {
+    if ( !modulationEditors_.contains(componentId) ) return nullptr ;
+
+    return modulationEditors_.at(componentId) ;
+}
+
 GroupModel* ComponentManager::getGroupModel(int groupId) const {
     if ( !groupModels_.contains(groupId) ) return nullptr ;
 
@@ -110,10 +136,26 @@ GroupEditor* ComponentManager::getGroupEditor(int groupId) const {
     return groupEditors_.at(groupId) ;
 }
 
+ModulationEditor* ComponentManager::getGroupModulationEditor(int groupId) const {
+    if ( !groupModulationEditors_.contains(groupId) ) return nullptr ;
+
+    return groupModulationEditors_.at(groupId) ;
+}
+
 void ComponentManager::showEditor(int componentId){
     auto it = editors_.find(componentId);
     if ( it == editors_.end() ){
         qWarning() << "requested editor for invalid component id:" << componentId ;
+        return ;
+    }
+    it->second->show();
+    it->second->raise();
+}
+
+void ComponentManager::showModulationEditor(int componentId){
+    auto it = modulationEditors_.find(componentId);
+    if ( it == modulationEditors_.end() ){
+        qWarning() << "requested modulation editor for invalid component id:" << componentId ;
         return ;
     }
     it->second->show();
@@ -130,22 +172,56 @@ void ComponentManager::showGroupEditor(int groupId){
     it->second->raise();
 }
 
+void ComponentManager::showGroupModulationEditor(int groupId){
+    auto it = groupModulationEditors_.find(groupId);
+    if ( it == groupModulationEditors_.end() ){
+        qWarning() << "requested group editor for invalid group id:" << groupId ;
+        return ;
+    }
+    it->second->show();
+    it->second->raise();
+}
+
 void ComponentManager::createGroup(const std::vector<int> componentIds){
     int id = currentGroupId_++ ;
+    QString name = QString("Group %1").arg(id);
+
     GroupModel* m = new GroupModel(id);
-    GroupEditor* g = new GroupEditor(QString("Group %1").arg(id));
+    GroupEditor* g = new GroupEditor(name);
+    ModulationEditor* me = new ModulationEditor(name);
     groupModels_[id] = m ;
     groupEditors_[id] = g ;
+    groupModulationEditors_[id] = me ;
 
     connect(
         g, &GroupEditor::parameterEdited,
         this, &ComponentManager::onParameterEdited
     );
 
+    connect(
+        me, &ModulationEditor::modulationDepthEdited,
+        this, &ComponentManager::onModulationDepthEdited
+    );
+
+    connect(
+        me, &ModulationEditor::modulationStrategyEdited,
+        this, &ComponentManager::onModulationStrategyEdited
+    );
+
+    connect(
+        me, &ModulationEditor::modulationDisconnected,
+        this, &ComponentManager::modulationDisconnected
+    );
+
     for ( auto i : componentIds ){
         auto model = getModel(i);
         m->addComponent(model);
         g->addComponent(model);
+
+        const ComponentDescriptor& d = model->getDescriptor();
+        for ( const auto& p : d.modulatableParameters ){
+            me->add(model->getModulationModel(p));
+        }
         
         // handle specialized collection widgets
         auto cw = getCollectionWidget(g->getComponentParameters(i));
@@ -163,15 +239,23 @@ void ComponentManager::createGroup(const std::vector<int> componentIds){
 void ComponentManager::appendToGroup(int groupId, const std::vector<int> componentIds){
     auto model = getGroupModel(groupId);
     auto editor = getGroupEditor(groupId);
-    
-    if ( !model || !editor ){
+    auto modEditor = getGroupModulationEditor(groupId);
+
+    if ( !model || !editor || !modEditor ){
         qWarning() << "Could not find group editor with Id " << groupId ;
         return ;
     }
     
     for ( auto id : componentIds ){
-        model->addComponent(getModel(id));
-        editor->addComponent(getModel(id));
+        auto m = getModel(id);
+
+        model->addComponent(m);
+        editor->addComponent(m);
+
+        const ComponentDescriptor& d = m->getDescriptor();
+        for ( const auto& p : d.modulatableParameters ){
+            modEditor->add(m->getModulationModel(p));
+        }
     }
 
     emit componentGroupUpdated(groupId, model->getComponents());
@@ -180,33 +264,60 @@ void ComponentManager::appendToGroup(int groupId, const std::vector<int> compone
 void ComponentManager::removeGroup(int groupId){
     auto model = getGroupModel(groupId);
     auto editor = getGroupEditor(groupId);
+    auto modEditor = getGroupModulationEditor(groupId);
 
-    if ( !model || !editor ) return ;
+    if ( !model || !editor || !modEditor ) return ;
 
     emit componentGroupRemoved(groupId, model->getComponents());
 
     groupModels_.erase(groupId);
     groupEditors_.erase(groupId);
+    groupModulationEditors_.erase(groupId);
     
     model->deleteLater();
     editor->deleteLater();    
+    modEditor->deleteLater();
 }
 
 void ComponentManager::addComponent(int componentId, ComponentType type){
-    models_[componentId] = new ComponentModel(componentId, type);
+    auto model = new ComponentModel(componentId, type);
+    models_[componentId] = model ;
 
-    auto editor = new ComponentEditor(models_[componentId]);
+    auto editor = new ComponentEditor(model);
     editors_[componentId] = editor ;
 
-    // editors must communicate parameter edits
+    auto modEditor = new ModulationEditor(editor->getName());
+    modulationEditors_[componentId] = modEditor ;
+
+    const ComponentDescriptor& d = model->getDescriptor();
+    for ( const auto& p : d.modulatableParameters ){
+        modEditor->add(model->getModulationModel(p));
+    }
+
+    // handle editor communications
     connect(
         editors_[componentId], &ComponentEditor::parameterEdited,
         this, &ComponentManager::onParameterEdited
     );
+
+    connect(
+        modEditor, &ModulationEditor::modulationDepthEdited,
+        this, &ComponentManager::onModulationDepthEdited
+    );
+
+    connect(
+        modEditor, &ModulationEditor::modulationStrategyEdited,
+        this, &ComponentManager::onModulationStrategyEdited
+    );
+
+    connect(
+        modEditor, &ModulationEditor::modulationDisconnected,
+        this, &ComponentManager::modulationDisconnected
+    );
     
+    // handle collection widget if exists
     auto cw = getCollectionWidget(editor->getComponentParameters());
     if ( cw ){
-        qDebug() << "collection edits connecting!";
         connect(
             cw, &CollectionWidget::collectionEdited,
             this, &ComponentManager::onCollectionEdited
@@ -218,6 +329,7 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
 
 void ComponentManager::removeComponent(int componentId){
     auto it = models_.find(componentId);
+
     if ( it == models_.end() ){
         qWarning() << "could not find model for component to delete";
         return ;
@@ -225,8 +337,10 @@ void ComponentManager::removeComponent(int componentId){
 
     models_[componentId]->deleteLater();
     editors_[componentId]->deleteLater();
+    modulationEditors_[componentId]->deleteLater();
     models_.erase(componentId);
     editors_.erase(componentId);
+    modulationEditors_.erase(componentId);
 
     emit componentRemoved(componentId);
 }
@@ -300,6 +414,7 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
                 << ". Will not process set parameter request" ;
             return ;
         }
+
         ParameterType p = static_cast<ParameterType>(json["parameter"].toInt());
         
         // dispatch to set parameter value with correct variant
@@ -319,6 +434,50 @@ void ComponentManager::onApiDataReceived(const QJsonObject &json){
         return ;
     }
 
+    if ( action == "set_modulation_depth" && success ){
+        int id = json["componentId"].toInt();
+        auto it = models_.find(id);
+        if ( it == models_.end() ){
+            qWarning() << "Could not find model with Component ID" << id 
+                << ". Will not process modulation depth request" ;
+            return ;
+        }
+
+        ParameterType p = parameterFromString(json["parameter"].toString().toStdString());
+        ModulationModel* m = it->second->getModulationModel(p);
+        if ( !m ){
+            qWarning() << "Could not find Modulation Model for Parameter " 
+                << GET_PARAMETER_TRAIT_MEMBER(p, name) 
+                << "from Component Model: " << it->second ;
+            return ;
+        }
+
+        m->setDepth(json["depth"].toDouble());
+        return ;
+    }
+
+    if ( action == "set_modulation_strategy" && success ){
+        int id = json["componentId"].toInt();
+        auto it = models_.find(id);
+        if ( it == models_.end() ){
+            qWarning() << "Could not find model with Component ID" << id 
+                << ". Will not process modulation strategy request" ;
+            return ;
+        }
+
+        ParameterType p = parameterFromString(json["parameter"].toString().toStdString());
+        ModulationModel* m = it->second->getModulationModel(p);
+        if ( !m ){
+            qWarning() << "Could not find Modulation Model for Parameter " 
+                << GET_PARAMETER_TRAIT_MEMBER(p, name) 
+                << "from Component Model: " << it->second ;
+            return ;
+        }
+
+        m->setStrategy(static_cast<ModulationStrategy>(json["strategy"].toInt()));
+        return ;
+    }
+
     if ( success && handleCollectionApiResponse(json) ){
         return ;
     }
@@ -331,4 +490,12 @@ void ComponentManager::onParameterEdited(int componentId, ParameterType p, Param
 void ComponentManager::onCollectionEdited(CollectionRequest req ){
     qDebug() << "collection edit request received!";
     requestCollectionUpdate(req);
+}
+
+void ComponentManager::onModulationDepthEdited(int componentId, ParameterType p, double depth){
+    requestModulationDepthUpdate(componentId, p, depth);
+}
+
+void ComponentManager::onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy){
+    requestModulationStrategyUpdate(componentId, p, strategy);
 }

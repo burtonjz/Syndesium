@@ -15,51 +15,56 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef GROUP_EDITOR_HPP_
-#define GROUP_EDITOR_HPP_
+#ifndef MODULATION_EDITOR_HPP_
+#define MODULATION_EDITOR_HPP_
 
-#include "widgets/ComponentParameters.hpp"
+#include "models/ModulationModel.hpp"
 #include "types/ParameterType.hpp"
+#include "widgets/ModulationControl.hpp"
 
 #include <QWidget>
+#include <QLabel>
 #include <QPushButton>
 #include <QGridLayout>
-#include <unordered_map>
+#include <map>
+#include <utility>
+#include <vector>
 
-// forward declarations
-class ComponentModel ;
-
-class GroupEditor : public QWidget {
+class ModulationEditor : public QWidget {
     Q_OBJECT
 
 private:
-    std::unordered_map<int, ComponentParameters*> params_ ;
-    QLabel* name_ ;
-    QGridLayout* paramsLayout_ ;
+    std::map<std::pair<int, ParameterType>, ModulationControl*> modulationControls_ ;
+    std::vector<std::pair<int, ParameterType>> controlOrder_ ;
+
+    QLabel* editorLabel_ ;
+    QGridLayout* ctrlLayout_ ;
     QPushButton* closeButton_ ;
 
 public:
-    explicit GroupEditor(const QString& name, QWidget* parent = nullptr);
+    ModulationEditor(QString name, QWidget* parent = nullptr);
+    ~ModulationEditor();
+
+    void add(ModulationModel* model);
+    void remove(int componentId, ParameterType p);
 
     void setName(const QString& name);
 
-    void addComponent(ComponentModel* model);
-    void removeComponent(ComponentModel* model);
-    ComponentParameters* getComponentParameters(int componentId);
-    
 protected:
     void changeEvent(QEvent *event) override ;
-
+    
 private:
-    void setupLayout();
-    void relayoutParams();
+    void updateLayout();
     void closeEvent(QCloseEvent* event) override ;
-
-signals:
-    void parameterEdited(int componentId, ParameterType p, ParameterValue value);
-
+    
 private slots:
     void onCloseButtonClicked();
+
+signals:
+    void modulationDepthEdited(int componentId, ParameterType p, double depth);
+    void modulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
+    void modulationDisconnected(int componentId, ParameterType p);
+
 };
 
-#endif // GROUP_EDITOR_HPP_
+#endif // MODULATION_EDITOR_HPP_

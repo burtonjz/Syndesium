@@ -50,9 +50,6 @@ void ApiHandler::initialize(Engine* engine){
     engine_ = engine ;
 
     // register api handler functions
-
-
-
     handlers_["get_audio_devices"] = [this](int sock, const json& request){ return getAudioDevices(sock, request); };
     handlers_["get_midi_devices"] = [this](int sock, const json& request){ return getMidiDevices(sock, request); };
     handlers_["set_audio_device"] = [this](int sock, const json& request){ return setAudioDevice(sock, request); };
@@ -79,7 +76,8 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["reset_collection"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
     handlers_["get_collection_range"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
     handlers_["set_collection_range"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
-    
+    handlers_["set_modulation_strategy"] = [this](int sock, const json& request){ return setModulationStrategy(sock, request); };
+    handlers_["set_modulation_depth"] = [this](int sock, const json& request){ return setModulationDepth(sock, request); };
 }
 
 void ApiHandler::start(){
@@ -858,6 +856,81 @@ json ApiHandler::getCollectionValueRange(int sock, BaseComponent* c, const Colle
     return sendApiResponse(sock, response);
 }
 
+json ApiHandler::setModulationStrategy(int sock, const json& request){
+    ComponentId id ;
+    ParameterType p ;
+    ModulationStrategy s ;
+    json response = request ;
+
+    try {
+        id = request["componentId"];
+        p = parameterFromString(request["parameter"]);
+        s = static_cast<ModulationStrategy>(request["strategy"]);
+    } catch (const std::exception& e){
+        json response = request ;
+        return sendApiResponse(sock, response, 
+            "failed to parse request to update modulation strategy:" + std::string(e.what())
+        );
+    }
+
+    auto component = engine_->componentManager.getRaw(id);
+    if (!component){
+        json response = request ;
+        return sendApiResponse(sock, response,
+            "could not find component"
+        );
+    }
+
+    const std::vector<ParameterType>&  modulatable = ComponentRegistry::getComponentDescriptor(
+        component->getType()).modulatableParameters ;
+    auto it = std::find(modulatable.begin(), modulatable.end(), p);
+    if ( it == modulatable.end() ){
+        return sendApiResponse(sock, response,
+            "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
+        );
+    }
+
+    component->setParameterModulationStrategy(p, s);
+    return sendApiResponse(sock, response);
+}
+
+json ApiHandler::setModulationDepth(int sock, const json& request){
+    ComponentId id ;
+    ParameterType p ;
+    double depth ;
+    json response = request ;
+
+    try {
+        id = request["componentId"];
+        p = parameterFromString(request["parameter"]);
+        depth = request["depth"];
+    } catch (const std::exception& e){
+        json response = request ;
+        return sendApiResponse(sock, response, 
+            "failed to parse request to update modulation strategy:" + std::string(e.what())
+        );
+    }
+
+    auto component = engine_->componentManager.getRaw(id);
+    if (!component){
+        json response = request ;
+        return sendApiResponse(sock, response,
+            "could not find component"
+        );
+    }
+    
+    const std::vector<ParameterType>&  modulatable = ComponentRegistry::getComponentDescriptor(
+        component->getType()).modulatableParameters ;
+    auto it = std::find(modulatable.begin(), modulatable.end(), p);
+    if ( it == modulatable.end() ){
+        return sendApiResponse(sock, response,
+            "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
+        );
+    }
+
+    component->setParameterDepth(p, depth);
+    return sendApiResponse(sock, response);
+}
 
 bool ApiHandler::routeConnectionRequest(ConnectionRequest request){
     if ( request.inboundSocket == SocketType::MidiInbound && request.outboundSocket == SocketType::MidiOutbound )

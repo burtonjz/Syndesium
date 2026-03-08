@@ -20,6 +20,7 @@
 #include "app/Theme.hpp"
 
 #include <QScrollArea>
+#include <QCloseEvent>
 
 GroupEditor::GroupEditor(const QString& name, QWidget* parent):
     QWidget(nullptr),
@@ -81,7 +82,7 @@ ComponentParameters* GroupEditor::getComponentParameters(int componentId){
 }
 
 void GroupEditor::changeEvent(QEvent *event){
-    // handle close events on focus loss, where focus was not lost to a child window.
+    // handle close events on focus loss
     if ( event->type() == QEvent::ActivationChange && !isActiveWindow() ){
         QWidget* active = QApplication::activeWindow();
         if ( !active ){
@@ -140,6 +141,11 @@ void GroupEditor::relayoutParams(){
     }
 
     adjustSize();
+}
+
+void GroupEditor::closeEvent(QCloseEvent* event){
+    event->ignore();
+    hide();
 }
 
 void GroupEditor::onCloseButtonClicked(){

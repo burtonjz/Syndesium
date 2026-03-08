@@ -91,6 +91,7 @@ void PolyOscillator::onKeyPressed(const ActiveNote* anote, bool rePress){
         osc->addReferenceParameters(*parameters_);
         osc->setFrequency(anote->note.getFrequency());
         osc->setAmplitude(anote->note.getMidiVelocity() / 127.0 );
+        setOverrides(osc);
         
         // if there are modulators that need MIDI_NOTE, the module needs to make sure that gets set
         for ( auto p : osc->getParameters()->getModulatableParameters()){
@@ -129,6 +130,28 @@ void PolyOscillator::updateParameters(){
 
 BaseModulator* PolyOscillator::getParameterModulator(ParameterType p) const {
     return modulators_[static_cast<size_t>(p)] ;
+}
+
+void PolyOscillator::setParameterDepth(ParameterType p, double depth){
+    auto parentParam = parameters_->getParameter(p);
+    if ( parentParam ){
+        BaseComponent::setParameterDepth(p, depth );
+        return ;
+    }
+
+    depthOverrides_[static_cast<int>(p)] = depth ;
+    childPool_.forEachActive(&Oscillator::setParameterDepth, p, depth);
+}
+
+void PolyOscillator::setParameterModulationStrategy(ParameterType p, ModulationStrategy strat){
+    auto parentParam = parameters_->getParameter(p);
+    if ( parentParam ){
+        BaseComponent::setParameterModulationStrategy(p, strat);
+        return ;
+    }
+
+    strategyOverrides_[static_cast<int>(p)] = strat ;
+    childPool_.forEachActive(&Oscillator::setParameterModulationStrategy, p, strat);
 }
 
 void PolyOscillator::onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d){
@@ -171,4 +194,20 @@ void PolyOscillator::updateModulationInitialValue(Oscillator* osc){
             }
         }
     } 
+}
+
+void PolyOscillator::setOverrides(Oscillator* osc){
+    if ( ! osc ) return ;
+
+    // modulation depth & strategy
+    for ( const auto& p : osc->getParameters()->getModulatableParameters() ){
+        int idx = static_cast<int>(p);
+        if ( depthOverrides_.at(idx).has_value() ){
+            osc->setParameterDepth(p, depthOverrides_.at(idx).value());
+        }
+
+        if ( strategyOverrides_.at(idx).has_value() ){
+            osc->setParameterModulationStrategy(p, strategyOverrides_.at(idx).value());
+        }
+    }
 }

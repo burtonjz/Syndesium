@@ -18,7 +18,7 @@
 #ifndef I_SOCKET_LOOKUP_HPP_
 #define I_SOCKET_LOOKUP_HPP_
 
-#include "widgets/SocketWidget.hpp"
+#include "graphics/SocketWidget.hpp"
 #include <QPointF>
 
 class ISocketLookup {
