@@ -15,7 +15,7 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include "widgets/SocketWidget.hpp"
+#include "graphics/SocketWidget.hpp"
 #include "graphics/GraphNode.hpp"
 #include "app/Theme.hpp"
 

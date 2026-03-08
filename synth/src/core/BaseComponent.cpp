@@ -71,6 +71,26 @@ void BaseComponent::removeParameterModulation(ParameterType p){
     onRemoveParameterModulation(p);
 }
 
+void BaseComponent::setParameterDepth(ParameterType p, double depth){
+    if ( ! parameters_ ) return ;
+
+    auto d = parameters_->getParameter(p)->getDepth();
+
+    if ( !d ) return ;
+    d->setValue(depth);
+
+}
+
+void BaseComponent::setParameterModulationStrategy(ParameterType p, ModulationStrategy strat){
+    if ( ! parameters_ ) return ;
+
+    auto param = parameters_->getParameter(p);
+
+    if ( ! param ) return ;
+
+    param->setModulationStrategy(strat);
+}
+
 void BaseComponent::updateParameters(){
     if (parameters_) parameters_->modulate() ;
 }

@@ -40,6 +40,7 @@ private:
 
     std::map<int, GroupModel*> groupModels_ ;
     std::map<int, GroupEditor*> groupEditors_ ;
+    std::map<int, ModulationEditor*> groupModulationEditors_ ;
 
     int currentGroupId_ = 0 ;
 
@@ -60,12 +61,17 @@ public:
     
     ComponentModel* getModel(int componentId) const ;
     ComponentEditor* getEditor(int componentId) const ;
+    ModulationEditor* getModulationEditor(int componentId) const ;
 
     GroupModel* getGroupModel(int groupId) const ;
     GroupEditor* getGroupEditor(int groupId) const ;
+    ModulationEditor* getGroupModulationEditor(int groupId) const ;
     
     void showEditor(int componentId);
+    void showModulationEditor(int componentId);
+
     void showGroupEditor(int groupId);
+    void showGroupModulationEditor(int groupId);
 
     void createGroup(const std::vector<int> componentIds);
     void appendToGroup(int groupId, const std::vector<int> componentIds);
@@ -93,6 +99,8 @@ signals:
     void componentGroupCreated(int groupId, const std::vector<int> componentIds); // new group id, components added
     void componentGroupRemoved(int groupId, const std::vector<int> componentIds); // existing group id, components removed
     void componentGroupUpdated(int groupId, const std::vector<int> componentIds); // existing group id, new component id list
+
+    void modulationDisconnected(int componentId, ParameterType p); // to inform the connectionManager
 };
 
 #endif // COMPONENT_MANAGER_HPP_

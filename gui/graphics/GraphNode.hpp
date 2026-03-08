@@ -25,7 +25,7 @@
 #include <initializer_list>
 #include <vector>
 
-#include "widgets/SocketWidget.hpp"
+#include "graphics/SocketWidget.hpp"
 
 class GraphNode :  public QGraphicsObject {
     Q_OBJECT

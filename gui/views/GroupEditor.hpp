@@ -53,6 +53,7 @@ protected:
 private:
     void setupLayout();
     void relayoutParams();
+    void closeEvent(QCloseEvent* event) override ;
 
 signals:
     void parameterEdited(int componentId, ParameterType p, ParameterValue value);

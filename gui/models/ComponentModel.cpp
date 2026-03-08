@@ -32,7 +32,7 @@ ComponentModel::ComponentModel(int id, ComponentType typ):
     }
 
     for ( const auto& p : descriptor_.modulatableParameters ){
-        modulations_.at(p) = new ModulationModel(id_, p);
+        modulations_[p] = new ModulationModel(id_, p);
 
         connect(
             modulations_.at(p), &ModulationModel::modulationStrategyChanged,

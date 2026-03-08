@@ -54,12 +54,16 @@ ComponentParameters* ComponentEditor::getComponentParameters() const {
     return params_ ;
 }
 
+QString ComponentEditor::getName() const {
+    return name_->text();
+}
+
 void ComponentEditor::setName(const QString& name){
     name_->setText(name);
 }
 
 void ComponentEditor::changeEvent(QEvent *event){
-    // handle close events on focus loss, where focus was not lost to a child window.
+    // handle close events on focus loss
     if ( event->type() == QEvent::ActivationChange && !isActiveWindow() ){
         QWidget* active = QApplication::activeWindow();
         if ( !active ){

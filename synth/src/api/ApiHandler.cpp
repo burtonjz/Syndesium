@@ -881,29 +881,29 @@ json ApiHandler::setModulationStrategy(int sock, const json& request){
         );
     }
 
-    auto parameters = component->getParameters();
-    auto modulatable = parameters->getModulatableParameters();
+    const std::vector<ParameterType>&  modulatable = ComponentRegistry::getComponentDescriptor(
+        component->getType()).modulatableParameters ;
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
         return sendApiResponse(sock, response,
             "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
         );
     }
-    
-    parameters->getParameter(p)->setModulationStrategy(s);
+
+    component->setParameterModulationStrategy(p, s);
     return sendApiResponse(sock, response);
 }
 
 json ApiHandler::setModulationDepth(int sock, const json& request){
     ComponentId id ;
     ParameterType p ;
-    double d ;
+    double depth ;
     json response = request ;
 
     try {
         id = request["componentId"];
         p = parameterFromString(request["parameter"]);
-        d = request["depth"];
+        depth = request["depth"];
     } catch (const std::exception& e){
         json response = request ;
         return sendApiResponse(sock, response, 
@@ -918,17 +918,17 @@ json ApiHandler::setModulationDepth(int sock, const json& request){
             "could not find component"
         );
     }
-
-    auto parameters = component->getParameters();
-    auto modulatable = parameters->getModulatableParameters();
+    
+    const std::vector<ParameterType>&  modulatable = ComponentRegistry::getComponentDescriptor(
+        component->getType()).modulatableParameters ;
     auto it = std::find(modulatable.begin(), modulatable.end(), p);
     if ( it == modulatable.end() ){
         return sendApiResponse(sock, response,
             "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
         );
     }
-    
-    parameters->getParameter(p)->getDepth()->setValue(d);
+
+    component->setParameterDepth(p, depth);
     return sendApiResponse(sock, response);
 }
 

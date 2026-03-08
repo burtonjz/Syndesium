@@ -16,7 +16,7 @@
  */
 
 #include "graphics/ComponentNode.hpp"
-#include "widgets/SocketWidget.hpp"
+#include "graphics/SocketWidget.hpp"
 #include "types/ParameterType.hpp"
 
 #include <QGraphicsSceneMouseEvent>

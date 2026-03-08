@@ -41,6 +41,8 @@ public:
     ~ComponentEditor() override ;
 
     ComponentParameters* getComponentParameters() const ;
+
+    QString getName() const ;
     void setName(const QString& name);
 
 protected:
@@ -49,9 +51,6 @@ protected:
 private:
     void setupLayout();
     void closeEvent(QCloseEvent* event) override ;
-
-    void requestCollectionItemCreate(int index, std::function<void(bool)> callback);
-    void requestCollectionItemDelete(int index, std::function<void(bool)> callback);
 
 signals:
     // passthrough for ComponentParameters

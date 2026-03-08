@@ -22,7 +22,7 @@ from pathlib import Path
 def generate_component_include_file():
     componentDir = Path(__file__).parent 
     components = os.listdir(componentDir)
-    includes = "\n".join(f'#include "components/{c}"' for c in components if c.endswith(".hpp"))
+    includes = "\n".join( f'#include "components/{c}"' for c in components if c.endswith(".hpp") and c != "Components.hpp" )
 
     templatePath = componentDir / "Components.hpp.in"
     with open(templatePath, "r") as f:

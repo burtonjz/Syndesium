@@ -18,15 +18,43 @@
 #ifndef MODULATION_CONTROL_HPP_
 #define MODULATION_CONTROL_HPP_
 
+#include "types/ParameterType.hpp"
+#include "widgets/ParameterWidget.hpp"
+#include "widgets/ModulationIndicator.hpp"
+
 #include <QWidget>
+#include <QLabel>
+#include <QComboBox>
+#include <QPushButton>
 
 class ModulationControl : public QWidget {
     Q_OBJECT
 
 private:
-    
+    int componentId_ ;
+    ParameterType parameter_ ;
+
+    QLabel* paramLabel_ ;
+    SliderWidget* depthSlider_ ;
+    QComboBox* strategySelector_ ;
+    ModulationIndicator* modIndicator_ ;
+    QPushButton* disconnectBtn_ ;
 
 public:
+    ModulationControl(int componentId, ParameterType p, QWidget* parent = nullptr);
+
+private:
+    void setupLayout();
+
+public slots:
+    void onModelDepthChanged(int componentId, ParameterType p, double depth);
+    void onModelStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
+    void onModelConnectionUpdated(int componentId, ParameterType p, bool active);
+
+signals:
+    void modulationDepthEdited(int componentId, ParameterType p, double depth);
+    void modulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
+    void modulationDisconnected(int componentId, ParameterType p);
 
 };
 

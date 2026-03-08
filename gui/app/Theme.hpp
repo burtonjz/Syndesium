@@ -30,7 +30,14 @@ public:
     ==================THEME COLORS==================
     ================================================ 
     */
+    // UI Colors
+    static const QColor BACKGROUND_DARK ;
+    static const QColor BACKGROUND_MEDIUM ;
+    static const QColor BACKGROUND_LIGHT ;
     static const QColor GRAPH_GRID_COLOR ;
+    static const QColor TEXT_PRIMARY ;
+    static const QColor TEXT_SECONDARY ;
+    static const QColor ACCENT_COLOR ;
 
     // Cable/Connection Colors
     static const QColor CABLE_SHADOW ;
@@ -53,15 +60,6 @@ public:
     static const QColor COMPONENT_BACKGROUND_HOVER ;
     static const QColor COMPONENT_TEXT ;
     
-    // UI Colors
-    static const QColor BACKGROUND_DARK ;
-    static const QColor BACKGROUND_MEDIUM ;
-    static const QColor BACKGROUND_LIGHT ;
-    static const QColor TEXT_PRIMARY ;
-    static const QColor TEXT_SECONDARY ;
-    static const QColor ACCENT_COLOR ;
-    
-    // Piano Roll
     static const QColor PIANO_ROLL_KEY_WHITE ;
     static const QColor PIANO_ROLL_KEY_BLACK ;
     static const QColor PIANO_ROLL_KEY_BORDER ;
@@ -73,7 +71,6 @@ public:
     static const QColor PIANO_ROLL_GRID_PRIMARY ;
     static const QColor PIANO_ROLL_GRID_SECONDARY ;
 
-    // Switch Widget
     static const QColor SWITCH_WIDGET_ON_COLOR ;
     static const QColor SWITCH_WIDGET_OFF_COLOR ;
     static const QColor SWITCH_WIDGET_THUMB_COLOR_ON ;
@@ -84,24 +81,23 @@ public:
     static const QColor ANALYZER_LINE_COLOR ;
     static const QColor ANALYZER_GRID_COLOR ;
 
-
     // Modulation indicator
     static const QColor MODULATION_ACTIVE ;
+    static const QColor MODULATION_INACTIVE ;
     
     // Apply theme to application
     static void applyDarkTheme();
     
     // Get stylesheet snippets
     static QString getComponentStyle(bool selected = false, bool hovered = false);
-    static QString getModulationStyle();
 
     /*
     =======================================================
-    =============== THEME LAYOUT / CONTROLS ===============
+    =============== THEME SPACING / CONTROLS ==============
     =======================================================
     */
 
-    static constexpr const char* DEFAULT_WINDOW_TITLE = "Syndesium" ;
+    static constexpr const char* DEFAULT_WINDOW_TITLE = "Lutherie" ;
 
     static constexpr int   GRAPH_DOUBLE_CLICK_MS = 300 ;
     static constexpr qreal GRAPH_GRID_SIZE = 20.0 ;
@@ -158,7 +154,16 @@ public:
 
     static constexpr int GROUP_EDITOR_GRID_MAX_COLUMNS = 3 ;
     
-    static constexpr int DRAG_HANDLE_HEIGHT = 20 ;
+    static constexpr int    MODULATION_INDICATOR_SIZE = 16 ; 
+
+    /*
+    =======================================================
+    =============== STYLE SHEET DEFINITIONS ===============
+    =======================================================
+    */
+    static const QString& getLabelTitleStyle();
+    static const QString& getLabelHeaderStyle();
+
 };
 
 #endif // __UI_THEME_HPP_

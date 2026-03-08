@@ -20,7 +20,7 @@
 
 #include <QGraphicsPathItem>
 
-#include "widgets/SocketWidget.hpp"
+#include "graphics/SocketWidget.hpp"
 #include "requests/ConnectionRequest.hpp"
 
 class ConnectionCable : public QGraphicsPathItem {

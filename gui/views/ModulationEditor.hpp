@@ -18,14 +18,52 @@
 #ifndef MODULATION_EDITOR_HPP_
 #define MODULATION_EDITOR_HPP_
 
+#include "models/ModulationModel.hpp"
+#include "types/ParameterType.hpp"
+#include "widgets/ModulationControl.hpp"
+
 #include <QWidget>
+#include <QLabel>
+#include <QPushButton>
+#include <QGridLayout>
+#include <map>
+#include <utility>
+#include <vector>
 
 class ModulationEditor : public QWidget {
     Q_OBJECT
 
 private:
+    std::map<std::pair<int, ParameterType>, ModulationControl*> modulationControls_ ;
+    std::vector<std::pair<int, ParameterType>> controlOrder_ ;
+
+    QLabel* editorLabel_ ;
+    QGridLayout* ctrlLayout_ ;
+    QPushButton* closeButton_ ;
 
 public:
+    ModulationEditor(QString name, QWidget* parent = nullptr);
+    ~ModulationEditor();
+
+    void add(ModulationModel* model);
+    void remove(int componentId, ParameterType p);
+
+    void setName(const QString& name);
+
+protected:
+    void changeEvent(QEvent *event) override ;
+    
+private:
+    void updateLayout();
+    void closeEvent(QCloseEvent* event) override ;
+    
+private slots:
+    void onCloseButtonClicked();
+
+signals:
+    void modulationDepthEdited(int componentId, ParameterType p, double depth);
+    void modulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
+    void modulationDisconnected(int componentId, ParameterType p);
 
 };
 

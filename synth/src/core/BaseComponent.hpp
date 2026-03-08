@@ -40,7 +40,7 @@ protected:
     ComponentId id_ ;
     ComponentType type_ ;
     ParameterMap* parameters_ ; 
-    std::unordered_set<BaseModule*> modulationModules_ ;
+    std::unordered_set<BaseModule*> modulationModules_ ; // used only for tracking, see SignalChain for context
 
 public:
     BaseComponent(ComponentId id = -1, ComponentType type = ComponentType::Unknown);
@@ -52,9 +52,16 @@ public:
     ParameterMap* getParameters() { return parameters_ ;}
     std::unordered_set<BaseModule*>& getModulationInputs() ;
 
+    /* depth/modulation are managed from component instead of parameterMap, to allow for
+     parent/child component setups. Non-virtual functions in this section have
+     default behaviors that should ALWAYS happen and custom functionality happens through
+     protected NVI functions 
+    */
     void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} );
     void removeParameterModulation(ParameterType p);
     virtual BaseModulator* getParameterModulator(ParameterType p) const ;
+    virtual void setParameterDepth(ParameterType p, double depth);
+    virtual void setParameterModulationStrategy(ParameterType p, ModulationStrategy strat);
 
     // this function runs modulation on all internal parameters
     virtual void updateParameters();

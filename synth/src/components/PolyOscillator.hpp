@@ -34,9 +34,11 @@ private:
     RTMap<uint8_t, Oscillator*, 128> children_ ;
     FixedPool<Oscillator, 128> childPool_ ;
 
-    // modulation
+    // child modulation/parameter storage
     std::array<BaseModulator*, N_PARAMETER_TYPES> modulators_ ;
     std::array<ModulationData, N_PARAMETER_TYPES> modulationData_ ;
+    std::array<std::optional<double>, N_PARAMETER_TYPES> depthOverrides_ ;
+    std::array<std::optional<ModulationStrategy>, N_PARAMETER_TYPES> strategyOverrides_ ;
     
 public:
     // Constructors
@@ -56,12 +58,15 @@ public:
     // BaseComponent Overrides
     void updateParameters() override ;
     BaseModulator* getParameterModulator(ParameterType p) const  override ;
+    void setParameterDepth(ParameterType p, double depth) override ;
+    void setParameterModulationStrategy(ParameterType p, ModulationStrategy strat) override ;
     void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} ) override ;
     void onRemoveParameterModulation(ParameterType p) override ;
 
     void updateGain();
 private:
     void updateModulationInitialValue(Oscillator* osc);
+    void setOverrides(Oscillator* osc);
 
 };  
 

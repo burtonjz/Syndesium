@@ -64,7 +64,7 @@ To add a ParameterType, the following is required:
     X(START_POSITION) \
     X(DURATION) \
     X(SCALE_NOTE) \
-    X(SCALE_TYPE) \
+    X(SCALE_TYPE)
 
 /**
  * @brief types of parameters that might exist within any given module
@@ -87,14 +87,24 @@ every ParameterType will store a default modulation strategy
 based on the type of variable it is. This can be overridden in
 a Parameter instance. 
 */ 
-enum class ModulationStrategy {
-    ADDITIVE,
-    MULTIPLICATIVE, 
-    EXPONENTIAL,
-    LOGARITHMIC,
-    REPLACE,
-    NONE
+#define MODULATION_STRATEGY_LIST \
+    X(ADDITIVE) \
+    X(MULTIPLICATIVE) \
+    X(EXPONENTIAL) \
+    X(LOGARITHMIC) \
+    X(REPLACE) \
+    X(NONE) 
+
+enum class ModulationStrategy : uint8_t {
+    #define X(name) \
+        name,
+        MODULATION_STRATEGY_LIST
+    #undef X
+    N_STRATEGIES
 };
+
+ModulationStrategy modStrategyFromString(std::string str);
+std::string modStrategyToString(ModulationStrategy str);
 
 // Parameter Traits access
 template <ParameterType Type> struct ParameterTraits ;

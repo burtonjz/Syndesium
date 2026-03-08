@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2025 Jared Burton
+ * Copyright (C) 2026 Jared Burton
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -15,33 +15,28 @@
  * along with this program. If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef COMPONENT_NODE_HPP_
-#define COMPONENT_NODE_HPP_
+#ifndef MODULATION_INDICATOR_HPP_
+#define MODULATION_INDICATOR_HPP_
 
-#include <QGraphicsObject>
-#include <QPainter>
-#include <QString>
-#include <QStyleOptionGraphicsItem>
-#include <qnamespace.h>
+#include <QWidget>
 
-#include "models/ComponentModel.hpp"
-#include "graphics/GraphNode.hpp"
-#include "graphics/SocketWidget.hpp"
-
-class ComponentNode :  public GraphNode {
+class ModulationIndicator : public QWidget {
     Q_OBJECT
 
 private:
-    ComponentModel* model_ ;
-    std::vector<SocketSpec> specs_ ;
+    bool active_;
 
 public:
-    explicit ComponentNode(ComponentModel* model, QGraphicsItem* parent = nullptr);
-    ~ComponentNode() = default ;
+    explicit ModulationIndicator(QWidget* parent = nullptr);
+    bool isActive() const;
 
-    ComponentModel* getModel() const ;
-    const std::vector<SocketSpec>& getSpecs() const ;
-    
+private:
+    void updateStyle();
+
+public slots:
+    void setActive(bool active);
+
 };
 
-#endif // COMPONENT_NODE_HPP_
+
+#endif // MODULATION_INDICATOR_HPP_
