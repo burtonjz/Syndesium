@@ -55,6 +55,14 @@ SocketWidget* ConnectionCable::getOutboundSocket() const {
     return nullptr ;
 }
 
+const std::optional<ParameterType>& ConnectionCable::getModulatedParameter() const {
+    return modulated_ ;
+}
+
+void ConnectionCable::setModulatedParameter(ParameterType p){
+    modulated_ = p ;
+}
+
 void ConnectionCable::setFromSocket(SocketWidget* socket){
     fromSocket_ = socket ;
     updatePath();
@@ -140,8 +148,11 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
         r.inboundID = inboundSocket->getSpec().componentId ;
         r.inboundSocket = inboundSocket->getSpec().type ;
         r.inboundIdx = inboundSocket->getSpec().idx ;
-        if ( inboundSocket->getSpec().type == SocketType::ModulationInbound ){
-            r.inboundParameter = inboundSocket->getSpec().modulatedParameter ;
+        if ( 
+            inboundSocket->getSpec().type == SocketType::ModulationInbound &&
+            modulated_.has_value()
+        ){
+            r.inboundParameter = modulated_.value() ;
         }
     }
         

@@ -48,9 +48,9 @@ void ConnectionManager::loadConnection(const ConnectionRequest& req){
     SocketWidget* inboundSocket = socketLookup_->findSocket({
         .type = req.inboundSocket, 
         .componentId = req.inboundID,
-        .idx =  req.inboundIdx,
-        .modulatedParameter = req.inboundParameter
+        .idx =  req.inboundIdx
     });
+
     SocketWidget* outboundSocket = socketLookup_->findSocket({
         .type = req.outboundSocket,
         .componentId = req.outboundID,
@@ -63,6 +63,22 @@ void ConnectionManager::loadConnection(const ConnectionRequest& req){
     }
 
     emit connectionAdded(req);
+}
+
+std::vector<ParameterType> ConnectionManager::getModulationConnections(int componentId) const {
+    std::vector<ParameterType> sc ;
+
+    for ( const auto& c : connections_ ){
+        if ( 
+            c.inboundSocket == SocketType::ModulationInbound && 
+            c.inboundID == componentId &&
+            c.inboundParameter.has_value()
+        ){
+            sc.push_back(c.inboundParameter.value());
+        } 
+    }
+
+    return sc ;
 }
 
 void ConnectionManager::requestConnectionEvent(const ConnectionRequest& req){

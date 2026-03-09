@@ -120,6 +120,8 @@ public  slots:
 
     void onNodeZUpdate();
 
+    void ondragCableParameterNeeded(SocketWidget* socket); // for completing modulation connections
+
 signals:
     void wasModified();
 

@@ -25,7 +25,6 @@
 #include <optional>
 
 #include "types/SocketType.hpp"
-#include "types/ParameterType.hpp"
 
 
 class GraphNode ; // forward declaration
@@ -35,13 +34,11 @@ struct SocketSpec {
     QString name ;
     std::optional<int> componentId ;
     std::optional<size_t> idx ;
-    std::optional<ParameterType> modulatedParameter ;
 
     bool operator==(const SocketSpec& other){
         return other.type == type &&
                other.componentId == componentId &&
-               other.idx == idx &&
-               other.modulatedParameter == modulatedParameter
+               other.idx == idx
             ;
     }
 };

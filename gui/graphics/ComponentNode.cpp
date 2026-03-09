@@ -17,7 +17,6 @@
 
 #include "graphics/ComponentNode.hpp"
 #include "graphics/SocketWidget.hpp"
-#include "types/ParameterType.hpp"
 
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
@@ -30,16 +29,14 @@ ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent):
     auto d = model_->getDescriptor();
     
     // create sockets from descriptor
-    for ( const ParameterType& p : d.modulatableParameters){
-        std::string name = GET_PARAMETER_TRAIT_MEMBER(p,name);
+    if ( d.modulatableParameters.size() > 0 ){
         specs_.push_back({
             .type        =SocketType::ModulationInbound, 
-            .name        = QString::fromStdString(name), 
-            .componentId = model_->getId(),
-            .modulatedParameter = p
+            .name        = "Inbound Modulation", 
+            .componentId = model_->getId()
         });
     }
-
+    
     for (int i = 0; i < d.numAudioInputs; ++i){
         specs_.push_back({
             .type        = SocketType::SignalInbound, 

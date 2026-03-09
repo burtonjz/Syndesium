@@ -34,11 +34,10 @@ private:
 public:
     explicit ConnectionManager(QObject* parent = nullptr);
 
-    // backend confirmed successful connection
     void loadConnection(const ConnectionRequest& req);
-    bool hasConnection(SocketWidget* socket) const ;
-     
-    void requestConnectionEvent(const ConnectionRequest& req); // add or remove
+    std::vector<ParameterType> getModulationConnections(int componentId) const ;
+
+    void requestConnectionEvent(const ConnectionRequest& req); 
 
 private:
     void sendConnectionApiRequest(ConnectionRequest req);

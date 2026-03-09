@@ -25,6 +25,7 @@
 #include "graphics/SocketWidget.hpp"
 #include "graphics/ComponentNode.hpp"
 #include "types/ComponentType.hpp"
+#include "graphics/ToastNotification.hpp"
 
 #include <QWheelEvent>
 #include <QKeyEvent>
@@ -94,6 +95,10 @@ GraphPanel::GraphPanel(QWidget* parent):
     connect(
         componentManager_, &ComponentManager::componentGroupRemoved,
         this, &GraphPanel::onComponentGroupRemoved
+    );
+    connect(
+        connectionRenderer_, &ConnectionRenderer::dragCableParameterNeeded,
+        this, &GraphPanel::ondragCableParameterNeeded
     );
 }
 
@@ -736,5 +741,58 @@ void GraphPanel::onNodeZUpdate(){
     auto sockets = node->getSockets();
     for ( auto* socket: sockets){
         socket->setZValue(maxZ + 0.8);
+    }
+}
+
+void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
+    if ( ! socket ){
+        qWarning() << "drag cable parameter requested for an invalid socket. Cancelling drag." ;
+        connectionRenderer_->cancelDrag();
+        return ;
+    }
+
+    if ( ! socket->getSpec().componentId.has_value() ){
+        qWarning() << "drag cable inbound socket does not have a defined component id. Cancelling drag." ;
+        connectionRenderer_->cancelDrag();
+        return ;
+    }
+
+    QMenu menu ;
+
+    QAction* header = menu.addAction("Select Parameter");
+    header->setEnabled(false);
+    menu.addSeparator();
+
+    int id = socket->getSpec().componentId.value() ;
+
+    auto params = componentManager_
+        ->getModel(id)
+        ->getDescriptor().modulatableParameters ;
+
+    auto existing = connectionManager_
+        ->getModulationConnections(id);
+
+    for ( const auto& p : params ){
+        if ( std::find(existing.begin(), existing.end(), p) == existing.end() ){
+            QAction* param = new QAction(
+                QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name)),
+                &menu
+            );
+            menu.addAction(param);
+        }    
+    }
+
+    if ( menu.actions().size() == 0 ){
+        connectionRenderer_->cancelDrag();
+        ToastNotification::show(scene_, this, "All modulation slots are full.");
+        return ;
+    }
+
+    QAction* selected = menu.exec(QCursor::pos());
+    if ( selected ){
+        ParameterType p = parameterFromString(selected->text().toStdString());
+        connectionRenderer_->setDragCableParameter(p);
+    } else {
+        connectionRenderer_->cancelDrag();
     }
 }

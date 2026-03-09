@@ -85,13 +85,16 @@ void ConnectionRenderer::finishDrag(const QPointF& scenePos){
         return ;
     }
 
-    request = dragCable_->toConnectionRequest();
-
-    manager_->requestConnectionEvent(request);
-
-    // cleanup temporary cable
-    cancelDrag();
-
+    if ( toSocket->getSpec().type == SocketType::ModulationInbound ){
+        emit dragCableParameterNeeded(toSocket);
+        return ;
+    } else if ( dragFromSocket_->getSpec().type == SocketType::ModulationInbound ){
+        emit dragCableParameterNeeded(dragFromSocket_);
+        return ;
+    } else {
+        sendDragCableRequest();
+        return ;
+    }
 }
 
 void ConnectionRenderer::cancelDrag(){
@@ -105,6 +108,11 @@ void ConnectionRenderer::cancelDrag(){
 
 bool ConnectionRenderer::isDragging() const {
     return dragCable_ != nullptr ;
+}
+
+void ConnectionRenderer::setDragCableParameter(ParameterType p){
+    dragCable_->setModulatedParameter(p);
+    sendDragCableRequest();
 }
 
 void ConnectionRenderer::removeSocketConnections(SocketWidget* s){
@@ -123,6 +131,12 @@ const std::vector<ConnectionCable*> ConnectionRenderer::getNodeConnections(Graph
         if (cable->involvesWidget(node)) c.push_back(cable);
     }
     return c ;
+}
+
+void ConnectionRenderer::sendDragCableRequest(){
+    ConnectionRequest request = dragCable_->toConnectionRequest();
+    manager_->requestConnectionEvent(request);
+    cancelDrag(); // destroy temporary cable
 }
 
 void ConnectionRenderer::onComponentGroup(const std::vector<int>& componentIds){
@@ -160,11 +174,11 @@ void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
         .componentId = req.outboundID,
         .idx = req.outboundIdx
     });
+
     SocketWidget*  inbound = socketLookup_->findSocket({
         .type = req.inboundSocket, 
         .componentId = req.inboundID, 
         .idx = req.inboundIdx, 
-        .modulatedParameter = req.inboundParameter
     });
 
     if ( !outbound || !inbound ){
@@ -173,6 +187,11 @@ void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
     }
 
     ConnectionCable* c = new ConnectionCable(outbound, inbound);
+    
+    if ( inbound->getSpec().type == SocketType::ModulationInbound ){
+        c->setModulatedParameter(req.inboundParameter.value());
+    }
+
     cables_.push_back(c);
     scene_->addItem(c);
     c->setZValue(std::max(inbound->zValue(), outbound->zValue()));

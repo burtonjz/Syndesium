@@ -18,16 +18,18 @@
 #ifndef CONNECTION_CABLE_HPP_
 #define CONNECTION_CABLE_HPP_
 
-#include <QGraphicsPathItem>
-
 #include "graphics/SocketWidget.hpp"
 #include "requests/ConnectionRequest.hpp"
+
+#include <QGraphicsPathItem>
+#include <optional>
 
 class ConnectionCable : public QGraphicsPathItem {
 private:
     SocketWidget* fromSocket_ ;
     SocketWidget* toSocket_ ;
     QPointF endpoint_ ;
+    std::optional<ParameterType> modulated_ ;
 
 public:
     ConnectionCable(SocketWidget* fromSocket, SocketWidget* toSocket = nullptr);
@@ -40,6 +42,9 @@ public:
     
     SocketWidget* getOutboundSocket() const ;
     SocketWidget* getInboundSocket() const ;
+
+    const std::optional<ParameterType>& getModulatedParameter() const ;
+    void setModulatedParameter(ParameterType p);
 
     void setFromSocket(SocketWidget* socket);
     void setToSocket(SocketWidget* socket);

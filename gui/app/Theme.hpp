@@ -81,9 +81,11 @@ public:
     static const QColor ANALYZER_LINE_COLOR ;
     static const QColor ANALYZER_GRID_COLOR ;
 
-    // Modulation indicator
     static const QColor MODULATION_ACTIVE ;
     static const QColor MODULATION_INACTIVE ;
+
+    static const QColor TOAST_NOTIFICATION_BG ;
+    static const QColor TOAST_NOTIFICATION_TEXT ;
     
     // Apply theme to application
     static void applyDarkTheme();
@@ -154,7 +156,16 @@ public:
 
     static constexpr int GROUP_EDITOR_GRID_MAX_COLUMNS = 3 ;
     
-    static constexpr int    MODULATION_INDICATOR_SIZE = 16 ; 
+    static constexpr int MODULATION_INDICATOR_SIZE = 16 ; 
+    
+    static constexpr int TOAST_NOTIFICATION_DURATION = 2000 ; // msec
+    static constexpr int TOAST_NOTIFICATION_FADE_DURATION = 400 ; // msec
+    static constexpr int TOAST_NOTIFICATION_CORNER_RADIUS = 6 ;
+    static constexpr int TOAST_NOTIFICATION_PADDING_H = 16 ;
+    static constexpr int TOAST_NOTIFICATION_PADDING_V = 8 ;
+    static constexpr int TOAST_NOTIFICATION_FONT_SIZE = 13 ;
+    static constexpr int TOAST_NOTIFICATION_MARGIN = 24 ;
+    static constexpr int TOAST_NOTIFICATION_BG_MAX_ALPHA = 220 ;
 
     /*
     =======================================================

@@ -41,8 +41,6 @@ const QColor Theme::BACKGROUND_LIGHT = QColor(42, 48, 52);
 const QColor Theme::TEXT_PRIMARY = QColor(245, 237, 240);
 const QColor Theme::TEXT_SECONDARY = QColor(160, 165, 168);  
 const QColor Theme::ACCENT_COLOR = QColor(213, 137, 54);  
-const QColor Theme::MODULATION_ACTIVE = QColor(180, 85, 110);  
-const QColor Theme::MODULATION_INACTIVE = QColor(30,30,30);
 const QColor Theme::GRAPH_GRID_COLOR = QColor(38, 44, 48);
 
 // Component colors
@@ -89,6 +87,13 @@ const QColor Theme::SWITCH_WIDGET_DISABLED_COLOR = QColor(38, 44, 48);
 const QColor Theme::ANALYZER_BACKGROUND_COLOR = QColor(22, 26, 30);
 const QColor Theme::ANALYZER_GRID_COLOR = QColor(38, 44, 48);
 const QColor Theme::ANALYZER_LINE_COLOR = QColor(135, 175, 155);
+
+
+const QColor Theme::MODULATION_ACTIVE = QColor(180, 85, 110);  
+const QColor Theme::MODULATION_INACTIVE = QColor(30,30,30);
+
+const QColor Theme::TOAST_NOTIFICATION_BG = QColor(58, 68, 74);
+const QColor Theme::TOAST_NOTIFICATION_TEXT = QColor(245, 237, 240);
 
 void Theme::applyDarkTheme() {
 

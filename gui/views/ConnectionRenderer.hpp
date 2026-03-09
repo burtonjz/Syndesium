@@ -52,6 +52,7 @@ public:
     void finishDrag(const QPointF& scenePos);
     void cancelDrag();
     bool isDragging() const ;
+    void setDragCableParameter(ParameterType p); 
 
     // cable management
     const std::vector<ConnectionCable*> getNodeConnections(GraphNode* node) const ;
@@ -59,10 +60,17 @@ public:
 
     void onComponentGroup(const std::vector<int>& componentIds);
 
+private:
+    void sendDragCableRequest();
+
+signals:
+    void dragCableParameterNeeded(SocketWidget* socket);
+
 public slots:
-    void onNodePositionChanged();
+    void onNodePositionChanged(); // for redrawing cables
     void onConnectionAdded(const ConnectionRequest& req);
     void onConnectionRemoved(const ConnectionRequest& req);
+
 };
 
 #endif // CONNECTION_RENDERER_HPP_
