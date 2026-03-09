@@ -782,7 +782,7 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
         }    
     }
 
-    if ( menu.actions().size() == 0 ){
+    if ( menu.actions().size() <= 1 ){ // header counts
         connectionRenderer_->cancelDrag();
         ToastNotification::show(scene_, this, "All modulation slots are full.");
         return ;
