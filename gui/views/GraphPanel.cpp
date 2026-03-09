@@ -772,6 +772,7 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
     auto existing = connectionManager_
         ->getModulationConnections(id);
 
+    bool hasActions = false ;
     for ( const auto& p : params ){
         if ( std::find(existing.begin(), existing.end(), p) == existing.end() ){
             QAction* param = new QAction(
@@ -779,10 +780,11 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
                 &menu
             );
             menu.addAction(param);
+            hasActions = true ;
         }    
     }
 
-    if ( menu.actions().size() <= 1 ){ // header counts
+    if ( ! hasActions ){ 
         connectionRenderer_->cancelDrag();
         ToastNotification::show(scene_, this, "All modulation slots are full.");
         return ;
