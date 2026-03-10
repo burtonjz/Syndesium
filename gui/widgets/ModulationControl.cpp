@@ -10,33 +10,25 @@ ModulationControl::ModulationControl(int componentId, ParameterType p, QWidget* 
     parameter_(p),
     paramLabel_(new QLabel(this)),
     depthSlider_(new SliderWidget(ParameterType::DEPTH, this)),
+    strategyLabel_(new QLabel(this)),
     strategySelector_(new QComboBox(this)),
-    modIndicator_(new ModulationIndicator(this)),
-    disconnectBtn_(new QPushButton("X",this))
+    modIndicator_(new ModulationIndicator(this))
 {
     QString pString = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
     paramLabel_->setText(pString);
     paramLabel_->setStyleSheet(Theme::getLabelHeaderStyle());
 
+    strategyLabel_->setText("Modulation Strategy");
     #define X(NAME) \
         strategySelector_->addItem(QString::fromStdString( \
             modStrategyToString(ModulationStrategy::NAME)), static_cast<uint8_t>(ModulationStrategy::NAME));
     MODULATION_STRATEGY_LIST
     #undef X
-
     ModulationStrategy s = GET_PARAMETER_TRAIT_MEMBER(p, defaultStrategy);
     auto idx = strategySelector_->findData(static_cast<uint8_t>(s));
     strategySelector_->setCurrentIndex(idx);
 
-    disconnectBtn_->setDisabled(true);
     setupLayout();
-
-    connect(
-        disconnectBtn_, &QPushButton::clicked,
-        this, [this](){
-            emit modulationDisconnected(componentId_, parameter_);
-        }
-    );
 
     connect( 
         depthSlider_, &ParameterWidget::valueChanged,
@@ -71,13 +63,13 @@ void ModulationControl::setupLayout(){
     QHBoxLayout* header = new QHBoxLayout();
     QHBoxLayout* body = new QHBoxLayout();
 
-    header->addWidget(paramLabel_, 0, Qt::AlignCenter);
-    header->addWidget(modIndicator_, 0, Qt::AlignRight);
+    header->addWidget(paramLabel_);
+    header->addStretch();
+    header->addWidget(modIndicator_);
     layout->addLayout(header);
 
-    body->addWidget(depthSlider_, 1);
+    body->addWidget(depthSlider_);
     body->addWidget(strategySelector_);
-    body->addWidget(disconnectBtn_);
     layout->addLayout(body);
 }
 
@@ -96,5 +88,4 @@ void ModulationControl::onModelConnectionUpdated(int componentId, ParameterType 
     if ( componentId_ != componentId || p != parameter_ ) return ;
 
     modIndicator_->setActive(active);
-    disconnectBtn_->setEnabled(active);
 }

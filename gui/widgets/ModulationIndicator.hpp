@@ -19,7 +19,6 @@
 #define MODULATION_INDICATOR_HPP_
 
 #include <QWidget>
-
 class ModulationIndicator : public QWidget {
     Q_OBJECT
 
@@ -28,10 +27,11 @@ private:
 
 public:
     explicit ModulationIndicator(QWidget* parent = nullptr);
-    bool isActive() const;
+    bool isActive() const ;
 
-private:
-    void updateStyle();
+protected:
+    void paintEvent(QPaintEvent* e) override ;
+    QSize sizeHint() const override ;
 
 public slots:
     void setActive(bool active);

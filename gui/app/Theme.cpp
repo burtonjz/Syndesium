@@ -89,8 +89,8 @@ const QColor Theme::ANALYZER_GRID_COLOR = QColor(38, 44, 48);
 const QColor Theme::ANALYZER_LINE_COLOR = QColor(135, 175, 155);
 
 
-const QColor Theme::MODULATION_ACTIVE = QColor(180, 85, 110);  
-const QColor Theme::MODULATION_INACTIVE = QColor(30,30,30);
+const QColor Theme::MODULATION_ACTIVE = QColor(185, 49, 79);  
+const QColor Theme::MODULATION_INACTIVE = QColor(15, 15, 15);
 
 const QColor Theme::TOAST_NOTIFICATION_BG = QColor(58, 68, 74);
 const QColor Theme::TOAST_NOTIFICATION_TEXT = QColor(245, 237, 240);

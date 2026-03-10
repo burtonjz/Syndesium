@@ -157,7 +157,9 @@ public:
     static constexpr int GROUP_EDITOR_GRID_MAX_COLUMNS = 3 ;
     
     static constexpr int MODULATION_INDICATOR_SIZE = 16 ; 
-    
+    static constexpr int MODULATION_INDICATOR_GLOW_RADIUS = 6 ;
+    static constexpr qreal MODULATION_INDICATOR_RING_WIDTH = 2.0 ;
+
     static constexpr int TOAST_NOTIFICATION_DURATION = 4000 ; // msec
     static constexpr int TOAST_NOTIFICATION_FADE_DURATION = 800 ; // msec
     static constexpr int TOAST_NOTIFICATION_CORNER_RADIUS = 6 ;

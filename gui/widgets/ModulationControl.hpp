@@ -36,9 +36,9 @@ private:
 
     QLabel* paramLabel_ ;
     SliderWidget* depthSlider_ ;
+    QLabel* strategyLabel_ ;
     QComboBox* strategySelector_ ;
     ModulationIndicator* modIndicator_ ;
-    QPushButton* disconnectBtn_ ;
 
 public:
     ModulationControl(int componentId, ParameterType p, QWidget* parent = nullptr);
@@ -56,7 +56,6 @@ public slots:
 signals:
     void modulationDepthEdited(int componentId, ParameterType p, double depth);
     void modulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
-    void modulationDisconnected(int componentId, ParameterType p);
 
 };
 
