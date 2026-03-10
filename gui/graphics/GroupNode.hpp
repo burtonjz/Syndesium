@@ -31,7 +31,7 @@ private:
     std::vector<ComponentNode*> children_ ;
     
 public:
-    explicit GroupNode(int groupId, QGraphicsItem* parent = nullptr);
+    explicit GroupNode(int groupId, const QString& name, QGraphicsItem* parent = nullptr);
 
     void add(ComponentNode* node);
     void remove(ComponentNode* node);

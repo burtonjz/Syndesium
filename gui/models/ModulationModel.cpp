@@ -57,16 +57,3 @@ void ModulationModel::setStrategy(ModulationStrategy strat, bool block){
         emit modulationStrategyChanged(id_, parameter_, strategy_);
     }
 }
-
-bool ModulationModel::isConnected() const {
-    return isConnected_ ;
-}
-
-void ModulationModel::setConnection(int componentId){
-    connectedId_ = componentId ;
-    isConnected_ = true ;
-}
-
-void ModulationModel::disconnect(){
-    isConnected_ = false ;
-}

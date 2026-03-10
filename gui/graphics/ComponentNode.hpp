@@ -36,7 +36,7 @@ private:
     std::vector<SocketSpec> specs_ ;
 
 public:
-    explicit ComponentNode(ComponentModel* model, QGraphicsItem* parent = nullptr);
+    explicit ComponentNode(ComponentModel* model, const QString& name, QGraphicsItem* parent = nullptr);
     ~ComponentNode() = default ;
 
     ComponentModel* getModel() const ;

@@ -18,8 +18,8 @@
 #include "GroupNode.hpp"
 #include <QGraphicsScene>
 
-GroupNode::GroupNode(int groupId, QGraphicsItem* parent):
-    GraphNode(QString("Group %1").arg(groupId), parent),
+GroupNode::GroupNode(int groupId, const QString& name, QGraphicsItem* parent):
+    GraphNode(name, parent),
     groupId_(groupId)
 {
 }

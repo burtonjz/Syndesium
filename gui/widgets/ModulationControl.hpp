@@ -43,6 +43,8 @@ private:
 public:
     ModulationControl(int componentId, ParameterType p, QWidget* parent = nullptr);
 
+    void setConnectionStatus(bool active);
+    
 private:
     void setupLayout();
 

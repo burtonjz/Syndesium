@@ -46,15 +46,10 @@ public:
 
     ModulationStrategy getStrategy() const ;
     void setStrategy(ModulationStrategy strat, bool block = false);
-    
-    bool isConnected() const ;
-    void setConnection(int componentId);
-    void disconnect();
 
 signals:
     void modulationDepthChanged(int componentId, ParameterType p, double depth);
     void modulationStrategyChanged(int componentId, ParameterType p, ModulationStrategy strategy);
-
 };
 
 #endif // MODULATION_MODEL_HPP_

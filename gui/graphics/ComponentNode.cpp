@@ -21,8 +21,8 @@
 #include <QGraphicsSceneMouseEvent>
 #include <vector>
 
-ComponentNode::ComponentNode(ComponentModel* model, QGraphicsItem* parent): 
-    GraphNode(QString::fromStdString(model->getDescriptor().name), parent),
+ComponentNode::ComponentNode(ComponentModel* model, const QString& name, QGraphicsItem* parent): 
+    GraphNode(name, parent),
     model_(model),
     specs_()
 {

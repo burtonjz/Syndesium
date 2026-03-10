@@ -103,6 +103,8 @@ private:
     void onSocketRightClicked(SocketWidget* socket);
     void startRename(GraphNode* node);
 
+    bool isNodeNameAvailable(const QString& name, GraphNode* target = nullptr) const ;
+
 private slots:
     void onApiDataReceived(const QJsonObject &json);
     

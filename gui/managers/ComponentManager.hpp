@@ -27,6 +27,7 @@
 #include "requests/CollectionRequest.hpp"
 #include "widgets/CollectionWidget.hpp"
 #include "widgets/ComponentParameters.hpp"
+#include "requests/ConnectionRequest.hpp"
 
 #include <QObject>
 
@@ -92,6 +93,10 @@ public slots:
     void onModulationDepthEdited(int componentId, ParameterType p, double depth);
     void onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
 
+    // for updating modulation menus
+    void onConnectionAdded(const ConnectionRequest& req);
+    void onConnectionRemoved(const ConnectionRequest& req);
+
 signals:
     void componentAdded(int componentId, ComponentType type);
     void componentRemoved(int componentId);
@@ -99,8 +104,6 @@ signals:
     void componentGroupCreated(int groupId, const std::vector<int> componentIds); // new group id, components added
     void componentGroupRemoved(int groupId, const std::vector<int> componentIds); // existing group id, components removed
     void componentGroupUpdated(int groupId, const std::vector<int> componentIds); // existing group id, new component id list
-
-    void modulationDisconnected(int componentId, ParameterType p); // to inform the connectionManager
 };
 
 #endif // COMPONENT_MANAGER_HPP_

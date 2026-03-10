@@ -36,6 +36,7 @@ ModulationEditor::ModulationEditor(QString name, QWidget* parent):
     ctrlLayout_(new QGridLayout()),
     closeButton_(new QPushButton("Close", this))
 {
+    setWindowTitle(" ");
     QVBoxLayout* mainLayout = new QVBoxLayout(this);
 
     editorLabel_->setStyleSheet(Theme::getLabelTitleStyle());
@@ -86,11 +87,6 @@ void ModulationEditor::add(ModulationModel* model){
         this, &ModulationEditor::modulationStrategyEdited
     );
 
-    connect(
-        ctrl, &ModulationControl::modulationDisconnected,
-        this, &ModulationEditor::modulationDisconnected
-    );
-
     modulationControls_[key] = ctrl ;
     controlOrder_.push_back(key);    
     updateLayout();
@@ -103,6 +99,7 @@ void ModulationEditor::remove(int componentId, ParameterType p){
         qWarning() << "modulation control for component " << key.first 
             << " parameter " << GET_PARAMETER_TRAIT_MEMBER(key.second, name)
             << " is not present in editor and cannot be removed" ;
+        return ;
     }
     auto ctrl = modulationControls_.at(key);
 
@@ -120,6 +117,18 @@ void ModulationEditor::setName(const QString& name){
     editorLabel_->setText(name);
 }
 
+void ModulationEditor::setModulationStatus(int componentId, ParameterType p, bool active){
+    auto key = std::make_pair(componentId, p);
+
+    if ( !modulationControls_.contains(key) ){
+        qWarning() << "modulation control for component " << key.first 
+            << " parameter " << GET_PARAMETER_TRAIT_MEMBER(key.second, name)
+            << " is not present in editor and cannot be removed" ;
+        return ;
+    }
+    auto ctrl = modulationControls_.at(key);
+    ctrl->setConnectionStatus(active);
+}
 
 void ModulationEditor::changeEvent(QEvent *event){
     // handle close events on focus loss
@@ -154,9 +163,3 @@ void ModulationEditor::closeEvent(QCloseEvent* event){
 void ModulationEditor::onCloseButtonClicked(){
     hide();
 }
-
-
-// signals:
-//     void modulationDepthEdited(int componentId, ParameterType p, double depth);
-//     void modulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
-//     void modulationDisconnected(int componentId, ParameterType p);

@@ -62,6 +62,10 @@ ModulationControl::ModulationControl(int componentId, ParameterType p, QWidget* 
 
 }
 
+void ModulationControl::setConnectionStatus(bool active){
+    modIndicator_->setActive(active);
+}
+
 void ModulationControl::setupLayout(){
     QVBoxLayout* layout = new QVBoxLayout(this);
     QHBoxLayout* header = new QHBoxLayout();

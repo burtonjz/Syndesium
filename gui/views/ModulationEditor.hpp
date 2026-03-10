@@ -49,6 +49,7 @@ public:
     void remove(int componentId, ParameterType p);
 
     void setName(const QString& name);
+    void setModulationStatus(int componentId, ParameterType p, bool active);
 
 protected:
     void changeEvent(QEvent *event) override ;
@@ -63,7 +64,6 @@ private slots:
 signals:
     void modulationDepthEdited(int componentId, ParameterType p, double depth);
     void modulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy);
-    void modulationDisconnected(int componentId, ParameterType p);
 
 };
 

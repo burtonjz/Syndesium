@@ -100,6 +100,14 @@ GraphPanel::GraphPanel(QWidget* parent):
         connectionRenderer_, &ConnectionRenderer::dragCableParameterNeeded,
         this, &GraphPanel::ondragCableParameterNeeded
     );
+    connect(
+        connectionManager_, &ConnectionManager::connectionAdded,
+        componentManager_, &ComponentManager::onConnectionAdded
+    );
+    connect(
+        connectionManager_, &ConnectionManager::connectionRemoved,
+        componentManager_, &ComponentManager::onConnectionRemoved
+    );
 }
 
 GraphPanel::~GraphPanel(){
@@ -512,10 +520,21 @@ void GraphPanel::startRename(GraphNode* node ){
     edit->setFocus();
     text->hide();
 
+    connect(edit, &QLineEdit::textChanged, [this, node, edit](const QString& text)
+    {
+        bool available = text.trimmed().isEmpty() || isNodeNameAvailable(text.trimmed(), node);
+        edit->setStyleSheet(available ? "" : "color: red; background: transparent;");
+    });
+
     connect(edit, &QLineEdit::editingFinished, [this, node, text, edit, proxy](){
-        if ( !edit->text().isEmpty() ){
-            node->setName(edit->text());
-        }
+        QString newName = edit->text().trimmed();
+        if ( ! newName.isEmpty() ){
+            if ( isNodeNameAvailable(newName, node) ){
+                node->setName(newName);
+            } else {
+                return ;
+            }
+        } 
         text->show();
         scene_->removeItem(proxy);
         proxy->deleteLater();
@@ -528,6 +547,16 @@ void GraphPanel::wheelEvent(QWheelEvent* event){
     } else {
         scale( 1.0 / Theme::GRAPH_WHEEL_SCALE_FACTOR, 1.0 / Theme::GRAPH_WHEEL_SCALE_FACTOR );
     }
+}
+
+bool GraphPanel::isNodeNameAvailable(const QString& name, GraphNode* target) const {
+    for ( const auto& node : nodes_ ){
+        if ( node == target ) continue ;
+        if ( node && node->getName() == name ){
+            return false ;
+        }
+    }
+    return true ;
 }
 
 void GraphPanel::drawBackground(QPainter* painter, const QRectF& rect){
@@ -573,7 +602,14 @@ void GraphPanel::onComponentAdded(int componentId, ComponentType type){
         return ;
     }
 
-    auto n = new ComponentNode(m);
+    QString name = QString::fromStdString(m->getDescriptor().name) ;
+    QString baseName = name ;
+    int count = 1 ;
+    while ( !isNodeNameAvailable(name) ){
+        name = baseName + " " + QString::number(count++);
+    }
+
+    auto n = new ComponentNode(m, name);
     nodes_.push_back(n);
 
     connect(
@@ -609,7 +645,7 @@ void GraphPanel::onComponentRemoved(int componentId){
 }
 
 void GraphPanel::onComponentGroupCreated(int groupId, std::vector<int> componentIds){
-    auto gNode =  new GroupNode(groupId);
+    auto gNode =  new GroupNode(groupId, QString("Group %1").arg(groupId));
     nodes_.push_back(gNode);
     gNode->addToScene(scene_);
 

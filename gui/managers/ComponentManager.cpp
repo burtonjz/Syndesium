@@ -107,37 +107,55 @@ void ComponentManager::renameGroup(int id, const QString& name){
 }
 
 ComponentModel* ComponentManager::getModel(int componentId) const {
-    if ( !models_.contains(componentId) ) return nullptr ;
+    if ( !models_.contains(componentId) ){
+        qWarning() << "No component model found with id = " << componentId ;
+        return nullptr ;
+    } 
 
     return models_.at(componentId) ;
 }
 
 ComponentEditor* ComponentManager::getEditor(int componentId) const {
-    if ( !editors_.contains(componentId) ) return nullptr ;
+    if ( !editors_.contains(componentId) ){
+        qWarning() << "No component editor found with id = " << componentId ;
+        return nullptr ;
+    } 
 
     return editors_.at(componentId) ;
 }
 
 ModulationEditor* ComponentManager::getModulationEditor(int componentId) const {
-    if ( !modulationEditors_.contains(componentId) ) return nullptr ;
+    if ( !modulationEditors_.contains(componentId) ){
+        qWarning() << "No modulation editor found with id = " << componentId ;
+        return nullptr ;
+    } 
 
     return modulationEditors_.at(componentId) ;
 }
 
 GroupModel* ComponentManager::getGroupModel(int groupId) const {
-    if ( !groupModels_.contains(groupId) ) return nullptr ;
+    if ( !groupModels_.contains(groupId) ){
+        qWarning() << "No group model found with id = " << groupId ;
+        return nullptr ;
+    } 
 
     return groupModels_.at(groupId) ;
 }
 
 GroupEditor* ComponentManager::getGroupEditor(int groupId) const {
-    if ( !groupEditors_.contains(groupId) ) return nullptr ;
+    if ( !groupEditors_.contains(groupId) ){
+        qWarning() << "No group editor found with id = " << groupId ;
+        return nullptr ;
+    }
 
     return groupEditors_.at(groupId) ;
 }
 
 ModulationEditor* ComponentManager::getGroupModulationEditor(int groupId) const {
-    if ( !groupModulationEditors_.contains(groupId) ) return nullptr ;
+    if ( !groupModulationEditors_.contains(groupId) ){
+        qWarning() << "No group modulation editor found with id = " << groupId ;
+        return nullptr ;
+    }
 
     return groupModulationEditors_.at(groupId) ;
 }
@@ -206,11 +224,6 @@ void ComponentManager::createGroup(const std::vector<int> componentIds){
     connect(
         me, &ModulationEditor::modulationStrategyEdited,
         this, &ComponentManager::onModulationStrategyEdited
-    );
-
-    connect(
-        me, &ModulationEditor::modulationDisconnected,
-        this, &ComponentManager::modulationDisconnected
     );
 
     for ( auto i : componentIds ){
@@ -308,11 +321,6 @@ void ComponentManager::addComponent(int componentId, ComponentType type){
     connect(
         modEditor, &ModulationEditor::modulationStrategyEdited,
         this, &ComponentManager::onModulationStrategyEdited
-    );
-
-    connect(
-        modEditor, &ModulationEditor::modulationDisconnected,
-        this, &ComponentManager::modulationDisconnected
     );
     
     // handle collection widget if exists
@@ -498,4 +506,28 @@ void ComponentManager::onModulationDepthEdited(int componentId, ParameterType p,
 
 void ComponentManager::onModulationStrategyEdited(int componentId, ParameterType p, ModulationStrategy strategy){
     requestModulationStrategyUpdate(componentId, p, strategy);
+}
+
+void ComponentManager::onConnectionAdded(const ConnectionRequest& req){
+    if ( 
+        req.inboundSocket == SocketType::ModulationInbound && 
+        req.inboundID.has_value() &&
+        req.inboundParameter.has_value()
+    ){
+        auto editor = getModulationEditor(req.inboundID.value());
+        if ( !editor ) return ;
+        editor->setModulationStatus(req.inboundID.value(), req.inboundParameter.value(), true);
+    }
+}
+
+void ComponentManager::onConnectionRemoved(const ConnectionRequest& req){
+    if ( 
+        req.inboundSocket == SocketType::ModulationInbound && 
+        req.inboundID.has_value() &&
+        req.inboundParameter.has_value()
+    ){
+        auto editor = getModulationEditor(req.inboundID.value());
+        if ( !editor ) return ;
+        editor->setModulationStatus(req.inboundID.value(), req.inboundParameter.value(), false);
+    }
 }
