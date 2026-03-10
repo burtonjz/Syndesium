@@ -532,7 +532,8 @@ void GraphPanel::startRename(GraphNode* node ){
             if ( isNodeNameAvailable(newName, node) ){
                 node->setName(newName);
             } else {
-                return ;
+                ToastNotification::show(scene_, this, 
+                    "Cannot name widget '" + newName + "'. Name is unavailable.");
             }
         } 
         text->show();

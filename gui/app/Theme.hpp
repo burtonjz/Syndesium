@@ -158,8 +158,8 @@ public:
     
     static constexpr int MODULATION_INDICATOR_SIZE = 16 ; 
     
-    static constexpr int TOAST_NOTIFICATION_DURATION = 2000 ; // msec
-    static constexpr int TOAST_NOTIFICATION_FADE_DURATION = 400 ; // msec
+    static constexpr int TOAST_NOTIFICATION_DURATION = 4000 ; // msec
+    static constexpr int TOAST_NOTIFICATION_FADE_DURATION = 800 ; // msec
     static constexpr int TOAST_NOTIFICATION_CORNER_RADIUS = 6 ;
     static constexpr int TOAST_NOTIFICATION_PADDING_H = 16 ;
     static constexpr int TOAST_NOTIFICATION_PADDING_V = 8 ;
