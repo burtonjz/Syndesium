@@ -121,6 +121,29 @@ void GraphNode::addToScene(QGraphicsScene* scene){
     for ( auto* socket : sockets_ ) scene->addItem(socket);
 }
 
+std::vector<SocketWidget*> GraphNode::getHiddenSockets() const {
+    std::vector<SocketWidget*> output ;
+    for ( const auto& s : sockets_ ){
+        if ( ! s->isVisible() ) output.push_back(s);
+    }
+    return output ;
+}
+
+void GraphNode::showHiddenSocket(SocketWidget* socket){
+    if ( !socket ) return ;
+    auto it = std::find(sockets_.begin(), sockets_.end(), socket);
+    if ( it == sockets_.end() ) return ;
+    socket->show();
+}
+
+void GraphNode::hideSocket(SocketWidget* socket){
+    if ( !socket ) return ;
+    auto it = std::find(sockets_.begin(), sockets_.end(), socket);
+    if ( it == sockets_.end() ) return ;
+
+    socket->hide();
+}
+
 void GraphNode::layoutSockets(){
     leftSockets_.clear();
     rightSockets_.clear();

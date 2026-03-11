@@ -67,6 +67,10 @@ public:
     void show();
     void addToScene(QGraphicsScene* scene);
 
+    std::vector<SocketWidget*> getHiddenSockets() const ;
+    void showHiddenSocket(SocketWidget* socket);
+    void hideSocket(SocketWidget* socket);
+
 protected:
     // Graphics overrides
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes

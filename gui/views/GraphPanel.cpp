@@ -452,39 +452,57 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
 
 void GraphPanel::onNodeRightClicked(GraphNode* node){
     QMenu menu ;
-    QMenu* openMenu = menu.addMenu("Show");
+    QMenu* editorMenu = new QMenu("Show Editor", &menu);
+    QMenu* socketMenu = new QMenu("Show Hidden Sockets", &menu);
 
+    // editor menu
+    QAction* openEdit = new QAction("Editor", editorMenu);
+    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
+        connect ( openEdit, &QAction::triggered, [this,c](){
+            componentManager_->showEditor(c->getModel()->getId());
+        });
+        editorMenu->addAction(openEdit);
+    } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
+        connect ( openEdit, &QAction::triggered, [this,g](){
+            componentManager_->showGroupEditor(g->getId());
+        });
+        editorMenu->addAction(openEdit);
+    }
+    
+    QAction* openMod = new QAction("Modulation", editorMenu);
+    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
+        connect ( openMod, &QAction::triggered, [this,c](){
+            componentManager_->showModulationEditor(c->getModel()->getId());
+        });
+        editorMenu->addAction(openMod);
+    } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
+        connect ( openMod, &QAction::triggered, [this,g](){
+            componentManager_->showGroupModulationEditor(g->getId());
+        });
+        editorMenu->addAction(openMod);
+    }
+    if ( editorMenu->actions().size() > 0 ){
+        menu.addMenu(editorMenu);
+    }
+
+    // socket menu
+    for ( auto s : node->getHiddenSockets() ){
+        QAction* showSocket = new QAction(s->getSpec().name, socketMenu);
+        connect ( showSocket, &QAction::triggered, [node, s]{
+            node->showHiddenSocket(s);
+        });
+        socketMenu->addAction(showSocket);
+    }
+    if ( socketMenu->actions().size() > 0 ){
+        menu.addMenu(socketMenu);
+    }
+
+    // other misc actions
     QAction* rename = new QAction("Rename", &menu);
     connect ( rename, &QAction::triggered, [this, node](){
         startRename(node);
     });
     menu.addAction(rename);
-
-    QAction* openEdit = new QAction("Editor", openMenu);
-    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
-        connect ( openEdit, &QAction::triggered, [this,c](){
-            componentManager_->showEditor(c->getModel()->getId());
-        });
-        openMenu->addAction(openEdit);
-    } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
-        connect ( openEdit, &QAction::triggered, [this,g](){
-            componentManager_->showGroupEditor(g->getId());
-        });
-        openMenu->addAction(openEdit);
-    }
-    
-    QAction* openMod = new QAction("Modulation", openMenu);
-    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
-        connect ( openMod, &QAction::triggered, [this,c](){
-            componentManager_->showModulationEditor(c->getModel()->getId());
-        });
-        openMenu->addAction(openMod);
-    } else if ( auto g = dynamic_cast<GroupNode*>(node) ){
-        connect ( openMod, &QAction::triggered, [this,g](){
-            componentManager_->showGroupModulationEditor(g->getId());
-        });
-        openMenu->addAction(openMod);
-    }
 
     menu.exec(QCursor::pos());
 }
@@ -519,8 +537,16 @@ void GraphPanel::onSocketRightClicked(SocketWidget* socket){
         disconnectMenu->addAction(disconnectOne);
     }
 
+    QAction* socketHide = new QAction("Hide Socket", &menu);
+    connect(socketHide, &QAction::triggered, [node, socket](){
+        node->hideSocket(socket);
+    });
+
+    menu.addAction(socketHide);
+
     menu.addMenu(disconnectMenu);
     menu.addAction(disconnectAll);
+
     menu.exec(QCursor::pos());
 }
 
