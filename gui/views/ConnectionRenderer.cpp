@@ -115,12 +115,17 @@ void ConnectionRenderer::setDragCableParameter(ParameterType p){
     sendDragCableRequest();
 }
 
-void ConnectionRenderer::removeSocketConnections(SocketWidget* s){
-    for ( const auto& c : cables_ ){
+void ConnectionRenderer::requestRemoveConnection(ConnectionCable* cable){
+    if ( !cable ) return ;
+    auto req = cable->toConnectionRequest();
+    req.remove = true ;
+    manager_->requestConnectionEvent(req);
+}
+
+void ConnectionRenderer::requestRemoveSocketConnections(SocketWidget* s){
+    for ( auto c : cables_ ){
         if ( c->getFromSocket() == s || c->getToSocket() == s ){
-            auto req = c->toConnectionRequest();
-            req.remove = true ;
-            manager_->requestConnectionEvent(req);
+            requestRemoveConnection(c);
         }
     }
 }

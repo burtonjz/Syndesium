@@ -69,8 +69,8 @@ public:
     bool isHovered() const ;
     void setHovered(bool hovered);
 
-    bool isOutput() const ;
-    bool isInput() const ;
+    bool isInbound() const ;
+    bool isOutbound() const ;
     
     QPointF getConnectionPoint() const ;
 

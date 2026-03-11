@@ -44,14 +44,14 @@ bool ConnectionCable::operator==(const ConnectionRequest& req) const {
 }
 
 SocketWidget* ConnectionCable::getInboundSocket() const {
-    if ( fromSocket_ && fromSocket_->isInput() ) return fromSocket_ ;
-    if ( toSocket_ && toSocket_->isInput() ) return toSocket_ ;
+    if ( fromSocket_ && fromSocket_->isInbound() ) return fromSocket_ ;
+    if ( toSocket_ && toSocket_->isInbound() ) return toSocket_ ;
     return nullptr ;
 }
 
 SocketWidget* ConnectionCable::getOutboundSocket() const {
-    if ( fromSocket_ && fromSocket_->isOutput() ) return fromSocket_ ;
-    if ( toSocket_ && toSocket_->isOutput() ) return toSocket_ ;
+    if ( fromSocket_ && fromSocket_->isOutbound() ) return fromSocket_ ;
+    if ( toSocket_ && toSocket_->isOutbound() ) return toSocket_ ;
     return nullptr ;
 }
 
@@ -341,7 +341,7 @@ void ConnectionCable::drawCableArrow(QPainterPath& path, qreal atPercent){
         std::sin(angle + M_PI_2) * height / 2,
         std::cos(angle + M_PI_2) * height / 2  
     );
-    if ( fromSocket_->isOutput() ){
+    if ( fromSocket_->isOutbound() ){
         tip = midpoint + heightVector ;
         baseMid = midpoint - heightVector ;
     } else {

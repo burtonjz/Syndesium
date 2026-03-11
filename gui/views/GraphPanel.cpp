@@ -452,7 +452,7 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
 
 void GraphPanel::onNodeRightClicked(GraphNode* node){
     QMenu menu ;
-    QMenu* openMenu = menu.addMenu("Open");
+    QMenu* openMenu = menu.addMenu("Show");
 
     QAction* rename = new QAction("Rename", &menu);
     connect ( rename, &QAction::triggered, [this, node](){
@@ -494,9 +494,32 @@ void GraphPanel::onSocketRightClicked(SocketWidget* socket){
 
     QAction* disconnectAll = new QAction("Disconnect All",&menu);
     connect(disconnectAll, &QAction::triggered, [this, socket]() 
-        { connectionRenderer_->removeSocketConnections(socket);}
+        { connectionRenderer_->requestRemoveSocketConnections(socket);}
     );
 
+    QMenu* disconnectMenu = new QMenu("Disconnect",&menu);
+    GraphNode* node = socket->getParent();
+    bool isInbound = socket->isInbound();
+
+    for ( const auto c : connectionRenderer_->getNodeConnections(node)){
+        if ( ! c->involvesSocket(socket) ) continue ;
+        GraphNode* other ;
+        QString s ;
+        if ( isInbound ){
+            other = c->getOutboundSocket()->getParent();
+            s = other->getName() + ": " + c->getOutboundSocket()->getSpec().name ;
+        } else {
+            other = c->getInboundSocket()->getParent();
+            s = other->getName() + ": " + c->getInboundSocket()->getSpec().name ;
+        }
+        QAction* disconnectOne = new QAction(s,disconnectMenu);
+        connect( disconnectOne, &QAction::triggered, [this, c](){
+            connectionRenderer_->requestRemoveConnection(c);
+        });
+        disconnectMenu->addAction(disconnectOne);
+    }
+
+    menu.addMenu(disconnectMenu);
     menu.addAction(disconnectAll);
     menu.exec(QCursor::pos());
 }

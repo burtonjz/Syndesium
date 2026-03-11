@@ -59,7 +59,7 @@ void SocketWidget::paint(QPainter* painter, const QStyleOptionGraphicsItem* opti
     painter->drawEllipse(boundingRect());
 
     // Draw an indicator for input vs output
-    if (isOutput()){
+    if (isOutbound()){
         painter->setBrush(Qt::white);
     } else {
         painter->setBrush(Qt::black);
@@ -93,15 +93,15 @@ void SocketWidget::setHovered(bool hovered){
     update();
 }
 
-bool SocketWidget::isOutput() const {
+bool SocketWidget::isOutbound() const {
     return spec_.type == SocketType::ModulationOutbound || 
            spec_.type == SocketType::SignalOutbound ||
            spec_.type == SocketType::MidiOutbound
     ;
 }
 
-bool SocketWidget::isInput() const {
-    return !isOutput() ;
+bool SocketWidget::isInbound() const {
+    return !isOutbound() ;
 }
 
 QPointF SocketWidget::getConnectionPoint() const {
