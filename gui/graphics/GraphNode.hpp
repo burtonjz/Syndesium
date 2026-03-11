@@ -34,6 +34,7 @@ private:
     bool isDragging_ = false ;
     QPointF dragStartPos_ ;
     QString name_ ;
+    qreal height_ ;
 
     std::vector<SocketWidget*> leftSockets_ ; // audio / midi inputs
     std::vector<SocketWidget*> rightSockets_ ; // audio / midi outputs
@@ -76,12 +77,15 @@ protected:
     QVariant itemChange(GraphicsItemChange change, const QVariant& value ) override ; // for tracking module position changes
 
     void layoutSockets();
+    void reorderSockets();
     void positionSockets(QPointF newPos = QPointF(0,0)); 
 
 signals:
     void positionChanged();
     void needsZUpdate();
     void nodeNameUpdated(const QString& name);
+    void socketHidden(SocketWidget* socket);
+    void socketUnhidden(SocketWidget* socket);
 
 };
 

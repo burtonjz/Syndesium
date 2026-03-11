@@ -129,6 +129,48 @@ void GraphPanel::setupScene(){
     setResizeAnchor(QGraphicsView::AnchorUnderMouse);
 }
 
+void GraphPanel::setNodeConnections(GraphNode* node){
+    // all graph nodes
+    connect(
+        node, &GraphNode::needsZUpdate, 
+        this, &GraphPanel::onNodeZUpdate
+    );
+    connect(
+        node, &GraphNode::positionChanged, 
+        connectionRenderer_, &ConnectionRenderer::onNodePositionChanged
+    );
+    connect(
+        node, &GraphNode::socketHidden,
+        connectionRenderer_, &ConnectionRenderer::onSocketHidden
+    );
+    connect(
+        node, &GraphNode::socketUnhidden,
+        connectionRenderer_, &ConnectionRenderer::onSocketUnhidden
+    );
+
+    // component nodes
+    if ( auto c = dynamic_cast<ComponentNode*>(node) ){
+        int id = c->getModel()->getId();
+        connect(
+            c, &GraphNode::nodeNameUpdated,
+            [this, id](const QString& name){
+                componentManager_->renameComponent(id, name);
+            }
+        );
+    }
+
+    // group nodes
+    if ( auto g = dynamic_cast<GroupNode*>(node) ){
+        int id = g->getId();
+        connect(
+            g, &GraphNode::nodeNameUpdated,
+            [this, id](const QString& name){
+                componentManager_->renameGroup(id, name);
+            }
+        );
+    }
+}
+
 void GraphPanel::addAudioOutput(){
     audioOut_ = new GraphNode("Audio Output Device");
     audioOut_->createSockets({{
@@ -141,8 +183,7 @@ void GraphPanel::addAudioOutput(){
     audioOut_->moveBy(200, 0);
     nodes_.push_back(audioOut_);
     
-    connect(audioOut_, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
-    connect(audioOut_, &GraphNode::positionChanged, connectionRenderer_, &::ConnectionRenderer::onNodePositionChanged);
+    setNodeConnections(audioOut_);
 
     qDebug() << "Created Audio Output Device Widget:" << audioOut_->getName() << "at position:" << audioOut_->pos() ;
 }
@@ -158,8 +199,7 @@ void GraphPanel::addMidiInput(){
     midiIn_->moveBy(-200,0);
     nodes_.push_back(midiIn_);
     
-    connect(midiIn_, &GraphNode::needsZUpdate, this, &GraphPanel::onNodeZUpdate);
-    connect(midiIn_, &GraphNode::positionChanged, connectionRenderer_, &ConnectionRenderer::onNodePositionChanged);
+    setNodeConnections(midiIn_);
 
     qDebug() << "Created Midi Input Device Widget:" << midiIn_->getName() << "at position:" << midiIn_->pos() ;
 }
@@ -662,23 +702,8 @@ void GraphPanel::onComponentAdded(int componentId, ComponentType type){
     auto n = new ComponentNode(m, name);
     nodes_.push_back(n);
 
-    connect(
-        n, &GraphNode::needsZUpdate, 
-        this, &GraphPanel::onNodeZUpdate
-    );
-    connect(
-        n, &GraphNode::positionChanged, 
-        connectionRenderer_, &ConnectionRenderer::onNodePositionChanged
-    );
-    connect(
-        n, &GraphNode::nodeNameUpdated,
-        [this, componentId](const QString& name){
-            componentManager_->renameComponent(componentId, name);
-        }
-    );
-
+    setNodeConnections(n);
     n->addToScene(scene_);
-
     n->setPos(0,0); // TODO: dynamically place the module somewhere currently empty on the scene
 }
 
@@ -700,20 +725,7 @@ void GraphPanel::onComponentGroupCreated(int groupId, std::vector<int> component
     gNode->addToScene(scene_);
 
     // connections 
-    connect(
-        gNode, &GraphNode::needsZUpdate, 
-        this, &GraphPanel::onNodeZUpdate
-    );
-    connect(
-        gNode, &GraphNode::positionChanged, 
-        connectionRenderer_, &ConnectionRenderer::onNodePositionChanged
-    );
-    connect(
-        gNode, &GraphNode::nodeNameUpdated,
-        [this, groupId](const QString& name){
-            componentManager_->renameGroup(groupId, name);
-        }
-    );
+    setNodeConnections(gNode);
 
     for ( const auto id : componentIds ){
         gNode->add(getComponentNode(id));

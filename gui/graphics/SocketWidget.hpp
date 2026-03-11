@@ -50,7 +50,7 @@ private:
     SocketSpec spec_ ;
     GraphNode* parent_ ;
     bool isHovered_ = false ;
-    bool isDragging_ = false ;
+    int nConnections_ = false ;
     QColor getSocketColor(bool isHovered) const ;
 
 public:
@@ -71,6 +71,9 @@ public:
 
     bool isInbound() const ;
     bool isOutbound() const ;
+
+    bool hasConnection() const ;
+    void setConnnection(bool newConnection);
     
     QPointF getConnectionPoint() const ;
 

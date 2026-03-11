@@ -51,7 +51,7 @@ GraphNode::~GraphNode(){
 
 QRectF GraphNode::boundingRect() const {
     qreal delta = Theme::COMPONENT_HIGHLIGHT_BUFFER + Theme::COMPONENT_HIGHLIGHT_WIDTH ;
-    return QRectF(0, 0, Theme::COMPONENT_WIDTH, Theme::COMPONENT_HEIGHT)
+    return QRectF(0, 0, Theme::COMPONENT_WIDTH, height_)
         .adjusted(-delta, -delta, delta, delta);
 }
 
@@ -60,7 +60,7 @@ void GraphNode::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
     Q_UNUSED(widget)
 
     // draw background
-    QRectF baseRect(0, 0,Theme::COMPONENT_WIDTH, Theme::COMPONENT_HEIGHT);
+    QRectF baseRect(0, 0,Theme::COMPONENT_WIDTH, height_);
     painter->setBrush(Theme::Theme::COMPONENT_BACKGROUND);
     painter->setPen(QPen(Theme::Theme::COMPONENT_BORDER,Theme::COMPONENT_BORDER_WIDTH));
     painter->drawRoundedRect(baseRect, Theme::COMPONENT_ROUNDED_RADIUS, Theme::COMPONENT_ROUNDED_RADIUS);
@@ -89,7 +89,8 @@ void GraphNode::createSockets(std::initializer_list<SocketSpec> specs ){
     }
 
     layoutSockets();
-    positionSockets();
+    reorderSockets();
+    positionSockets(scenePos());
 }
 
 void GraphNode::createSockets(std::vector<SocketSpec> specs){
@@ -99,7 +100,8 @@ void GraphNode::createSockets(std::vector<SocketSpec> specs){
     }
 
     layoutSockets();
-    positionSockets();
+    reorderSockets();
+    positionSockets(scenePos());
 }
 
 void GraphNode::hide(){
@@ -134,6 +136,9 @@ void GraphNode::showHiddenSocket(SocketWidget* socket){
     auto it = std::find(sockets_.begin(), sockets_.end(), socket);
     if ( it == sockets_.end() ) return ;
     socket->show();
+    reorderSockets();
+    positionSockets(scenePos());
+    emit socketUnhidden(socket);
 }
 
 void GraphNode::hideSocket(SocketWidget* socket){
@@ -142,6 +147,9 @@ void GraphNode::hideSocket(SocketWidget* socket){
     if ( it == sockets_.end() ) return ;
 
     socket->hide();
+    reorderSockets();
+    positionSockets(scenePos());
+    emit socketHidden(socket);
 }
 
 void GraphNode::layoutSockets(){
@@ -175,27 +183,79 @@ void GraphNode::layoutSockets(){
 void GraphNode::positionSockets(QPointF newPos){
     QPointF scenePos = newPos;
 
-    qreal startY = 25 ; // below the title
     // left
+    qreal height = Theme::COMPONENT_HEIGHT ;
     for ( int i = 0; i < leftSockets_.size(); ++i ){
-        leftSockets_[i]->setPos(scenePos + QPointF(-6, startY + i * Theme::SOCKET_WIDGET_SPACING));
+        if ( leftSockets_[i]->isVisible() ){
+            qreal ypos = Theme::SOCKET_WIDGET_MARGIN + 
+                i * Theme::SOCKET_WIDGET_SPACING ;
+
+            leftSockets_[i]->setPos(scenePos + QPointF(
+                -Theme::SOCKET_WIDGET_RADIUS, 
+                ypos 
+            ));
+            height = std::max(height, ypos + Theme::SOCKET_WIDGET_MARGIN);
+        }
     }
 
     // right
     for ( int i = 0; i < rightSockets_.size(); ++i ){
-        rightSockets_[i]->setPos(scenePos + QPointF(Theme::COMPONENT_WIDTH + 6, startY + i * Theme::SOCKET_WIDGET_SPACING));
+        if ( rightSockets_[i]->isVisible() ){
+            qreal ypos = Theme::SOCKET_WIDGET_MARGIN + 
+                i * Theme::SOCKET_WIDGET_SPACING ;
+            rightSockets_[i]->setPos(scenePos + QPointF(
+                Theme::COMPONENT_WIDTH + Theme::SOCKET_WIDGET_RADIUS, 
+                ypos
+            ));
+            height = std::max(height, ypos + Theme::SOCKET_WIDGET_MARGIN);
+        }
+            
     }
 
-    qreal startX = 4 ;
     // bottom
+    int socketsPerHorizontalRow = 
+        ( Theme::COMPONENT_WIDTH - Theme::SOCKET_WIDGET_MARGIN * 2 ) / 
+        Theme::SOCKET_WIDGET_SPACING ;
+    int count = 0 ;
     for ( int i = 0; i < bottomSockets_.size(); ++i ){
-        bottomSockets_[i]->setPos(scenePos + QPointF(startX + i * Theme::SOCKET_WIDGET_SPACING, Theme::COMPONENT_HEIGHT + 6 ));
+        if ( bottomSockets_[i]->isVisible() ){
+            int col = count % socketsPerHorizontalRow ;
+            int row = count / socketsPerHorizontalRow ;
+
+            qreal xpos = Theme::SOCKET_WIDGET_MARGIN + col * Theme::SOCKET_WIDGET_SPACING ;
+            qreal ypos = height + Theme::SOCKET_WIDGET_RADIUS
+                + row * Theme::SOCKET_WIDGET_SPACING ; 
+
+            bottomSockets_[i]->setPos(scenePos + QPointF(xpos,ypos));
+            ++count ;
+        }
     }
 
     // top
+    count = 0 ;
     for ( int i = 0; i < topSockets_.size(); ++i ){
-        topSockets_[i]->setPos(scenePos + QPointF(Theme::COMPONENT_WIDTH - 6 - i * Theme::SOCKET_WIDGET_SPACING, -6));
+        if ( topSockets_[i]->isVisible() ){
+            int col = count % socketsPerHorizontalRow ;
+            int row = count / socketsPerHorizontalRow ;
+
+            qreal xpos = Theme::SOCKET_WIDGET_MARGIN + Theme::COMPONENT_WIDTH - 
+                Theme::SOCKET_WIDGET_RADIUS - col * Theme::SOCKET_WIDGET_SPACING ;
+            qreal ypos = -Theme::SOCKET_WIDGET_RADIUS - 
+                row * Theme::SOCKET_WIDGET_SPACING ; 
+
+            topSockets_[i]->setPos(scenePos + QPointF(xpos,ypos));
+            ++count ;
+        }
     }
+
+    if ( height_ == height ) return ;
+
+    if ( height_ > height ){
+        prepareGeometryChange();    
+    }
+
+    height_ = height ;
+    emit positionChanged();
 }
 
 QVariant GraphNode::itemChange(GraphicsItemChange change, const QVariant& value ){
@@ -209,4 +269,47 @@ QVariant GraphNode::itemChange(GraphicsItemChange change, const QVariant& value 
         if ( value.toBool()) emit needsZUpdate();
     }
     return QGraphicsObject::itemChange(change, value);
+}
+
+void GraphNode::reorderSockets(){
+    /* order priority:
+    1. Has Connection
+    2. Socket Type
+    2. Socket Name
+    2. Hidden Socket
+    */
+    auto socketSortLR = [](const SocketWidget* a, const SocketWidget* b){
+        bool aConnect = a->hasConnection();
+        bool bConnect = b->hasConnection();
+
+        if ( aConnect != bConnect ){
+            return aConnect ;
+        }
+
+        bool aVisible = a->isVisible();
+        bool bVisible = b->isVisible();
+
+        if ( aVisible != bVisible ){
+            return aVisible ;
+        }
+
+        const auto& aSpec = a->getSpec();
+        const auto& bSpec = b->getSpec();
+
+        if ( aSpec.type != bSpec.type ){
+            return aSpec.type < bSpec.type ;
+        }
+
+        return aSpec.name < bSpec.name ;
+    };
+
+    // top/bottom are reversed due to draw order
+    auto socketSortTB = [&socketSortLR](const SocketWidget* a, const SocketWidget* b){
+        return socketSortLR(b,a);
+    };
+
+    std::ranges::sort(topSockets_, socketSortTB);
+    std::ranges::sort(bottomSockets_, socketSortTB);
+    std::ranges::sort(leftSockets_, socketSortLR);
+    std::ranges::sort(rightSockets_, socketSortLR);
 }

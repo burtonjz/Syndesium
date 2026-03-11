@@ -114,6 +114,7 @@ public:
     static constexpr qreal COMPONENT_HIGHLIGHT_WIDTH = 3.0 ;
     static constexpr qreal SOCKET_WIDGET_SPACING = 15.0 ;
     static constexpr qreal SOCKET_WIDGET_RADIUS = 6.0 ;
+    static constexpr qreal SOCKET_WIDGET_MARGIN = 5.0 ;
 
     static constexpr qreal CABLE_SIDE_BEND_FACTOR = 0.5 ; 
     static constexpr qreal CABLE_SIDE_BEND_MAX = 70.0 ; 

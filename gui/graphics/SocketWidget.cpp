@@ -104,6 +104,19 @@ bool SocketWidget::isInbound() const {
     return !isOutbound() ;
 }
 
+bool SocketWidget::hasConnection() const {
+    return nConnections_ > 0 ;
+}
+
+void SocketWidget::setConnnection(bool newConnection){
+    if ( newConnection ){
+        ++nConnections_ ;
+    } else {
+        --nConnections_ ;
+    }
+}
+
+
 QPointF SocketWidget::getConnectionPoint() const {
     return mapToScene(0,0);
 }

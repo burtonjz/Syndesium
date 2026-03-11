@@ -173,6 +173,31 @@ void ConnectionRenderer::onNodePositionChanged(){
     }
 }
 
+void ConnectionRenderer::onSocketHidden(SocketWidget* socket){
+    for ( auto c : cables_ ){
+        if ( c->involvesSocket(socket) ){
+            c->hide();
+        }
+    }
+}
+
+void ConnectionRenderer::onSocketUnhidden(SocketWidget* socket){
+    for ( auto c : cables_ ){
+        if ( c->involvesSocket(socket) ){
+            SocketWidget* other ;
+            if ( socket->isInbound() ){
+                other = c->getOutboundSocket();
+            } else {
+                other = c->getInboundSocket();
+            }
+            if ( other->isVisible() ){
+                c->updatePath();
+                c->show();
+            }
+        }
+    }
+}
+
 void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
     SocketWidget* outbound = socketLookup_->findSocket({
         .type = req.outboundSocket, 
@@ -200,11 +225,17 @@ void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
     cables_.push_back(c);
     scene_->addItem(c);
     c->setZValue(std::max(inbound->zValue(), outbound->zValue()));
+
+    inbound->setConnnection(true);
+    outbound->setConnnection(true);
 }
 
 void ConnectionRenderer::onConnectionRemoved(const ConnectionRequest& req){
     for ( auto c : cables_ ){
         if ( c->toConnectionRequest() == req ){
+            c->getInboundSocket()->setConnnection(true);
+            c->getOutboundSocket()->setConnnection(true);
+
             scene_->removeItem(c);
             delete c ;
             cables_.erase(std::remove(cables_.begin(), cables_.end(), c), cables_.end());

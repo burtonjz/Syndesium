@@ -90,6 +90,8 @@ protected:
 private:
     void setupScene() ;
 
+    void setNodeConnections(GraphNode* node);
+
     void drawBackground(QPainter* painter, const QRectF& rect) override ;
     void graphNodeDoubleClicked(GraphNode* widget);
     

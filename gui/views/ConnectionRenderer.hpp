@@ -68,7 +68,10 @@ signals:
     void dragCableParameterNeeded(SocketWidget* socket);
 
 public slots:
-    void onNodePositionChanged(); // for redrawing cables
+    void onNodePositionChanged(); 
+    void onSocketHidden(SocketWidget* socket);
+    void onSocketUnhidden(SocketWidget* socket);
+
     void onConnectionAdded(const ConnectionRequest& req);
     void onConnectionRemoved(const ConnectionRequest& req);
 

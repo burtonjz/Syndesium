@@ -78,6 +78,7 @@ void GroupNode::addSockets(ComponentNode* node){
     }
 
     layoutSockets();
+    reorderSockets();
     positionSockets();
 }
 
@@ -98,5 +99,6 @@ void GroupNode::removeSockets(ComponentNode* node){
     );
     
     layoutSockets();
+    reorderSockets();
     positionSockets();
 }
