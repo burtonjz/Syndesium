@@ -191,7 +191,6 @@ void ConnectionRenderer::onSocketUnhidden(SocketWidget* socket){
                 other = c->getInboundSocket();
             }
             if ( other->isVisible() ){
-                c->updatePath();
                 c->show();
             }
         }

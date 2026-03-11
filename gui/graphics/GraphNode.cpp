@@ -139,6 +139,7 @@ void GraphNode::showHiddenSocket(SocketWidget* socket){
     reorderSockets();
     positionSockets(scenePos());
     emit socketUnhidden(socket);
+    emit positionChanged();
 }
 
 void GraphNode::hideSocket(SocketWidget* socket){
@@ -150,6 +151,7 @@ void GraphNode::hideSocket(SocketWidget* socket){
     reorderSockets();
     positionSockets(scenePos());
     emit socketHidden(socket);
+    emit positionChanged();
 }
 
 void GraphNode::layoutSockets(){
