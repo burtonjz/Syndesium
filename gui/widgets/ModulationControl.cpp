@@ -15,8 +15,11 @@ ModulationControl::ModulationControl(int componentId, ParameterType p, QWidget* 
     modIndicator_(new ModulationIndicator(this))
 {
     QString pString = QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name));
-    paramLabel_->setText(pString);
+    paramLabel_->setText(pString.toCaseFolded());
     paramLabel_->setStyleSheet(Theme::getLabelHeaderStyle());
+    QFont f = paramLabel_->font();
+    f.setCapitalization(QFont::AllUppercase);
+    paramLabel_->setFont(f);
 
     strategyLabel_->setText("Modulation Strategy");
     #define X(NAME) \
@@ -69,7 +72,10 @@ void ModulationControl::setupLayout(){
     layout->addLayout(header);
 
     body->addWidget(depthSlider_);
-    body->addWidget(strategySelector_);
+    QVBoxLayout* strategy = new QVBoxLayout();
+    strategy->addWidget(strategyLabel_);
+    strategy->addWidget(strategySelector_);
+    body->addLayout(strategy);
     layout->addLayout(body);
 }
 
