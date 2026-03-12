@@ -154,11 +154,12 @@ void ConnectionRenderer::sendDragCableRequest(){
 
 void ConnectionRenderer::onComponentGroup(const std::vector<int>& componentIds){
     for ( auto cable : cables_ ){
-        auto fromSpec = cable->getFromSocket()->getSpec();
-        auto toSpec = cable->getToSocket()->getSpec();
+        SocketSpec fromSpec = cable->getFromSocket()->getSpec();
+        SocketSpec toSpec = cable->getToSocket()->getSpec();
         bool hasFromId = fromSpec.componentId.has_value();
         bool hasToId = toSpec.componentId.has_value();
         if ( !hasFromId && !hasToId ) continue ;
+        cable->setVisible(true);
         for ( const auto& id : componentIds ){
             if ( hasFromId && fromSpec.componentId.value() == id ){
                 cable->setFromSocket(socketLookup_->findSocket(fromSpec));
