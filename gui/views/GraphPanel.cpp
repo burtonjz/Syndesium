@@ -493,7 +493,7 @@ void GraphPanel::contextMenuEvent(QContextMenuEvent *event){
 void GraphPanel::onNodeRightClicked(GraphNode* node){
     QMenu menu ;
     QMenu* editorMenu = new QMenu("Show Editor", &menu);
-    QMenu* socketMenu = new QMenu("Show Hidden Sockets", &menu);
+    QMenu* socketMenu = menu.addMenu("Sockets");
 
     // editor menu
     QAction* openEdit = new QAction("Editor", editorMenu);
@@ -526,15 +526,47 @@ void GraphPanel::onNodeRightClicked(GraphNode* node){
     }
 
     // socket menu
+    qDebug() << "Node: " << node ;
+    QAction* unhideAll = new QAction("Unhide All", socketMenu);
+    connect(unhideAll, &QAction::triggered, [node]{
+        node->unhideAllSockets();
+    });
+    socketMenu->addAction(unhideAll);
+
+    QAction* hideDisconnected = new QAction("Hide Disconnected", socketMenu);
+    connect(hideDisconnected, &QAction::triggered, [node](){
+        node->hideDisconnectedSockets();
+    });
+    socketMenu->addAction(hideDisconnected);
+
+    QAction* hideInternal = new QAction("Hide Internal Connections", socketMenu);
+    connect(hideInternal, &QAction::triggered, [this, node](){
+        for ( auto s : node->getSockets() ){
+            if ( !s->isVisible() || !s->hasConnection() ) continue ;
+            bool internalOnly = true ;
+            for ( auto connection : connectionRenderer_->getSocketConnections(s) ){
+                if ( 
+                    connection->getInboundSocket()->getParent() != node ||
+                    connection->getOutboundSocket()->getParent() != node
+                ){
+                    internalOnly = false ;
+                    break ;
+                }
+            }
+            if ( internalOnly ){
+                node->hideSocket(s);
+            }   
+        }
+    });
+    socketMenu->addAction(hideInternal);
+
+    socketMenu->addSeparator();
     for ( auto s : node->getHiddenSockets() ){
-        QAction* showSocket = new QAction(s->getSpec().name, socketMenu);
+        QAction* showSocket = new QAction("Unhide " + s->getSpec().name, socketMenu);
         connect ( showSocket, &QAction::triggered, [node, s]{
-            node->showHiddenSocket(s);
+            node->unhideSocket(s);
         });
         socketMenu->addAction(showSocket);
-    }
-    if ( socketMenu->actions().size() > 0 ){
-        menu.addMenu(socketMenu);
     }
 
     // other misc actions

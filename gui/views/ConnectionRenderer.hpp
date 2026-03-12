@@ -56,6 +56,7 @@ public:
 
     // cable management
     const std::vector<ConnectionCable*> getNodeConnections(GraphNode* node) const ;
+    const std::vector<ConnectionCable*> getSocketConnections(SocketWidget* socket) const ;
     void requestRemoveConnection(ConnectionCable* cable);
     void requestRemoveSocketConnections(SocketWidget* s);
 

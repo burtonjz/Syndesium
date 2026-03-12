@@ -132,8 +132,16 @@ void ConnectionRenderer::requestRemoveSocketConnections(SocketWidget* s){
 
 const std::vector<ConnectionCable*> ConnectionRenderer::getNodeConnections(GraphNode* node) const {
     std::vector<ConnectionCable*> c ;
-    for (const auto& cable : cables_ ) {
+    for ( auto cable : cables_ ) {
         if (cable->involvesWidget(node)) c.push_back(cable);
+    }
+    return c ;
+}
+
+const std::vector<ConnectionCable*> ConnectionRenderer::getSocketConnections(SocketWidget* socket) const {
+    std::vector<ConnectionCable*> c ;
+    for ( auto cable : cables_ ){
+        if ( cable->involvesSocket(socket)) c.push_back(cable);
     }
     return c ;
 }

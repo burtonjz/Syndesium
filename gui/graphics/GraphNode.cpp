@@ -76,6 +76,13 @@ void GraphNode::paint(QPainter* painter, const QStyleOptionGraphicsItem* option,
     }
 }
 
+SocketWidget* GraphNode::getSocket(SocketSpec s) const {
+    for ( auto socket : sockets_ ){
+        if ( socket->matches(s) ) return socket ;
+    }
+    return nullptr ;
+}
+
 void GraphNode::setName(const QString& name){
     name_ = name ;
     titleText_->setPlainText(name);
@@ -131,7 +138,7 @@ std::vector<SocketWidget*> GraphNode::getHiddenSockets() const {
     return output ;
 }
 
-void GraphNode::showHiddenSocket(SocketWidget* socket){
+void GraphNode::unhideSocket(SocketWidget* socket){
     if ( !socket ) return ;
     auto it = std::find(sockets_.begin(), sockets_.end(), socket);
     if ( it == sockets_.end() ) return ;
@@ -142,16 +149,31 @@ void GraphNode::showHiddenSocket(SocketWidget* socket){
     emit positionChanged();
 }
 
+void GraphNode::unhideAllSockets(){
+    for ( auto s : sockets_ ){
+        if ( !s->isVisible() ) unhideSocket(s);
+    }
+}
+
 void GraphNode::hideSocket(SocketWidget* socket){
     if ( !socket ) return ;
     auto it = std::find(sockets_.begin(), sockets_.end(), socket);
     if ( it == sockets_.end() ) return ;
+    if ( ! socket->isVisible() ) return ;
 
     socket->hide();
     reorderSockets();
     positionSockets(scenePos());
     emit socketHidden(socket);
     emit positionChanged();
+}
+
+void GraphNode::hideDisconnectedSockets(){
+    for ( auto s : sockets_ ){
+        if ( ! s->hasConnection() && s->isVisible() ){
+            hideSocket(s);
+        }
+    }
 }
 
 void GraphNode::layoutSockets(){

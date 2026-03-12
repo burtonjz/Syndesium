@@ -55,6 +55,7 @@ public:
     QRectF boundingRect() const override ;
     void paint(QPainter* painter, const QStyleOptionGraphicsItem* option, QWidget* widget = nullptr ) override ;
 
+    SocketWidget* getSocket(SocketSpec s) const ;
     const std::vector<SocketWidget*>& getSockets() const { return sockets_ ; }
     const QString& getName() const { return name_ ; }
     QGraphicsTextItem* getNameItem() const { return titleText_ ; }
@@ -69,8 +70,10 @@ public:
     void addToScene(QGraphicsScene* scene);
 
     std::vector<SocketWidget*> getHiddenSockets() const ;
-    void showHiddenSocket(SocketWidget* socket);
+    void unhideSocket(SocketWidget* socket);
+    void unhideAllSockets();
     void hideSocket(SocketWidget* socket);
+    void hideDisconnectedSockets();
 
 protected:
     // Graphics overrides

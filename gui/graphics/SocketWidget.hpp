@@ -74,6 +74,7 @@ public:
 
     bool hasConnection() const ;
     void setConnnection(bool newConnection);
+    void syncConnection(SocketWidget* other);
     
     QPointF getConnectionPoint() const ;
 

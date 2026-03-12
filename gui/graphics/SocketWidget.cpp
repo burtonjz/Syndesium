@@ -116,6 +116,10 @@ void SocketWidget::setConnnection(bool newConnection){
     }
 }
 
+void SocketWidget::syncConnection(SocketWidget* other){
+    nConnections_ = other->nConnections_ ;
+    
+}
 
 QPointF SocketWidget::getConnectionPoint() const {
     return mapToScene(0,0);

@@ -70,9 +70,11 @@ int GroupNode::getId() const {
 }
 
 void GroupNode::addSockets(ComponentNode* node){
-    for ( SocketSpec spec : node->getSpecs() ){
+    for ( auto cSocket : node->getSockets() ){
+        auto spec = cSocket->getSpec();
         spec.name = node->getName() + " " + spec.name ;
         SocketWidget* socket = new SocketWidget(spec, this);
+        socket->syncConnection(cSocket);
         sockets_.push_back(socket);  
         if ( scene() ) scene()->addItem(socket);
     }
@@ -91,6 +93,7 @@ void GroupNode::removeSockets(ComponentNode* node){
                 bool match = s->getSpec().componentId == node->getModel()->getId();
                 if ( match ){
                     if ( s->scene() ) s->scene()->removeItem(s);
+                    node->getSocket(s->getSpec())->syncConnection(s);
                     s->deleteLater();
                 }
                 return match ;
