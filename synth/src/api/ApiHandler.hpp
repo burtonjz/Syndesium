@@ -73,9 +73,9 @@ private:
     // component management
     json addComponent(int sock, const json& request);
     json removeComponent(int sock, const json& request);
+    json parseConnectionRequest(int sock, const json& request);
     bool routeConnectionRequest(ConnectionRequest request);
-    json createConnection(int sock, const json& request);
-    json removeConnection(int sock, const json& request);
+    
     // parameter management
     json getParameter(int sock, const json& request);
     json setParameter(int sock, const json& request);
@@ -93,7 +93,9 @@ private:
     json resetCollection(int sock, BaseComponent* c, const CollectionDescriptor& cd, const CollectionRequest& request);
     json getCollectionValueRange(int sock, BaseComponent* c, const CollectionDescriptor& cd, CollectionRequest& request);
     // modulation management
+    json getModulationStrategy(int sock, const json& request);
     json setModulationStrategy(int sock, const json& request);
+    json getModulationDepth(int sock, const json& request);
     json setModulationDepth(int sock, const json& request);
     
     // load functions

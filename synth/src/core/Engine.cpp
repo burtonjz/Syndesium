@@ -702,10 +702,18 @@ bool Engine::handleModulationConnection(ConnectionRequest request){
         return false ;
     }
 
-    if ( request.remove ){
-        component->removeParameterModulation(request.inboundParameter.value());
+    if ( request.depthConnection ){
+        if ( request.remove ){
+            component->removeParameterDepthModulation(request.inboundParameter.value());
+        } else {
+            component->setParameterDepthModulation(request.inboundParameter.value(), modulator);
+        }
     } else {
-        component->setParameterModulation(request.inboundParameter.value(), modulator);
+        if ( request.remove ){
+            component->removeParameterModulation(request.inboundParameter.value());
+        } else {
+            component->setParameterModulation(request.inboundParameter.value(), modulator);
+        }
     }
     
     // stateful modulators need to be in the signal processing graph
@@ -741,14 +749,15 @@ std::vector<ConnectionRequest> Engine::getComponentModulationConnections(Compone
 
     // if this component is also a modulator, add in what it is modulating
     if ( modulator ){
-        for ( auto [c, p] : modulator->getModulationTargets() ){
-            if ( c ){
+        for ( auto t : modulator->getModulationTargets() ){
+            if ( t.component ){
                 ConnectionRequest req ;
-                req.inboundID = c->getId() ;
+                req.inboundID = t.component->getId() ;
                 req.inboundSocket = SocketType::ModulationInbound ;
-                req.inboundParameter = p ;
+                req.inboundParameter = t.param ;
                 req.outboundID = id ;
                 req.outboundSocket = SocketType::ModulationOutbound ;
+                req.depthConnection = t.depth ;
                 v.push_back(req);
             }
         }

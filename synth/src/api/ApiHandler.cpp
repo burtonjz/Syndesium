@@ -59,8 +59,10 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["load_configuration"] = [this](int sock, const json& request){ return loadConfiguration(sock, request); };
     handlers_["add_component"] = [this](int sock, const json& request){ return addComponent(sock, request); };
     handlers_["remove_component"] = [this](int sock, const json& request){ return removeComponent(sock, request); };
-    handlers_["create_connection"] = [this](int sock, const json& request){ return createConnection(sock, request); };
-    handlers_["remove_connection"] = [this](int sock, const json& request){ return removeConnection(sock, request); };
+    handlers_["create_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
+    handlers_["remove_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
+    handlers_["create_depth_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
+    handlers_["remove_depth_connection"] = [this](int sock, const json& request){ return parseConnectionRequest(sock, request); };
     handlers_["get_parameter"] = [this](int sock, const json& request){ return getParameter(sock, request); };
     handlers_["set_parameter"] = [this](int sock, const json& request){ return setParameter(sock, request); };
     handlers_["get_parameter_default"] = [this](int sock, const json& request){ return getParameterDefault(sock, request); };
@@ -76,7 +78,9 @@ void ApiHandler::initialize(Engine* engine){
     handlers_["reset_collection"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
     handlers_["get_collection_range"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
     handlers_["set_collection_range"] = [this](int sock, const json& request){ return parseCollectionRequest(sock, request); };
+    handlers_["get_modulation_strategy"] = [this](int sock, const json& request){ return getModulationStrategy(sock, request); };
     handlers_["set_modulation_strategy"] = [this](int sock, const json& request){ return setModulationStrategy(sock, request); };
+    handlers_["get_modulation_depth"] = [this](int sock, const json& request){ return getModulationDepth(sock, request); };
     handlers_["set_modulation_depth"] = [this](int sock, const json& request){ return setModulationDepth(sock, request); };
 }
 
@@ -366,7 +370,7 @@ json ApiHandler::removeComponent(int sock, const json& request){
         c.remove = true ;
         json j = c ;
         SPDLOG_DEBUG("removing midi connection: {}", j.dump());
-        auto cresponse = removeConnection(sock, j);
+        auto cresponse = parseConnectionRequest(sock, j);
         allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
     }
 
@@ -376,7 +380,7 @@ json ApiHandler::removeComponent(int sock, const json& request){
         c.remove = true ;
         json j = c ;
         SPDLOG_DEBUG("removing audio connection: {}", j.dump());
-        auto cresponse = removeConnection(sock, j);
+        auto cresponse = parseConnectionRequest(sock, j);
         allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
     }
 
@@ -387,7 +391,7 @@ json ApiHandler::removeComponent(int sock, const json& request){
         c.remove = true ;
         json j = c ;
         SPDLOG_DEBUG("removing modulation connection: {}", j.dump());
-        auto cresponse = removeConnection(sock, j);
+        auto cresponse = parseConnectionRequest(sock, j);
         allRemoved = allRemoved && cresponse.contains("status") && cresponse["status"] == "success" ;
     }
 
@@ -400,8 +404,7 @@ json ApiHandler::removeComponent(int sock, const json& request){
 }
 
 
-json ApiHandler::createConnection(int sock, const json& request){
-    SPDLOG_DEBUG("createConnection request: {}", request.dump());
+json ApiHandler::parseConnectionRequest(int sock, const json& request){
     json response = request ;
     ConnectionRequest req ;
 
@@ -418,31 +421,7 @@ json ApiHandler::createConnection(int sock, const json& request){
     if ( routeConnectionRequest(req)){
         return sendApiResponse(sock,response);
     } else {
-        return sendApiResponse(sock,response, "failed to make requested connection");
-    }
-}
-
-json ApiHandler::removeConnection(int sock, const json& request){
-    json response = request ;
-
-    try {
-        response.at("inbound");
-        response.at("outbound");
-    } catch (const std::exception& e){
-        return sendApiResponse(sock,response, "Error parsing json request: " + std::string(e.what()) );
-    }
-
-    ConnectionRequest req = response.get<ConnectionRequest>() ;
-    req.remove = true ;
-
-    if ( ! req.valid() ){
-        return sendApiResponse(sock, response, "Invalid connection request.");
-    }
-    
-    if ( routeConnectionRequest(req)){
-        return sendApiResponse(sock,response);
-    } else {
-        return sendApiResponse(sock,response, "failed to make requested connection");
+        return sendApiResponse(sock,response, "failed to handle requested connection event");
     }
 }
 
@@ -856,6 +835,51 @@ json ApiHandler::getCollectionValueRange(int sock, BaseComponent* c, const Colle
     return sendApiResponse(sock, response);
 }
 
+json ApiHandler::getModulationStrategy(int sock, const json& request){
+    ComponentId id ;
+    ParameterType p ;
+    ModulationStrategy s ;
+    json response = request ;
+
+    try {
+        id = request["componentId"];
+        p = parameterFromString(request["parameter"]);
+    } catch (const std::exception& e){
+        json response = request ;
+        return sendApiResponse(sock, response, 
+            "failed to parse request to update modulation strategy:" + std::string(e.what())
+        );
+    }
+
+    auto component = engine_->componentManager.getRaw(id);
+    if (!component){
+        json response = request ;
+        return sendApiResponse(sock, response,
+            "could not find component"
+        );
+    }
+
+    const std::vector<ParameterType>&  modulatable = ComponentRegistry::getComponentDescriptor(
+        component->getType()).modulatableParameters ;
+    auto it = std::find(modulatable.begin(), modulatable.end(), p);
+    if ( it == modulatable.end() ){
+        return sendApiResponse(sock, response,
+            "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
+        );
+    }
+
+    try {
+        s = component->getParameterModulationStrategy(p);
+    } catch ( const std::exception& e ){
+        return sendApiResponse(sock, response,
+            "Failed to get strategy from specified parameter: " + std::string(e.what())
+        );
+    }
+    
+    response["strategy"] = s ;
+    return sendApiResponse(sock, response);
+}
+
 json ApiHandler::setModulationStrategy(int sock, const json& request){
     ComponentId id ;
     ParameterType p ;
@@ -893,6 +917,52 @@ json ApiHandler::setModulationStrategy(int sock, const json& request){
     component->setParameterModulationStrategy(p, s);
     return sendApiResponse(sock, response);
 }
+
+json ApiHandler::getModulationDepth(int sock, const json& request){
+    ComponentId id ;
+    ParameterType p ;
+    double depth ;
+    json response = request ;
+
+    try {
+        id = request["componentId"];
+        p = parameterFromString(request["parameter"]);
+    } catch (const std::exception& e){
+        json response = request ;
+        return sendApiResponse(sock, response, 
+            "failed to parse request to update modulation strategy:" + std::string(e.what())
+        );
+    }
+
+    auto component = engine_->componentManager.getRaw(id);
+    if (!component){
+        json response = request ;
+        return sendApiResponse(sock, response,
+            "could not find component"
+        );
+    }
+    
+    const std::vector<ParameterType>&  modulatable = ComponentRegistry::getComponentDescriptor(
+        component->getType()).modulatableParameters ;
+    auto it = std::find(modulatable.begin(), modulatable.end(), p);
+    if ( it == modulatable.end() ){
+        return sendApiResponse(sock, response,
+            "Parameter " + GET_PARAMETER_TRAIT_MEMBER(p, name) + " is not listed as modulatable for this component."
+        );
+    }
+
+    try {
+        depth = component->getParameterDepth(p);
+    } catch (const std::exception& e){
+        return sendApiResponse(sock, response,
+            "Failed to get depth from specified parameter: " + std::string(e.what())
+        );
+    }
+    
+    response["depth"] = depth ;
+    return sendApiResponse(sock, response);
+}
+
 
 json ApiHandler::setModulationDepth(int sock, const json& request){
     ComponentId id ;
@@ -1010,7 +1080,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
             req.outboundIdx = sink.at("index");
             req.inboundIdx = 0 ; // TODO: support multi-channel output
             
-            const auto& connectionResponse = createConnection(sock, req);
+            const auto& connectionResponse = parseConnectionRequest(sock, req);
             if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
                 SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
                 success = false ;
@@ -1032,7 +1102,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
             req.outboundSocket = SocketType::MidiOutbound ;
             req.inboundID = id ;
             
-            const auto& connectionResponse = createConnection(sock, req);
+            const auto& connectionResponse = parseConnectionRequest(sock, req);
             if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
                 SPDLOG_ERROR("error requestion connection: {}", connectionResponse.dump());
                 success = false ;
@@ -1080,7 +1150,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
                         req.outboundIdx = outbound.at("index");
                         req.outboundSocket = SocketType::SignalOutbound ;
 
-                        const auto& connectionResponse = createConnection(sock, req);
+                        const auto& connectionResponse = parseConnectionRequest(sock, req);
                         if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
                             SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
                             success = false ;
@@ -1103,7 +1173,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
                     req.outboundID = component.at("id") ;
                     req.outboundSocket = SocketType::MidiOutbound ;
                     
-                    const auto& connectionResponse = createConnection(sock, req);
+                    const auto& connectionResponse = parseConnectionRequest(sock, req);
                     if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
                         SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
                         success = false ;
@@ -1137,7 +1207,7 @@ bool ApiHandler::loadConnectComponent(int sock, const json& config){
                 req.outboundID = data.at("modulatorId");
                 req.outboundSocket = SocketType::ModulationOutbound ;
                 
-                const auto& connectionResponse = createConnection(sock, req);
+                const auto& connectionResponse = parseConnectionRequest(sock, req);
                 if ( ! connectionResponse.contains("status") || connectionResponse.at("status") != "success" ){
                     SPDLOG_ERROR("error requesting connection: {}", connectionResponse.dump());
                     success = false ;

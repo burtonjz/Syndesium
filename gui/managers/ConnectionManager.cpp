@@ -72,7 +72,25 @@ std::vector<ParameterType> ConnectionManager::getModulationConnections(int compo
         if ( 
             c.inboundSocket == SocketType::ModulationInbound && 
             c.inboundID == componentId &&
-            c.inboundParameter.has_value()
+            c.inboundParameter.has_value() &&
+            c.depthConnection == false 
+        ){
+            sc.push_back(c.inboundParameter.value());
+        } 
+    }
+
+    return sc ;
+}
+
+std::vector<ParameterType> ConnectionManager::getModulationDepthConnections(int componentId) const {
+    std::vector<ParameterType> sc ;
+
+    for ( const auto& c : connections_ ){
+        if ( 
+            c.inboundSocket == SocketType::ModulationInbound && 
+            c.inboundID == componentId &&
+            c.inboundParameter.has_value() &&
+            c.depthConnection == true 
         ){
             sc.push_back(c.inboundParameter.value());
         } 
@@ -108,23 +126,32 @@ void ConnectionManager::onApiDataReceived(const QJsonObject &json){
     QString action = json["action"].toString();
     bool success = json["status"].toString() == "success" ;
 
-    if ( action == "create_connection" && success ){
-        ConnectionRequest req = Util::QJsonObjectToNlohmann(json);
+    // handle any kind of connection request. Any other api actions should be handled above this one
+    if ( ! success ) return ;
+
+    ConnectionRequest req ;
+    try {
+        req = Util::QJsonObjectToNlohmann(json);
+    } catch (std::exception& e){
+        return ;
+    }
+
+    if ( req.remove ){
+        if ( !connectionExists(req) ){
+            qWarning() << "requested connection is not present in connection manager. will not trigger removal.";
+            return ;
+        }
+        connections_.erase(std::remove(
+            connections_.begin(), connections_.end(), req),
+            connections_.end()
+        );
+        emit connectionRemoved(req);
+    } else {
         if ( connectionExists(req) ){
             qWarning() << "requested connection already exists in connection manager. Will not add again.";
             return ;
         }
         connections_.push_back(req);
         emit connectionAdded(req);
-    } 
-
-    if ( action == "remove_connection" && success ){
-        ConnectionRequest req = Util::QJsonObjectToNlohmann(json);
-        if ( !connectionExists(req) ){
-            qWarning() << "requested connection is not present in connection manager. will not trigger removal.";
-            return ;
-        }
-        connections_.erase(std::remove(connections_.begin(), connections_.end(), req), connections_.end());
-        emit connectionRemoved(req);
     }
 }

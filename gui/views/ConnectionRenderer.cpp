@@ -110,8 +110,8 @@ bool ConnectionRenderer::isDragging() const {
     return dragCable_ != nullptr ;
 }
 
-void ConnectionRenderer::setDragCableParameter(ParameterType p){
-    dragCable_->setModulatedParameter(p);
+void ConnectionRenderer::setDragCableParameter(ParameterType p, bool depth){
+    dragCable_->setModulatedParameter(p, depth);
     sendDragCableRequest();
 }
 
@@ -227,7 +227,7 @@ void ConnectionRenderer::onConnectionAdded(const ConnectionRequest& req){
     ConnectionCable* c = new ConnectionCable(outbound, inbound);
     
     if ( inbound->getSpec().type == SocketType::ModulationInbound ){
-        c->setModulatedParameter(req.inboundParameter.value());
+        c->setModulatedParameter(req.inboundParameter.value(), req.depthConnection);
     }
 
     cables_.push_back(c);

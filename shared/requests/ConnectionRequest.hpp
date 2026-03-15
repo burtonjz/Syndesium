@@ -34,6 +34,7 @@ struct ConnectionRequest {
     std::optional<int> outboundID ;
     std::optional<size_t> outboundIdx ; // audio only
     std::optional<ParameterType> inboundParameter ;
+    bool depthConnection = false ;
     bool remove = false ;
 
     bool operator==(const ConnectionRequest& other) const {
@@ -43,7 +44,8 @@ struct ConnectionRequest {
                inboundIdx == other.inboundIdx &&
                outboundID == other.outboundID &&
                outboundIdx == other.outboundIdx &&
-               inboundParameter == other.inboundParameter ;
+               inboundParameter == other.inboundParameter &&
+               depthConnection == other.depthConnection ;
     }
 
     bool valid() const {
@@ -72,12 +74,20 @@ struct ConnectionRequest {
 };
 
 inline void to_json(json& j, const ConnectionRequest& req){
-    if ( req.remove ){
-        j["action"] = "remove_connection" ;
+    if ( req.depthConnection ){
+        if ( req.remove ){
+            j["action"] = "remove_depth_connection" ;
+        } else {
+            j["action"] = "create_depth_connection" ;
+        }
     } else {
-        j["action"] = "create_connection" ;
+        if ( req.remove ){
+            j["action"] = "remove_connection" ;
+        } else {
+            j["action"] = "create_connection" ;
+        }
     }
-
+    
     j["inbound"] = json::object();
     j["outbound"] = json::object();
     j["inbound"]["socketType"] = req.inboundSocket ;
@@ -90,17 +100,31 @@ inline void to_json(json& j, const ConnectionRequest& req){
 }
 
 inline void from_json(const json& j, ConnectionRequest& req){
-    req.inboundSocket = static_cast<SocketType>(j["inbound"]["socketType"]);
-    req.outboundSocket = static_cast<SocketType>(j["outbound"]["socketType"]);
-    if ( j["inbound"].contains("componentId")) req.inboundID = j["inbound"]["componentId"];
-    if ( j["inbound"].contains("index")) req.inboundIdx = j["inbound"]["index"];
-    if ( j["outbound"].contains("componentId")) req.outboundID = j["outbound"]["componentId"];
-    if ( j["outbound"].contains("index")) req.outboundIdx = j["outbound"]["index"];
-    if ( j["inbound"].contains("parameter")) req.inboundParameter = static_cast<ParameterType>(j["inbound"]["parameter"]);
-    if ( j["action"] == "create_connection" ){
+    const auto& inbound = j.at("inbound");
+    const auto& outbound = j.at("outbound");
+    
+    req.inboundSocket = static_cast<SocketType>(inbound.at("socketType"));
+    req.outboundSocket = static_cast<SocketType>(outbound.at("socketType"));
+    if ( inbound.contains("componentId") ) 
+        req.inboundID = inbound.at("componentId");
+    if ( inbound.contains("index") ) 
+        req.inboundIdx = inbound.at("index");
+    if ( outbound.contains("componentId") ) 
+        req.outboundID = outbound.at("componentId");
+    if ( outbound.contains("index") ) 
+        req.outboundIdx = outbound.at("index");
+    if ( inbound.contains("parameter") ) 
+        req.inboundParameter = static_cast<ParameterType>(inbound.at("parameter"));
+
+    if ( j.at("action") == "create_connection" ){
         req.remove = false ;
-    } else if ( j["action"] == "remove_connection" ){
+    } else if ( j.at("action") == "remove_connection" ){
         req.remove = true ;
+    } else if ( j.at("action") == "create_depth_connection" ){
+        req.depthConnection = true ;
+    } else if ( j.at("action") == "remove_depth_connection" ){
+        req.remove = true ;
+        req.depthConnection = true ;
     } else {
         throw std::runtime_error("invalid action specified for connection request.");
     }

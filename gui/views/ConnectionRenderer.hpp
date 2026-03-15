@@ -52,7 +52,7 @@ public:
     void finishDrag(const QPointF& scenePos);
     void cancelDrag();
     bool isDragging() const ;
-    void setDragCableParameter(ParameterType p); 
+    void setDragCableParameter(ParameterType p, bool depth = false); 
 
     // cable management
     const std::vector<ConnectionCable*> getNodeConnections(GraphNode* node) const ;

@@ -19,17 +19,27 @@
 #define __MODULATOR_HPP_
 
 #include "core/BaseComponent.hpp"
-#include "midi/MidiNote.hpp"
 #include "params/ModulationParameter.hpp"
 
-using ModulationTarget = std::pair<BaseComponent*, ParameterType> ;
+struct ModulationTarget {
+    BaseComponent* component ;
+    ParameterType param ;
+    bool depth = false ;
+};
+
+inline bool operator<(const ModulationTarget& a, const ModulationTarget& b){
+    if ( a.component != b.component ){
+        return a.component < b.component ;
+    }
+
+    if ( a.param != b.param ){
+        return a.param < b.param ;
+    }
+
+    return a.depth < b.depth ;
+}
 
 #include <set>
-#include <utility>
-
-struct ModulationContext {
-    const MidiNote* note = nullptr ;
-};
 
 /**
  * @brief base class for all Modulators.
@@ -65,6 +75,8 @@ public:
     // allows recipricol tracking of modulation targets
     friend void BaseComponent::removeParameterModulation(ParameterType p);
     friend void BaseComponent::setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d);
+    friend void BaseComponent::removeParameterDepthModulation(ParameterType p);
+    friend void BaseComponent::setParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d);
 };
 
 #endif // __MODULATOR_HPP_

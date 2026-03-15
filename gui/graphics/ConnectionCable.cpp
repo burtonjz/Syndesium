@@ -55,12 +55,17 @@ SocketWidget* ConnectionCable::getOutboundSocket() const {
     return nullptr ;
 }
 
-const std::optional<ParameterType>& ConnectionCable::getModulatedParameter() const {
+std::optional<ParameterType> ConnectionCable::getModulatedParameter(bool depth) const {
+    if ( depth != isDepthModulation_ ){
+        return std::nullopt ;
+    }
+
     return modulated_ ;
 }
 
-void ConnectionCable::setModulatedParameter(ParameterType p){
+void ConnectionCable::setModulatedParameter(ParameterType p, bool depth){
     modulated_ = p ;
+    isDepthModulation_ = depth ;
 }
 
 void ConnectionCable::setFromSocket(SocketWidget* socket){
@@ -160,6 +165,10 @@ ConnectionRequest ConnectionCable::toConnectionRequest() const {
         r.outboundID = outboundSocket->getSpec().componentId ;
         r.outboundSocket = outboundSocket->getSpec().type ;
         r.outboundIdx = outboundSocket->getSpec().idx ;
+    }
+
+    if ( isDepthModulation_ ){
+        r.depthConnection = true ;
     }
     
     return r ;

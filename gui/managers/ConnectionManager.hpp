@@ -36,6 +36,7 @@ public:
 
     void loadConnection(const ConnectionRequest& req);
     std::vector<ParameterType> getModulationConnections(int componentId) const ;
+    std::vector<ParameterType> getModulationDepthConnections(int componentId) const ;
 
     void requestConnectionEvent(const ConnectionRequest& req); 
 

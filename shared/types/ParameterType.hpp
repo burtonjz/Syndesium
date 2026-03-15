@@ -133,10 +133,10 @@ template <> struct ParameterTraits<ParameterType::DELAY>{
 template <> struct ParameterTraits<ParameterType::DEPTH>{
     using ValueType = float ;
     static constexpr std::string name = "depth" ;
-    static constexpr float minimum = -5.0 ;
-    static constexpr float maximum = 5.0 ;
+    static constexpr float minimum = -1.0 ;
+    static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::NONE ;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
     static constexpr size_t uiPrecision = 2 ; // num decimals
 };
 
@@ -186,7 +186,7 @@ template <> struct ParameterTraits<ParameterType::GAIN>{
     static constexpr float minimum = 0.0 ;
     static constexpr float maximum = 1.0 ;
     static constexpr float defaultValue = 1.0 ;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::LOGARITHMIC ;
     static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 
@@ -196,7 +196,7 @@ template <> struct ParameterTraits<ParameterType::DBGAIN>{
     static constexpr float minimum = -24.0 ;
     static constexpr float maximum = 24.0 ;
     static constexpr float defaultValue = 0.0 ;
-    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE;
+    static constexpr ModulationStrategy defaultStrategy = ModulationStrategy::ADDITIVE ;
     static constexpr size_t uiPrecision = 3 ; // num decimals
 };
 

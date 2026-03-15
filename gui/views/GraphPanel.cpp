@@ -902,11 +902,24 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
     auto existing = connectionManager_
         ->getModulationConnections(id);
 
+    auto depthExisting = connectionManager_
+        ->getModulationDepthConnections(id);
+
     bool hasActions = false ;
     for ( const auto& p : params ){
-        if ( std::find(existing.begin(), existing.end(), p) == existing.end() ){
+        bool modExists = std::find(existing.begin(), existing.end(), p) != existing.end();
+        bool depthExists = std::find(depthExisting.begin(), depthExisting.end(), p) != depthExisting.end();
+        if ( ! modExists ){
             QAction* param = new QAction(
                 QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name)),
+                &menu
+            );
+            menu.addAction(param);
+            hasActions = true ;
+        }   
+        if ( modExists && ! depthExists ){
+            QAction* param = new QAction(
+                QString::fromStdString(GET_PARAMETER_TRAIT_MEMBER(p, name) + " depth"),
                 &menu
             );
             menu.addAction(param);
@@ -922,8 +935,16 @@ void GraphPanel::ondragCableParameterNeeded(SocketWidget* socket){
 
     QAction* selected = menu.exec(QCursor::pos());
     if ( selected ){
-        ParameterType p = parameterFromString(selected->text().toStdString());
-        connectionRenderer_->setDragCableParameter(p);
+        auto str = selected->text().toStdString();
+        ParameterType p ;
+        if ( str.find("depth") != std::string::npos ){
+            str.erase(str.find(" depth"), 6);
+            p = parameterFromString(str);
+            connectionRenderer_->setDragCableParameter(p, true);
+        } else {
+            p = parameterFromString(str);
+            connectionRenderer_->setDragCableParameter(p);
+        }
     } else {
         connectionRenderer_->cancelDrag();
     }

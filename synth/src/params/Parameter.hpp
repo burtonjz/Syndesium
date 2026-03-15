@@ -249,8 +249,10 @@ class Parameter : public ParameterBase {
             } else {
                 // modulate this parameter's depth, if it exists
                 auto* depth = getDepth();
-                if ( depth  && depth->isModulatable()){
+                double instDepth = 1 ;
+                if ( depth  && depth->isModulatable() ){
                     getDepth()->modulate();
+                    instDepth = getDepth()->getInstantaneousValue();
                 }
 
                 // now, modulate this parameter itself
@@ -259,28 +261,22 @@ class Parameter : public ParameterBase {
 
                 switch(modStrategy_){
                 case ModulationStrategy::ADDITIVE:
-                    setInstantaneousValue(value_ + getDepth()->getInstantaneousValue() * modulator_->modulate(value_, &modData_));
+                    setInstantaneousValue(value_ + instDepth * modulator_->modulate(value_, &modData_));
                     return ;
                 case ModulationStrategy::MULTIPLICATIVE:
-                    setInstantaneousValue( value_ * getDepth()->getInstantaneousValue() * modulator_->modulate(value_, &modData_));
+                    setInstantaneousValue( value_ * instDepth * modulator_->modulate(value_, &modData_));
                     return ;
                 case ModulationStrategy::EXPONENTIAL:
-                    setInstantaneousValue(value_ * exp2f(getDepth()->getInstantaneousValue() * modulator_->modulate(value_, &modData_)));
+                    setInstantaneousValue(value_ * exp2f(instDepth * modulator_->modulate(value_, &modData_)));
                     return ;
                 case ModulationStrategy::LOGARITHMIC:
-                    {
-                        float mout = modulator_->modulate(value_, &modData_);
-                        if ( mout <= 0.0f ){
-                            setInstantaneousValue(0.0f);
-                        } else {
-                            // map 0-1 range to db (-60db to 0db)
-                            float db = -60.0f + 60.0f * mout ;
-                            setInstantaneousValue(value_ * pow(10.0f, db / 20.0f));
-                        }
-                    }
+                {
+                    float mout = instDepth * modulator_->modulate(value_, &modData_);
+                    setInstantaneousValue(value_ + copysignf(log2f(1.0f + fabsf(mout)), mout));
                     return ;
+                }
                 case ModulationStrategy::REPLACE:
-                    setInstantaneousValue(getDepth()->getInstantaneousValue() * modulator_->modulate(value_, &modData_));
+                    setInstantaneousValue(instDepth * modulator_->modulate(value_, &modData_));
                     return ;
                 default:
                     return ;

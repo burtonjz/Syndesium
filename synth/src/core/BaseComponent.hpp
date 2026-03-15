@@ -57,10 +57,15 @@ public:
      default behaviors that should ALWAYS happen and custom functionality happens through
      protected NVI functions 
     */
-    void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {} );
+    void setParameterModulation(ParameterType p, BaseModulator* m, ModulationData d = {});
+    void setParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d = {});
     void removeParameterModulation(ParameterType p);
+    void removeParameterDepthModulation(ParameterType p);
     virtual BaseModulator* getParameterModulator(ParameterType p) const ;
+    virtual BaseModulator* getParameterDepthModulator(ParameterType p) const ;
+    virtual double getParameterDepth(ParameterType p) const ;
     virtual void setParameterDepth(ParameterType p, double depth);
+    virtual ModulationStrategy getParameterModulationStrategy(ParameterType p) const ;
     virtual void setParameterModulationStrategy(ParameterType p, ModulationStrategy strat);
 
     // this function runs modulation on all internal parameters
@@ -69,6 +74,8 @@ public:
 protected:
     virtual void onSetParameterModulation(ParameterType p, BaseModulator* m, ModulationData d );
     virtual void onRemoveParameterModulation(ParameterType p);
+    virtual void onSetParameterDepthModulation(ParameterType p, BaseModulator* m, ModulationData d );
+    virtual void onRemoveParameterDepthModulation(ParameterType p);
     
 };
 
